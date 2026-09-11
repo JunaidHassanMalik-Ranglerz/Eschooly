@@ -22,4 +22,8 @@ export const Fonts = {
   robotoMedium: 'Roboto-Medium',
   robotoSemibold: 'Roboto-SemiBold',
   robotoRegular: 'Roboto-Regular',
+  interRegular: Platform.select({
+    ios: 'Poppins-Regular',
+    android: 'Roboto-Regular',
+  }),
 };

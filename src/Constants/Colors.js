@@ -34,4 +34,7 @@ export const Colors = {
   whiteOverlay20: 'rgba(255,255,255,0.2)',
   whiteOverlay22: 'rgba(255,255,255,0.22)',
   overlayDark: 'rgba(0,0,0,0.35)',
+  onlineClassviewsColor: '#071A3D',
+  EndColor: '#18181B',
+  chatScreenBg: '#F7F8FD',
 };

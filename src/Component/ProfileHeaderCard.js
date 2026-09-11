@@ -125,7 +125,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(3),
     paddingVertical: hp(0.4),
     borderRadius: wp(4),
-    width: wp(23),
   },
   arrowBtn: {
     width: wp(8),

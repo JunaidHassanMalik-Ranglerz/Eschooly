@@ -1,13 +1,13 @@
 import React from 'react';
-import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import {Images} from '../Assets';
-import {hp, wp} from '../Constants/Responsive';
-import {Colors} from '../Constants/Colors';
-import {Fontsize} from '../Constants/Fontsize';
-import {Fonts} from '../Constants/Fonts';
-import {navigateToNotification} from '../Navigations/navigationHelpers';
+import { Images } from '../Assets';
+import { hp, wp } from '../Constants/Responsive';
+import { Colors } from '../Constants/Colors';
+import { Fontsize } from '../Constants/Fontsize';
+import { Fonts } from '../Constants/Fonts';
+import { navigateToNotification } from '../Navigations/navigationHelpers';
 
 const MainHeaderComponent = props => {
   const navigation = useNavigation();
@@ -19,7 +19,8 @@ const MainHeaderComponent = props => {
       <TouchableOpacity
         style={styles.backBtn}
         activeOpacity={0.8}
-        onPress={() => navigation.goBack()}>
+        onPress={() => navigation.goBack()}
+      >
         <Icon name="chevron-back" size={wp(5.5)} color={Colors.black} />
       </TouchableOpacity>
 
@@ -31,7 +32,8 @@ const MainHeaderComponent = props => {
         <TouchableOpacity
           style={styles.bellWrap}
           activeOpacity={0.8}
-          onPress={() => navigateToNotification(navigation)}>
+          onPress={() => navigateToNotification(navigation)}
+        >
           <Image
             source={Images.notification}
             style={styles.notificationIcon}
@@ -69,7 +71,7 @@ const styles = StyleSheet.create({
     color: Colors.black,
     fontFamily: Fonts.regular,
     fontSize: Fontsize.mm,
-    maxWidth: wp(35),
+    maxWidth: wp(40),
   },
   bellWrap: {
     position: 'relative',

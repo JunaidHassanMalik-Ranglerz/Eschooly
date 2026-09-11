@@ -1,18 +1,20 @@
 import React from 'react';
-import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AFN from '../../Screens/AppFlow/AFN';
 import Profile from '../../Screens/CommonScreens/Profile';
 import Attendance from '../../Screens/CommonScreens/Attendance';
 import Exam from '../../Screens/CommonScreens/Exam';
 import Teacher from '../../Screens/CommonScreens/Teacher';
-import {Images} from '../../Assets';
-import {hp, wp} from '../../Constants/Responsive';
-import {Colors} from '../../Constants/Colors';
-import {Fonts} from '../../Constants/Fonts';
-import {Fontsize} from '../../Constants/Fontsize';
-import {Strings} from '../../Constants/Strings';
+import { Images } from '../../Assets';
+import { hp, wp } from '../../Constants/Responsive';
+import { Colors } from '../../Constants/Colors';
+import { Fonts } from '../../Constants/Fonts';
+import { Fontsize } from '../../Constants/Fontsize';
+import { Strings } from '../../Constants/Strings';
+import Menu from '../../Screens/CommonScreens/Menu';
+import Chat from '../../Screens/CommonScreens/Chat';
 
 const BOTTOM_STACK = createBottomTabNavigator();
 
@@ -26,6 +28,8 @@ const TAB_ICONS = {
   Exam: Images.examIcon,
   Teachers: Images.teacherIcon,
   Profile: Images.profileIcon,
+  Menu: Images.menuIcon,
+  Chat: Images.messageIcon,
 };
 
 const TAB_LABELS = {
@@ -34,9 +38,11 @@ const TAB_LABELS = {
   Exam: Strings.exam,
   Teachers: Strings.teachers,
   Profile: Strings.profile,
+  Menu: Strings.menu,
+  Chat: Strings.chat,
 };
 
-const TabBarItem = ({name, isFocused, onPress}) => {
+const TabBarItem = ({ name, isFocused, onPress }) => {
   const icon = TAB_ICONS[name];
   const label = TAB_LABELS[name];
 
@@ -44,17 +50,19 @@ const TabBarItem = ({name, isFocused, onPress}) => {
     <TouchableOpacity
       activeOpacity={0.8}
       onPress={onPress}
-      style={styles.tabItem}>
+      style={styles.tabItem}
+    >
       <View
         style={[
           styles.iconSlot,
           isFocused ? styles.iconSlotActive : styles.iconSlotInactive,
-        ]}>
+        ]}
+      >
         <Image
           source={icon}
           style={[
             styles.tabIcon,
-            {tintColor: isFocused ? Colors.primary : Colors.grayText},
+            { tintColor: isFocused ? Colors.primary : Colors.grayText },
           ]}
           resizeMode="contain"
         />
@@ -62,14 +70,15 @@ const TabBarItem = ({name, isFocused, onPress}) => {
       <Text
         style={[styles.label, isFocused && styles.labelActive]}
         numberOfLines={1}
-        allowFontScaling={false}>
+        allowFontScaling={false}
+      >
         {label}
       </Text>
     </TouchableOpacity>
   );
 };
 
-const EschoolTabBar = ({state, navigation}) => {
+const EschoolTabBar = ({ state, navigation }) => {
   const insets = useSafeAreaInsets();
   const bottomPad = insets.bottom > hp(0.3) ? insets.bottom : hp(0.3);
   const activeName = state.routes[state.index]?.name;
@@ -94,13 +103,13 @@ const EschoolTabBar = ({state, navigation}) => {
   };
 
   return (
-    <View style={[styles.tabBar, {paddingBottom: bottomPad}]}>
+    <View style={[styles.tabBar, { paddingBottom: bottomPad }]}>
       <TabBarItem
         name="Home"
         isFocused={activeName === 'Home'}
         onPress={() => handlePress('Home')}
       />
-      <TabBarItem
+      {/* <TabBarItem
         name="Attends"
         isFocused={activeName === 'Attends'}
         onPress={() => handlePress('Attends')}
@@ -114,7 +123,20 @@ const EschoolTabBar = ({state, navigation}) => {
         name="Teachers"
         isFocused={activeName === 'Teachers'}
         onPress={() => handlePress('Teachers')}
+      /> */}
+
+      <TabBarItem
+        name="Menu"
+        isFocused={activeName === 'Menu'}
+        onPress={() => handlePress('Menu')}
       />
+
+      <TabBarItem
+        name="Chat"
+        isFocused={activeName === 'Chat'}
+        onPress={() => handlePress('Chat')}
+      />
+
       <TabBarItem
         name="Profile"
         isFocused={activeName === 'Profile'}
@@ -130,8 +152,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
     borderTopWidth: wp(0.25),
     borderTopColor: Colors.border,
-    paddingTop: hp(0.4),
-    minHeight: hp(6.5),
+    paddingTop: hp(1.8),
+    minHeight: hp(7.5),
   },
   tabItem: {
     flex: 1,
@@ -158,8 +180,8 @@ const styles = StyleSheet.create({
     borderColor: Colors.primary,
     borderRadius: CIRCLE_RADIUS,
     backgroundColor: Colors.white,
-    marginTop: -CIRCLE_RADIUS,
-    marginBottom: hp(0.3),
+    marginTop: -wp(4),
+    marginBottom: hp(0.4),
   },
   label: {
     fontSize: Fontsize.tab,
@@ -178,12 +200,15 @@ const BottomNavigation = () => (
   <BOTTOM_STACK.Navigator
     initialRouteName="Home"
     tabBar={props => <EschoolTabBar {...props} />}
-    screenOptions={{headerShown: false}}>
+    screenOptions={{ headerShown: false }}
+  >
     <BOTTOM_STACK.Screen name="Home" component={AFN} />
     <BOTTOM_STACK.Screen name="Attends" component={Attendance} />
     <BOTTOM_STACK.Screen name="Exam" component={Exam} />
     <BOTTOM_STACK.Screen name="Teachers" component={Teacher} />
     <BOTTOM_STACK.Screen name="Profile" component={Profile} />
+    <BOTTOM_STACK.Screen name="Menu" component={Menu} />
+    <BOTTOM_STACK.Screen name="Chat" component={Chat} />
   </BOTTOM_STACK.Navigator>
 );
 

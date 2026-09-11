@@ -1,6 +1,7 @@
-import React from 'react';
+import React, {useRef} from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { applyStatusBarForRoute, getActiveRouteName } from '../Constants/MyStyling';
 import SplashScreen from '../Screens/StartScreens/SplashScreen';
 import Role from '../Screens/StartScreens/Role';
 import AuthNavigation from './AuthNavigation';
@@ -13,14 +14,26 @@ import DigitalLibrary from '../Screens/CommonScreens/DigitalLibrary';
 import StudentIdCard from '../Screens/CommonScreens/StudentIdCard';
 import PdfViewer from '../Screens/CommonScreens/PdfViewer';
 import OnlineExam from '../Screens/CommonScreens/OnlineExam';
+import OnlineClass from '../Screens/CommonScreens/OnlineClass';
 import MidtermMathematics from '../Screens/CommonScreens/MidtermMathematics';
 import Menu from '../Screens/CommonScreens/Menu';
 
 const MAIN_STACK = createNativeStackNavigator();
 
 const MainNavigation = () => {
+  const navigationRef = useRef(null);
+
+  const syncStatusBar = () => {
+    const state = navigationRef.current?.getRootState();
+    const routeName = getActiveRouteName(state);
+    applyStatusBarForRoute(routeName);
+  };
+
   return (
-    <NavigationContainer>
+    <NavigationContainer
+      ref={navigationRef}
+      onReady={syncStatusBar}
+      onStateChange={syncStatusBar}>
       <MAIN_STACK.Navigator
         initialRouteName="SplashScreen"
         screenOptions={{ headerShown: false }}
@@ -37,6 +50,7 @@ const MainNavigation = () => {
         <MAIN_STACK.Screen name="StudentIdCard" component={StudentIdCard} />
         <MAIN_STACK.Screen name="PdfViewer" component={PdfViewer} />
         <MAIN_STACK.Screen name="OnlineExam" component={OnlineExam} />
+        <MAIN_STACK.Screen name="OnlineClass" component={OnlineClass} />
         <MAIN_STACK.Screen
           name="MidtermMathematics"
           component={MidtermMathematics}

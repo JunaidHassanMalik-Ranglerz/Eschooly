@@ -1,5 +1,5 @@
-import React from 'react';
-import {StyleSheet, Text, View} from 'react-native';
+import React, {useRef} from 'react';
+import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {Dropdown} from 'react-native-element-dropdown';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {Colors} from '../Constants/Colors';
@@ -9,10 +9,16 @@ import {Strings} from '../Constants/Strings';
 import {wp, hp} from '../Constants/Responsive';
 
 const SyllabusFilter = props => {
+  const dropdownRef = useRef(null);
+
   return (
     <View style={styles.card}>
-      <View style={styles.dropdownWrap}>
+      <TouchableOpacity
+        style={styles.dropdownWrap}
+        activeOpacity={0.8}
+        onPress={() => dropdownRef.current?.open()}>
         <Dropdown
+          ref={dropdownRef}
           data={props?.subjects}
           labelField="label"
           valueField="value"
@@ -42,7 +48,11 @@ const SyllabusFilter = props => {
             </View>
           )}
         />
-        <Text style={styles.subjectLabel} numberOfLines={1} ellipsizeMode="tail">
+        <Text
+          style={styles.subjectLabel}
+          numberOfLines={1}
+          ellipsizeMode="tail"
+          pointerEvents="none">
           {Strings.subject}
         </Text>
         <Text
@@ -52,7 +62,7 @@ const SyllabusFilter = props => {
           pointerEvents="none">
           {props?.label}
         </Text>
-      </View>
+      </TouchableOpacity>
 
       <View style={styles.classBadge}>
         <Icon name="school-outline" size={wp(4)} color={Colors.badgeText} />
@@ -87,7 +97,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.transparent,
     borderWidth: 0,
     paddingHorizontal: wp(3),
-    height: wp(10.13),
+    height: '100%',
+    width: '100%',
     paddingTop: hp(0.6),
     paddingBottom: hp(0.4),
   },

@@ -161,7 +161,7 @@ export const PROFILE_MENU_LIST = [
     value: 'onlineClasses',
     label: Strings.onlineClasses,
     icon: Images.onlineClass,
-    screen: null,
+    screen: 'OnlineClass',
   },
   {
     value: 'digitalLibrary',
@@ -594,5 +594,68 @@ export const ATTENDANCE_HISTORY = [
     dateLabel: 'November 22',
     fullDay: 'Friday',
     status: 'Present',
+  },
+];
+
+export const CHAT_USER = {
+  name: 'M.Saleem',
+  initials: 'AR',
+};
+
+export const CHAT_ANNOUNCEMENT = {
+  school: 'eSchool — Greenfield High',
+  title: 'Parent-Teacher Meeting Rescheduled',
+  desc:
+    'The PTM originally scheduled for 15 Nov has been moved to 18 Nov due to the national holiday. Please confirm your attendance.',
+  date: '18 Nov',
+  time: '10:00 AM',
+};
+
+export const CHAT_MESSAGES = [
+  {
+    id: '1',
+    text: 'Hi',
+    type: 'received',
+    sender: 'Ms. Priya',
+    time: '09:42',
+  },
+];
+
+export const CHAT_LIST = [
+  {
+    id: '1',
+    name: 'Mr. Ahmed Khan',
+    role: 'Mathematics Teacher',
+    lastMessage: 'Please submit homework by tomorrow.',
+    time: '10:30 AM',
+    unread: 2,
+    initials: 'AK',
+  },
+  {
+    id: '2',
+    name: 'Ms. Sara Ali',
+    role: 'English Teacher',
+    lastMessage: 'Great work on the essay!',
+    time: 'Yesterday',
+    unread: 0,
+    initials: 'SA',
+  },
+  {
+    id: '3',
+    name: 'School Admin',
+    role: 'Administration',
+    lastMessage: 'Parent meeting scheduled for Friday.',
+    time: 'Mon',
+    unread: 1,
+    initials: 'SA',
+  },
+  {
+    id: '4',
+    name: 'Mr. Hassan Raza',
+    role: 'Physics Teacher',
+    lastMessage: 'Lab report deadline is next week.',
+    time: 'Sun',
+    unread: 0,
+    initials: 'HR',
   },
 ];

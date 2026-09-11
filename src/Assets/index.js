@@ -10,6 +10,7 @@ export const Images = {
   syllabus: require('./Clock.png'),
   exams: require('./Exams.png'),
   onlineClass: require('./OnlineClass.png'),
+  Disclamier: require('./Disclamier.png'),
   library: require('./Library.png'),
   digitalLibrary: require('./Library.png'),
   transport: require('./Transport.png'),
@@ -38,4 +39,10 @@ export const Images = {
   examIcon: require('./ExamIcon.png'),
   profileIcon: require('./ProfileIcon.png'),
   teacherIcon: require('./TeacherIcon.png'),
+  menuIcon: require('./Menu.png'),
+  onlineClasstickIcon: require('./OnlineClasstickIcon.png'),
+  disclaimer: require('./Disclamier.png'),
+  videoIcon: require('./VideoIcon.png'),
+  send: require('./send.png'),
+  pin: require('./pinIcon.png'),
 };
