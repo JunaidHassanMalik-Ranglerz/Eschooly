@@ -1,5 +1,6 @@
 import React, {useMemo} from 'react';
 import {FlatList, StyleSheet, Text, View} from 'react-native';
+import {useNavigation} from '@react-navigation/native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import AttendanceStudentDropdown from '../../Component/AttendanceStudentDropdown';
 import ClassTeacherCard from '../../Component/ClassTeacherCard';
@@ -17,7 +18,8 @@ import MainHeaderComponent from '../../Component/MainHeaderComponent';
 import {useRoleData} from '../../hooks/useRoleData';
 
 const Teacher = () => {
-  const {activeStudent, studentLabel, isParent, selectedChildId, setSelectedChildId} =
+  const navigation = useNavigation();
+  const {activeStudent, studentLabel, isParent, selectedChildId, setSelectedChildId, childList} =
     useRoleData();
 
   const teacherStudent = useMemo(
@@ -30,7 +32,35 @@ const Teacher = () => {
   const {classTeacher, subjectTeachers} =
     TEACHERS_BY_STUDENT[activeStudent.value] || TEACHERS_BY_STUDENT['1'];
 
-  const handleMessage = () => {};
+  const openTeacherChat = teacher => {
+    if (!teacher) {
+      return;
+    }
+
+    const chatUser = {
+      name: teacher.name,
+      initials: teacher.initials,
+      role: teacher.subject
+        ? `${teacher.subject} Teacher`
+        : Strings.classTeacher,
+    };
+
+    const parentNav = navigation.getParent();
+    if (parentNav) {
+      parentNav.navigate({
+        name: 'BottomTab',
+        params: {
+          screen: 'Chat',
+          params: {chatUser},
+          merge: true,
+        },
+        merge: true,
+      });
+      return;
+    }
+
+    navigation.navigate('Chat', {chatUser});
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -40,22 +70,22 @@ const Teacher = () => {
         data={subjectTeachers}
         keyExtractor={item => item.id}
         renderItem={({item}) => (
-          <SubjectTeacherItem item={item} onMessage={handleMessage} />
+          <SubjectTeacherItem item={item} onMessage={openTeacherChat} />
         )}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
         ListHeaderComponent={
           <View>
             <AttendanceStudentDropdown
-              student={teacherStudent}
-              students={isParent ? TEACHER_STUDENTS : [teacherStudent]}
+              student={isParent ? activeStudent : teacherStudent}
+              students={isParent ? childList : [teacherStudent]}
               selectedId={isParent ? selectedChildId : teacherStudent.value}
               onSelect={item => setSelectedChildId(item.value)}
               readOnly={!isParent}
               label={studentLabel}
             />
 
-            <ClassTeacherCard teacher={classTeacher} onMessage={handleMessage} />
+            <ClassTeacherCard teacher={classTeacher} onMessage={openTeacherChat} />
 
             <View style={styles.subjectHeader}>
               <Text style={styles.subjectTitle} numberOfLines={1}>

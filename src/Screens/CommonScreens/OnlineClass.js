@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {Alert, ScrollView, StyleSheet} from 'react-native';
+import {ScrollView, StyleSheet} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import MainHeaderComponent from '../../Component/MainHeaderComponent';
 import ClassTabBar from '../../Component/OnlineClass/ClassTabBar';
@@ -46,7 +46,6 @@ const OnlineClass = () => {
             <ClassSectionHeader
               title={Strings.upcomingSessions}
               linkText={Strings.viewAll}
-              onPress={() => Alert.alert(Strings.viewAll, Strings.examDetailsSoon)}
             />
             {UPCOMING_CLASSES.map(item => (
               <UpcomingClassCard key={item.id} item={item} />
@@ -59,7 +58,6 @@ const OnlineClass = () => {
             <ClassSectionHeader
               title={Strings.recentRecordings}
               linkText={Strings.all}
-              onPress={() => Alert.alert(Strings.all, Strings.examDetailsSoon)}
             />
             {RECORDING_CLASSES.map(item => (
               <RecordingClassCard key={item.id} item={item} />

@@ -5,7 +5,17 @@ import {Fonts} from '../Constants/Fonts';
 import {Fontsize} from '../Constants/Fontsize';
 import {wp, hp} from '../Constants/Responsive';
 
+const STATUS_STYLES = {
+  Present: {bg: Colors.successBg, text: Colors.success},
+  Absent: {bg: Colors.overdueBg, text: Colors.red},
+  Late: {bg: Colors.pendingBg, text: Colors.warning},
+  Leave: {bg: Colors.lightGray, text: Colors.grayText},
+  Unmarked: {bg: Colors.cardBg, text: Colors.grayText},
+};
+
 const AttendanceHistoryItem = props => {
+  const statusStyle = STATUS_STYLES[props?.item?.status] || STATUS_STYLES.Unmarked;
+
   return (
     <View style={styles.card}>
       <View style={styles.dateBox}>
@@ -22,8 +32,10 @@ const AttendanceHistoryItem = props => {
         </Text>
       </View>
 
-      <View style={styles.badge}>
-        <Text style={styles.badgeText} numberOfLines={1}>{props?.item?.status}</Text>
+      <View style={[styles.badge, {backgroundColor: statusStyle.bg}]}>
+        <Text style={[styles.badgeText, {color: statusStyle.text}]} numberOfLines={1}>
+          {props?.item?.status}
+        </Text>
       </View>
     </View>
   );
@@ -79,18 +91,17 @@ const styles = StyleSheet.create({
     width: wp(25),
   },
   badge: {
-    width:wp(18),
+    minWidth: wp(18),
     paddingHorizontal: wp(3),
     paddingVertical: hp(0.5),
     borderRadius: wp(4),
     marginLeft: wp(2),
     backgroundColor: Colors.cardBg,
+    alignItems: 'center',
   },
   badgeText: {
-    fontFamily: Fonts.regular,
+    fontFamily: Fonts.semibold,
     fontSize: wp(3.1),
     color: Colors.grayText,
-    width: wp(15),
-    marginLeft:wp(0.5),
   },
 });

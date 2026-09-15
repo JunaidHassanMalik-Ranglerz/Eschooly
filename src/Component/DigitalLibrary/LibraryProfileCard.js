@@ -49,7 +49,7 @@ const styles = StyleSheet.create({
   },
   initials: {
     color: Colors.primary,
-    fontFamily: Fonts.semibold,
+    fontFamily: Fonts.bold,
     fontSize: Fontsize.sm,
   },
   info: {
@@ -57,8 +57,8 @@ const styles = StyleSheet.create({
   },
   name: {
     color: Colors.black,
-    fontFamily: Fonts.semibold,
-    fontSize: Fontsize.normal,
+    fontFamily: Fonts.bold,
+    fontSize: Fontsize.sm,
     marginBottom: hp(0.8),
   },
   badges: {
@@ -75,8 +75,8 @@ const styles = StyleSheet.create({
   },
   classText: {
     color: Colors.badgeText,
-    fontFamily: Fonts.medium,
-    fontSize: Fontsize.xs2,
+    fontFamily: Fonts.regular,
+    fontSize: Fontsize.xs1,
   },
   activeBadge: {
     backgroundColor: Colors.successBg,
@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
   },
   activeText: {
     color: Colors.success,
-    fontFamily: Fonts.medium,
-    fontSize: Fontsize.xs2,
+    fontFamily: Fonts.regular,
+    fontSize: Fontsize.xs1,
   },
 });

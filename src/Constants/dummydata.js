@@ -4,7 +4,7 @@ import {Strings} from './Strings';
 export const LOGGED_IN_STUDENT = {
   value: '1',
   label: 'Bilal Khaliq',
-  initials: 'BK',
+  initials: 'BKH',
   className: 'Class 7',
   section: 'B',
   classBadge: 'Class 7 - B',
@@ -15,11 +15,15 @@ export const LOGGED_IN_STUDENT = {
 };
 
 export const PARENT_DATA = {
-  label: 'Imran Khaliq',
-  initials: 'IK',
+  label: 'Bilal Khaliq',
+  initials: 'BKH',
   classBadge: 'Parent Account',
   cnic: '35202-1234567-1',
-  email: 'imran.khaliq@email.com',
+  fatherName: 'Muhammad Khaliq',
+  gender: 'Male',
+  dateOfIssue: '12 Apr 2024',
+  validUntil: '31 Mar 2027',
+  email: 'bilal.khaliq@email.com',
   phone: '+92 300 1234567',
   address: 'House 12, Street 5, Islamabad',
 };
@@ -74,7 +78,7 @@ export const MENU_LIST = [
     value: 'assignments',
     label: Strings.assignment,
     icon: Images.lecture,
-    screen: null,
+    screen: 'Assignment',
   },
   {
     value: 'teachers',
@@ -82,6 +86,7 @@ export const MENU_LIST = [
     icon: Images.multiplePerson,
     screen: 'Teachers',
     tab: true,
+    parentScreen: 'ParentTeachers',
   },
   {
     value: 'attendance',
@@ -89,18 +94,19 @@ export const MENU_LIST = [
     icon: Images.calendarClock,
     screen: 'Attends',
     tab: true,
+    parentScreen: 'ParentAttendance',
   },
   {
     value: 'timetable',
     label: Strings.timetable,
     icon: Images.clock,
-    screen: null,
+    screen: 'Timetable',
   },
   {
     value: 'holidays',
     label: Strings.holidays,
     icon: Images.calendar,
-    screen: null,
+    screen: 'Holidays',
   },
   {
     value: 'exams',
@@ -108,12 +114,51 @@ export const MENU_LIST = [
     icon: Images.exams,
     screen: 'Exam',
     tab: true,
+    parentScreen: 'ExamSchedule',
   },
   {
     value: 'result',
     label: Strings.result,
     icon: Images.reportCard,
-    screen: null,
+    screen: 'StudentResults',
+    parentScreen: 'ParentResults',
+  },
+  {
+    value: 'fee',
+    label: Strings.fee,
+    icon: Images.tuitionFee,
+    screen: 'Fee',
+  },
+];
+
+export const HOLIDAY_LIST = [
+  {
+    id: '1',
+    title: 'Independence Day',
+    date: 'Fri, 14 Aug 2026',
+    type: 'National',
+    duration: '1 day',
+  },
+  {
+    id: '2',
+    title: 'Eid-ul-Fitr',
+    date: 'Thu, 20 Mar 2026',
+    type: 'Religious',
+    duration: '3 days',
+  },
+  {
+    id: '3',
+    title: 'Summer Break',
+    date: '01 Jun - 15 Jul 2026',
+    type: 'School',
+    duration: '6 weeks',
+  },
+  {
+    id: '4',
+    title: 'Quaid-e-Azam Day',
+    date: 'Fri, 25 Dec 2026',
+    type: 'National',
+    duration: '1 day',
   },
 ];
 
@@ -129,12 +174,6 @@ export const PARENT_PROFILE_MENU_LIST = [
     label: Strings.menu,
     icon: Images.lecture,
     screen: 'Menu',
-  },
-  {
-    value: 'settings',
-    label: Strings.settings,
-    icon: Images.guardian,
-    screen: 'Setting',
   },
 ];
 
@@ -180,12 +219,6 @@ export const PROFILE_MENU_LIST = [
     label: Strings.reportCardReady,
     icon: Images.reportCard,
     screen: null,
-  },
-  {
-    value: 'settings',
-    label: Strings.settings,
-    icon: Images.guardian,
-    screen: 'Setting',
   },
   {
     value: 'menu',
@@ -411,19 +444,19 @@ export const TEACHER_STUDENTS = [
   {
     value: '1',
     label: 'Bilal Khaliq',
-    initials: 'BK',
+    initials: 'BKH',
     classInfo: 'Class 7 · Section B',
   },
   {
     value: '2',
     label: 'Jalal Khaliq',
-    initials: 'JK',
+    initials: 'JLK',
     classInfo: 'Class 3 · Section A',
   },
   {
     value: '3',
     label: 'Aqsa Khaliq',
-    initials: 'AK',
+    initials: 'AQS',
     classInfo: 'Class 8 · Section C',
   },
 ];
@@ -481,7 +514,7 @@ export const ATTENDANCE_STUDENTS = [
   {
     value: '1',
     label: 'Bilal Khaliq',
-    initials: 'BK',
+    initials: 'BKH',
     classInfo: 'Class 7 · Section B',
     month: 'November 2024',
     present: '22',
@@ -493,7 +526,7 @@ export const ATTENDANCE_STUDENTS = [
   {
     value: '2',
     label: 'Jalal Khaliq',
-    initials: 'JK',
+    initials: 'JLK',
     classInfo: 'Class 3 · Section A',
     month: 'November 2024',
     present: '20',
@@ -505,7 +538,7 @@ export const ATTENDANCE_STUDENTS = [
   {
     value: '3',
     label: 'Aqsa Khaliq',
-    initials: 'AK',
+    initials: 'AQS',
     classInfo: 'Class 8 · Section C',
     month: 'November 2024',
     present: '21',
@@ -517,7 +550,7 @@ export const ATTENDANCE_STUDENTS = [
   {
     value: '4',
     label: 'Zainab Khaliq',
-    initials: 'AK',
+    initials: 'ZNB',
     classInfo: 'Class 4 · Section C',
     month: 'November 2024',
     present: '21',
@@ -529,7 +562,7 @@ export const ATTENDANCE_STUDENTS = [
   {
     value: '5',
     label: 'Sara Khaliq',
-    initials: 'AK',
+    initials: 'SRK',
     classInfo: 'Class 8 · Section C',
     month: 'November 2024',
     present: '21',
@@ -659,3 +692,221 @@ export const CHAT_LIST = [
     initials: 'HR',
   },
 ];
+
+export const ASSIGNMENT_OVERVIEW = {
+  total: 11,
+  pending: 4,
+  submitted: 6,
+  overdue: 1,
+};
+
+export const ASSIGNMENT_SUBJECTS = [
+  {
+    id: '1',
+    name: 'Mathematics',
+    icon: 'calculator-outline',
+    iconBg: '#EEF2FF',
+    iconColor: '#1345A3',
+    pendingCount: 2,
+    assignments: [
+      {
+        id: '1-1',
+        title: 'Algebra Practice Sheet — Chapter 1',
+        teacher: 'Mr. Ahmed Khan',
+        dueDate: '15 Sep 2026',
+        status: 'pending',
+        type: 'homework',
+      },
+      {
+        id: '1-2',
+        title: 'Quadratic Equations Worksheet',
+        teacher: 'Mr. Ahmed Khan',
+        dueDate: '18 Sep 2026',
+        status: 'pending',
+        type: 'homework',
+      },
+      {
+        id: '1-3',
+        title: 'Geometry Project — Triangles',
+        teacher: 'Mr. Ahmed Khan',
+        dueDate: '20 Sep 2026',
+        status: 'submitted',
+        type: 'project',
+      },
+    ],
+  },
+  {
+    id: '2',
+    name: 'Physics',
+    icon: 'planet-outline',
+    iconBg: '#E8F8F5',
+    iconColor: '#007A55',
+    pendingCount: 1,
+    assignments: [
+      {
+        id: '2-1',
+        title: 'Motion & Velocity Lab Report',
+        teacher: 'Mr. Hassan Raza',
+        dueDate: '12 Sep 2026',
+        status: 'overdue',
+        type: 'lab',
+      },
+      {
+        id: '2-2',
+        title: 'Force Laws — Chapter Quiz',
+        teacher: 'Mr. Hassan Raza',
+        dueDate: '22 Sep 2026',
+        status: 'submitted',
+        type: 'quiz',
+      },
+      {
+        id: '2-3',
+        title: 'Light & Reflection Worksheet',
+        teacher: 'Mr. Hassan Raza',
+        dueDate: '08 Sep 2026',
+        status: 'submitted',
+        type: 'homework',
+      },
+    ],
+  },
+  {
+    id: '3',
+    name: 'Chemistry',
+    icon: 'flask-outline',
+    iconBg: '#FFF4E5',
+    iconColor: '#FF9500',
+    pendingCount: 2,
+    assignments: [
+      {
+        id: '3-1',
+        title: 'Chemical Reactions — Notes Submission',
+        teacher: 'Ms. Sara Ali',
+        dueDate: '16 Sep 2026',
+        status: 'pending',
+        type: 'homework',
+      },
+      {
+        id: '3-2',
+        title: 'Periodic Table Chart Project',
+        teacher: 'Ms. Sara Ali',
+        dueDate: '25 Sep 2026',
+        status: 'submitted',
+        type: 'project',
+      },
+      {
+        id: '3-3',
+        title: 'Acids and Bases Lab Notes',
+        teacher: 'Ms. Sara Ali',
+        dueDate: '19 Sep 2026',
+        status: 'pending',
+        type: 'homework',
+      },
+    ],
+  },
+  {
+    id: '4',
+    name: 'English',
+    icon: 'book-outline',
+    iconBg: '#FFECEC',
+    iconColor: '#FF3B30',
+    pendingCount: 0,
+    assignments: [
+      {
+        id: '4-1',
+        title: 'Essay — My Favourite Book',
+        teacher: 'Ms. Fatima Noor',
+        dueDate: '10 Sep 2026',
+        status: 'submitted',
+        type: 'homework',
+      },
+      {
+        id: '4-2',
+        title: 'Poetry Recitation Recording',
+        teacher: 'Ms. Fatima Noor',
+        dueDate: '14 Sep 2026',
+        status: 'submitted',
+        type: 'project',
+      },
+    ],
+  },
+];
+
+export const STUDENT_TIMETABLE = [
+  {
+    id: '1',
+    period: '01',
+    subject: 'Mathematics',
+    time: '9:00 AM - 10:00 AM',
+    teacher: 'Mr. Ahmed Khan',
+    room: 'Room 12',
+  },
+  {
+    id: '2',
+    period: '02',
+    subject: 'English',
+    time: '10:00 AM - 11:00 AM',
+    teacher: 'Ms. Sara Ali',
+    room: 'Room 08',
+  },
+  {
+    id: '3',
+    period: '03',
+    subject: 'Science',
+    time: '11:00 AM - 12:00 PM',
+    teacher: 'Ms. Hina Tariq',
+    room: 'Lab 2',
+  },
+  {
+    id: '4',
+    period: '04',
+    subject: 'Computer',
+    time: '12:00 PM - 1:00 PM',
+    teacher: 'Mr. Usman Farooq',
+    room: 'Lab 1',
+  },
+];
+
+export const STUDENT_UPCOMING_CLASS = {
+  title: 'Geometry - Triangles',
+  classInfo: 'Class 7B • Mathematics',
+  time: '9:00 AM',
+  subject: 'Mathematics',
+};
+
+export const STUDENT_RESULT_TERMS = [Strings.term1, Strings.term2, Strings.term3];
+
+export const STUDENT_RESULTS = {
+  [Strings.term1]: {
+    overall: 'A',
+    hint: 'Great Progress!',
+    subjects: [
+      {id: '1', name: 'Mathematics', grade: 'A+', score: 96, color: '#16A34A'},
+      {id: '2', name: 'Science', grade: 'A', score: 90, color: '#2563EB'},
+      {id: '3', name: 'English', grade: 'A-', score: 86, color: '#7C3AED'},
+      {id: '4', name: 'Computer', grade: 'B+', score: 82, color: '#0D9488'},
+      {id: '5', name: 'Islamic Studies', grade: 'A', score: 88, color: '#EA580C'},
+    ],
+  },
+  [Strings.term2]: {
+    overall: 'A-',
+    hint: 'Keep it up!',
+    subjects: [
+      {id: '1', name: 'Mathematics', grade: 'A', score: 91, color: '#16A34A'},
+      {id: '2', name: 'Science', grade: 'A-', score: 87, color: '#2563EB'},
+      {id: '3', name: 'English', grade: 'A-', score: 86, color: '#7C3AED'},
+      {id: '4', name: 'Computer', grade: 'B+', score: 81, color: '#0D9488'},
+      {id: '5', name: 'Islamic Studies', grade: 'B+', score: 80, color: '#EA580C'},
+    ],
+  },
+  [Strings.term3]: {
+    overall: 'A',
+    hint: 'Great Progress!',
+    subjects: [
+      {id: '1', name: 'Mathematics', grade: 'A+', score: 94, color: '#16A34A'},
+      {id: '2', name: 'Science', grade: 'A+', score: 93, color: '#2563EB'},
+      {id: '3', name: 'English', grade: 'A', score: 89, color: '#7C3AED'},
+      {id: '4', name: 'Computer', grade: 'A', score: 90, color: '#0D9488'},
+      {id: '5', name: 'Islamic Studies', grade: 'A-', score: 85, color: '#EA580C'},
+    ],
+  },
+};

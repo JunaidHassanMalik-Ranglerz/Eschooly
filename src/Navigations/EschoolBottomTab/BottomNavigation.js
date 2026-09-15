@@ -1,5 +1,5 @@
 import React from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AFN from '../../Screens/AppFlow/AFN';
@@ -38,7 +38,7 @@ const TAB_LABELS = {
   Exam: Strings.exam,
   Teachers: Strings.teachers,
   Profile: Strings.profile,
-  Menu: Strings.menu,
+  Menu: Strings.academics,
   Chat: Strings.chat,
 };
 
@@ -47,17 +47,15 @@ const TabBarItem = ({ name, isFocused, onPress }) => {
   const label = TAB_LABELS[name];
 
   return (
-    <TouchableOpacity
-      activeOpacity={0.8}
+    <Pressable
       onPress={onPress}
-      style={styles.tabItem}
-    >
+      android_ripple={{color: 'transparent', foreground: false}}
+      style={styles.tabItem}>
       <View
         style={[
           styles.iconSlot,
           isFocused ? styles.iconSlotActive : styles.iconSlotInactive,
-        ]}
-      >
+        ]}>
         <Image
           source={icon}
           style={[
@@ -74,7 +72,7 @@ const TabBarItem = ({ name, isFocused, onPress }) => {
       >
         {label}
       </Text>
-    </TouchableOpacity>
+    </Pressable>
   );
 };
 
@@ -152,8 +150,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
     borderTopWidth: wp(0.25),
     borderTopColor: Colors.border,
-    paddingTop: hp(1.8),
-    minHeight: hp(7.5),
+    paddingTop: hp(0.6),
+    minHeight: hp(6.2),
   },
   tabItem: {
     flex: 1,
@@ -180,8 +178,8 @@ const styles = StyleSheet.create({
     borderColor: Colors.primary,
     borderRadius: CIRCLE_RADIUS,
     backgroundColor: Colors.white,
-    marginTop: -wp(4),
-    marginBottom: hp(0.4),
+    marginTop: -wp(2.2),
+    marginBottom: hp(0.25),
   },
   label: {
     fontSize: Fontsize.tab,
@@ -194,13 +192,17 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.bold,
     color: Colors.primary,
   },
+  scene: {
+    backgroundColor: Colors.parentBg,
+  },
 });
 
 const BottomNavigation = () => (
   <BOTTOM_STACK.Navigator
     initialRouteName="Home"
     tabBar={props => <EschoolTabBar {...props} />}
-    screenOptions={{ headerShown: false }}
+    sceneContainerStyle={styles.scene}
+    screenOptions={{headerShown: false}}
   >
     <BOTTOM_STACK.Screen name="Home" component={AFN} />
     <BOTTOM_STACK.Screen name="Attends" component={Attendance} />

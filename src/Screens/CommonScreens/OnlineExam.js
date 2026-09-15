@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {Alert, ScrollView, StyleSheet, Text, View} from 'react-native';
+import {ScrollView, StyleSheet, Text, View} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import MainHeaderComponent from '../../Component/MainHeaderComponent';
@@ -67,9 +67,7 @@ const OnlineExam = () => {
               <UpcomingExamCard
                 key={item.id}
                 item={item}
-                onPress={() =>
-                  Alert.alert(item.title, Strings.examDetailsSoon)
-                }
+                onPress={() => {}}
               />
             ))}
           </>
@@ -85,9 +83,7 @@ const OnlineExam = () => {
               <CompletedExamCard
                 key={item.id}
                 item={item}
-                onPress={() =>
-                  Alert.alert(item.title, Strings.examResultSoon)
-                }
+                onPress={() => {}}
               />
             ))}
           </>

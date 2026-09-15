@@ -40,7 +40,7 @@ const styles = StyleSheet.create({
     marginLeft: wp(2),
     color: Colors.black,
     fontFamily: Fonts.regular,
-    fontSize: Fontsize.small,
+    fontSize: Fontsize.xs1,
     padding: 0,
   },
 });

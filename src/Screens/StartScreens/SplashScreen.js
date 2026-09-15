@@ -1,54 +1,39 @@
-import React, { useEffect } from 'react';
-import { StyleSheet, Text, StatusBar, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
-import { MyStyling } from '../../Constants/MyStyling';
-import { Colors } from '../../Constants/Colors';
-import { Fonts } from '../../Constants/Fonts';
-import { Fontsize } from '../../Constants/Fontsize';
-import { Strings } from '../../Constants/Strings';
-import { wp } from '../../Constants/Responsive';
+import React, {useEffect} from 'react';
+import {StatusBar, StyleSheet, View} from 'react-native';
+import {useNavigation} from '@react-navigation/native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import PortalBrand from '../../Component/PortalBrand';
+import {Colors} from '../../Constants/Colors';
 
 const SplashScreen = () => {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     const timer = setTimeout(() => {
       navigation.replace('Role');
-    }, 6000);
+    }, 1500);
 
     return () => clearTimeout(timer);
   }, [navigation]);
 
   return (
-    <SafeAreaView style={MyStyling.container1} edges={[]}>
+    <View style={styles.container}>
       <StatusBar
-        backgroundColor={Colors.BlueBackground}
+        translucent
+        backgroundColor={Colors.transparent}
         barStyle="light-content"
       />
-      <View style={styles.center}>
-        <Text style={styles.logo} numberOfLines={1} ellipsizeMode="tail">
-          {Strings.eschool}
-        </Text>
-      </View>
-    </SafeAreaView>
+      <PortalBrand showWave topInset={insets.top} />
+    </View>
   );
 };
 
 export default SplashScreen;
 
 const styles = StyleSheet.create({
-  center: {
+  container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  logo: {
-    width: wp(69.9),
-    color: Colors.white,
-    fontFamily: Fonts.regular,
-    fontSize: Fontsize.xxxl,
-    letterSpacing: 0.5,
-    textAlign: 'center',
+    backgroundColor: Colors.splashStart,
   },
 });

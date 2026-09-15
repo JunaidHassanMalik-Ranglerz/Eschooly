@@ -45,4 +45,5 @@ export const Images = {
   videoIcon: require('./VideoIcon.png'),
   send: require('./send.png'),
   pin: require('./pinIcon.png'),
+  transportMap: require('./TransportMap.png'),
 };

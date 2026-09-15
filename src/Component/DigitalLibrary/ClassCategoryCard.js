@@ -54,12 +54,12 @@ const styles = StyleSheet.create({
   title: {
     color: Colors.black,
     fontFamily: Fonts.semibold,
-    fontSize: Fontsize.normal,
+    fontSize: Fontsize.xs5,
     marginBottom: hp(0.3),
   },
   subtitle: {
     color: Colors.grayText,
     fontFamily: Fonts.regular,
-    fontSize: Fontsize.small,
+    fontSize: Fontsize.xs1,
   },
 });

@@ -1,9 +1,9 @@
 import React, {useCallback, useState} from 'react';
 import {
   BackHandler,
-  Image,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -11,10 +11,12 @@ import {
   View,
 } from 'react-native';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import CustomTextInput from '../../Component/CustomTextInput';
 import Btn from '../../Component/btn';
 import {Images} from '../../Assets';
+import PortalBrand from '../../Component/PortalBrand';
 import {Colors} from '../../Constants/Colors';
 import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
@@ -24,8 +26,22 @@ import {useRole} from '../../context/RoleContext';
 
 const Register = () => {
   const navigation = useNavigation();
-  const {clearRole} = useRole();
+  const insets = useSafeAreaInsets();
+  const {clearRole, isParent} = useRole();
   const [cnic, setCnic] = useState('');
+  const [studentId, setStudentId] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const portalLabel = isParent
+    ? Strings.parentPortalLabel
+    : Strings.studentPortalLabel;
+
+  const goToHome = () => {
+    navigation.getParent()?.reset({
+      index: 0,
+      routes: [{name: 'BottomTab'}],
+    });
+  };
 
   const goToRole = useCallback(() => {
     clearRole();
@@ -52,7 +68,8 @@ const Register = () => {
   return (
     <View style={styles.container}>
       <StatusBar
-        backgroundColor={Colors.primary}
+        translucent
+        backgroundColor={Colors.transparent}
         barStyle="light-content"
       />
 
@@ -62,28 +79,67 @@ const Register = () => {
         <ScrollView
           contentContainerStyle={styles.scroll}
           keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}>
-          <Image source={Images.parentPortal} style={styles.headerImage} />
+          showsVerticalScrollIndicator={false}
+          contentInsetAdjustmentBehavior="never">
+          <View style={styles.headerImage}>
+            <PortalBrand
+              compact
+              showWave
+              showPortalLabel
+              portalLabel={portalLabel}
+              topInset={insets.top}
+            />
+          </View>
 
           <View style={styles.content}>
             <Text style={styles.welcome} numberOfLines={1}>{Strings.welcomeBack}</Text>
-            <Text style={styles.heading} numberOfLines={1}>{Strings.signInTitle}</Text>
-            <Text style={styles.description} numberOfLines={2}>{Strings.signInDesc}</Text>
+            <Text style={styles.heading} numberOfLines={1}>
+              {isParent ? Strings.signInTitle : Strings.signInAccount}
+            </Text>
+            <Text style={styles.description} numberOfLines={2}>
+              {isParent ? Strings.signInDesc : Strings.studentSignInDesc}
+            </Text>
 
-            <CustomTextInput
-              label={Strings.cnic}
-              labelStyle={styles.cnicLabel}
-              icon={Images.idCard}
-              rightIcon={Images.tick}
-              placeholder={Strings.cnicPlaceholder}
-              placeholderStyle={styles.cnicPlaceholder}
-              inputStyle={styles.cnicInput}
-              value={cnic}
-              onChangeText={setCnic}
-              keyboardType="number-pad"
-              helper={Strings.cnicHelper}
-              helperStyle={styles.cnicHelper}
-            />
+            {isParent ? (
+              <CustomTextInput
+                label={Strings.cnic}
+                labelStyle={styles.cnicLabel}
+                icon={Images.idCard}
+                rightIcon={Images.tick}
+                placeholder={Strings.cnicPlaceholder}
+                placeholderStyle={styles.cnicPlaceholder}
+                inputStyle={styles.cnicInput}
+                value={cnic}
+                onChangeText={setCnic}
+                keyboardType="number-pad"
+                helper={Strings.cnicHelper}
+                helperStyle={styles.cnicHelper}
+              />
+            ) : (
+              <View>
+                <CustomTextInput
+                  vectorIcon="person-outline"
+                  placeholder={Strings.studentIdPlaceholder}
+                  placeholderStyle={styles.cnicPlaceholder}
+                  inputStyle={styles.cnicInput}
+                  value={studentId}
+                  onChangeText={setStudentId}
+                  autoCapitalize="none"
+                />
+                <CustomTextInput
+                  vectorIcon="lock-closed-outline"
+                  placeholder={Strings.passwordPlaceholder}
+                  placeholderStyle={styles.cnicPlaceholder}
+                  inputStyle={styles.cnicInput}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  rightVectorIcon={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                  onRightPress={() => setShowPassword(prev => !prev)}
+                />
+              </View>
+            )}
 
             <Btn
               title={Strings.signIn}
@@ -91,13 +147,33 @@ const Register = () => {
               iconRight
               iconSize={wp(4.5)}
               style={styles.signInBtn}
-              onPress={() =>
-                navigation.getParent()?.reset({
-                  index: 0,
-                  routes: [{name: 'BottomTab'}],
-                })
-              }
+              onPress={goToHome}
             />
+
+            {!isParent ? (
+              <View style={styles.studentExtras}>
+                <Pressable
+                  onPress={() => {}}
+                  hitSlop={8}>
+                  <Text style={styles.forgotText}>{Strings.forgotPassword}</Text>
+                </Pressable>
+
+                <View style={styles.orRow}>
+                  <View style={styles.orLine} />
+                  <Text style={styles.orText}>{Strings.orContinueAs}</Text>
+                  <View style={styles.orLine} />
+                </View>
+
+                <Btn
+                  variant="outline"
+                  showIcon={false}
+                  title={Strings.continueAsGuest}
+                  style={styles.guestBtn}
+                  textStyle={styles.guestBtnText}
+                  onPress={goToHome}
+                />
+              </View>
+            ) : null}
 
             <View style={styles.footer}>
               <View style={styles.footerRow}>
@@ -149,20 +225,21 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
   },
   headerImage: {
-    width: wp(100),
-    height: hp(33.99),
-    resizeMode: 'cover',
-    marginBottom: hp(2),
+    backgroundColor: Colors.white,
+    marginBottom: -1,
   },
   flex: {
     flex: 1,
   },
   scroll: {
     flexGrow: 1,
-    paddingBottom: hp(4),
   },
   content: {
     paddingHorizontal: wp(6),
+    paddingTop: hp(2),
+    paddingBottom: hp(4),
+    backgroundColor: Colors.white,
+    flexGrow: 1,
   },
   welcome: {
     color: Colors.mutedText,
@@ -204,12 +281,47 @@ const styles = StyleSheet.create({
     color: Colors.mutedText,
     fontFamily: Fonts.regular,
     fontSize: Fontsize.xs1,
-    fontFamily:Fonts.regular,
   },
   signInBtn: {
     paddingVertical: hp(2),
     marginTop: hp(3),
     elevation: 4,
+  },
+  studentExtras: {
+    marginTop: hp(2.2),
+    alignItems: 'center',
+  },
+  forgotText: {
+    color: Colors.primary,
+    fontFamily: Fonts.medium,
+    fontSize: Fontsize.xs1,
+  },
+  orRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: hp(2.4),
+    marginBottom: hp(0.6),
+    width: '100%',
+  },
+  orLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: Colors.border,
+  },
+  orText: {
+    color: Colors.mutedText,
+    fontFamily: Fonts.regular,
+    fontSize: Fontsize.xs0,
+    marginHorizontal: wp(3),
+  },
+  guestBtn: {
+    width: '100%',
+    marginTop: hp(0.6),
+    borderColor: Colors.primary,
+  },
+  guestBtnText: {
+    color: Colors.primary,
+    fontFamily: Fonts.medium,
   },
   footer: {
     marginTop: 'auto',

@@ -15,7 +15,7 @@ const PdfViewer = () => {
 
   return (
     <SafeAreaView style={MyStyling.container2} edges={['top']}>
-      <MainHeaderComponent title={title} />
+      <MainHeaderComponent title={title} hideNotification />
 
       <View style={styles.viewer}>
         {loading ? (

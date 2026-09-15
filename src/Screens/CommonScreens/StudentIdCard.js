@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {Alert, ScrollView, StyleSheet} from 'react-native';
+import {ScrollView, StyleSheet} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import MainHeaderComponent from '../../Component/MainHeaderComponent';
 import StudentIdSummary from '../../Component/StudentIdCard/StudentIdSummary';
@@ -22,18 +22,13 @@ const StudentIdCard = () => {
   const handleDownload = async () => {
     try {
       await downloadIdCardPdf(data);
-      Alert.alert(Strings.downloadPdf, Strings.idCardDownloadSuccess);
-    } catch (error) {
-      Alert.alert(Strings.downloadPdf, Strings.idCardDownloadFailed);
-    }
+    } catch (error) {}
   };
 
   const handlePrint = async () => {
     try {
       await printIdCard(data);
-    } catch (error) {
-      Alert.alert(Strings.printIdCard, Strings.idCardPrintFailed);
-    }
+    } catch (error) {}
   };
 
   return (

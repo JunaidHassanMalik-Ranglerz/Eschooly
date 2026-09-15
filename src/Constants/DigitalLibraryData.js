@@ -66,6 +66,7 @@ export const LIBRARY_CLASS_CATEGORIES = [
     id: '1',
     title: 'Class 10A',
     subtitle: '24 resources - Current class',
+    resourceCount: 24,
     isCurrent: true,
   },
 ];

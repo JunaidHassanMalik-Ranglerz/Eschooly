@@ -23,7 +23,8 @@ const ROLE_OPTIONS = [
     id: ROLES.PARENT,
     title: Strings.parentRole,
     description: Strings.parentRoleDesc,
-    icon: Images.parentPortal,
+    ionIcon: 'people',
+    iconColor: Colors.primary,
     iconBg: '#E8F0FF',
   },
   {
@@ -40,16 +41,16 @@ const RoleCard = ({item, onPress}) => (
     style={({pressed}) => [styles.card, pressed && styles.cardPressed]}
     onPress={onPress}>
     <View style={[styles.iconWrap, {backgroundColor: item.iconBg}]}>
-      <Image source={item.icon} style={styles.icon} resizeMode="contain" />
+      {item.ionIcon ? (
+        <Icon name={item.ionIcon} size={wp(7.5)} color={item.iconColor} />
+      ) : (
+        <Image source={item.icon} style={styles.icon} resizeMode="contain" />
+      )}
     </View>
 
     <View style={styles.cardContent}>
-      <Text style={styles.cardTitle} numberOfLines={1}>
-        {item.title}
-      </Text>
-      <Text style={styles.cardDesc} numberOfLines={2}>
-        {item.description}
-      </Text>
+      <Text style={styles.cardTitle}>{item.title}</Text>
+      <Text style={styles.cardDesc}>{item.description}</Text>
     </View>
 
     <View style={styles.arrowBtn}>
@@ -75,18 +76,10 @@ const Role = () => {
       />
 
       <View style={styles.header}>
-        <Text style={styles.brand} numberOfLines={1}>
-          {Strings.eschool}
-        </Text>
-        <Text style={styles.welcome} numberOfLines={1}>
-          {Strings.welcome}
-        </Text>
-        <Text style={styles.heading} numberOfLines={2}>
-          {Strings.selectRole}
-        </Text>
-        <Text style={styles.subtitle} numberOfLines={2}>
-          {Strings.roleSubtitle}
-        </Text>
+        <Text style={styles.brand}>{Strings.eschool}</Text>
+        <Text style={styles.welcome}>{Strings.welcome}</Text>
+        <Text style={styles.heading}>{Strings.selectRole}</Text>
+        <Text style={styles.subtitle}>{Strings.roleSubtitle}</Text>
       </View>
 
       <View style={styles.cards}>
@@ -105,9 +98,7 @@ const Role = () => {
           size={wp(4)}
           color={Colors.whiteMuted75}
         />
-        <Text style={styles.footerText} numberOfLines={1}>
-          {Strings.dataSafe}
-        </Text>
+        <Text style={styles.footerText}>{Strings.dataSafe}</Text>
       </View>
     </SafeAreaView>
   );
@@ -145,13 +136,13 @@ const styles = StyleSheet.create({
     fontSize: Fontsize.lg,
     lineHeight: Fontsize.xl,
     marginBottom: hp(1),
+    flexShrink: 1,
   },
   subtitle: {
     color: Colors.whiteMuted85,
     fontFamily: Fonts.regular,
     fontSize: Fontsize.xs3,
     lineHeight: Fontsize.m,
-    maxWidth: wp(80),
   },
   cards: {
     flex: 1,
@@ -224,8 +215,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(6),
   },
   footerText: {
+    flexShrink: 1,
     color: Colors.whiteMuted75,
     fontFamily: Fonts.regular,
     fontSize: Fontsize.xs1,
+    textAlign: 'center',
   },
 });

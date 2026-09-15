@@ -90,19 +90,19 @@ const styles = StyleSheet.create({
   newText: {
     color: Colors.success,
     fontFamily: Fonts.semibold,
-    fontSize: Fontsize.xxs0,
+    fontSize: Fontsize.xxm,
   },
   title: {
     color: Colors.black,
-    fontFamily: Fonts.semibold,
-    fontSize: Fontsize.small,
+    fontFamily: Fonts.bold,
+    fontSize: Fontsize.xs5,
     marginBottom: hp(0.4),
     minHeight: hp(4.5),
   },
   subtitle: {
     color: Colors.grayText,
     fontFamily: Fonts.regular,
-    fontSize: Fontsize.xs2,
+    fontSize: Fontsize.xs0,
     marginBottom: hp(1),
   },
   footer: {
@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
   },
   fileInfo: {
     color: Colors.grayText,
-    fontFamily: Fonts.regular,
+    fontFamily: Fonts.medium,
     fontSize: Fontsize.xs1,
     flex: 1,
   },

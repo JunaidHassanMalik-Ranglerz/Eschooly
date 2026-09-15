@@ -1,6 +1,5 @@
 import React, {useState} from 'react';
 import {
-  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -40,7 +39,6 @@ const DigitalLibrary = () => {
 
   const handleOpen = item => {
     if (!item.pdfUrl) {
-      Alert.alert(item.title, Strings.libraryFileComingSoon);
       return;
     }
     navigation.navigate('PdfViewer', {
@@ -51,7 +49,6 @@ const DigitalLibrary = () => {
 
   const handleDownload = async item => {
     if (!item.pdfUrl) {
-      Alert.alert(item.title, Strings.libraryFileComingSoon);
       return;
     }
 
@@ -61,10 +58,7 @@ const DigitalLibrary = () => {
         fileName: item.title,
         title: item.title,
       });
-      Alert.alert(item.title, Strings.libraryDownloadSuccess);
-    } catch (error) {
-      Alert.alert(item.title, Strings.libraryDownloadFailed);
-    }
+    } catch (error) {}
   };
 
   return (
@@ -122,9 +116,7 @@ const DigitalLibrary = () => {
           <ClassCategoryCard
             key={item.id}
             item={item}
-            onPress={() =>
-              Alert.alert(item.title, Strings.libraryClassResources)
-            }
+            onPress={() => {}}
           />
         ))}
       </ScrollView>
@@ -152,12 +144,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: Colors.black,
     fontFamily: Fonts.bold,
-    fontSize: Fontsize.normal,
+    fontSize: Fontsize.sm,
   },
   seeAll: {
     color: Colors.linkBlue,
     fontFamily: Fonts.medium,
-    fontSize: Fontsize.small,
+    fontSize: Fontsize.xs1,
   },
   grid: {
     flexDirection: 'row',
@@ -171,7 +163,7 @@ const styles = StyleSheet.create({
   emptyText: {
     color: Colors.grayText,
     fontFamily: Fonts.regular,
-    fontSize: Fontsize.small,
+    fontSize: Fontsize.xs1,
     textAlign: 'center',
     marginBottom: hp(2),
   },

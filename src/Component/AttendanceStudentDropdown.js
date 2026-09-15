@@ -1,6 +1,5 @@
-import React from 'react';
-import {StyleSheet, Text, View} from 'react-native';
-import {Dropdown} from 'react-native-element-dropdown';
+import React, {useState} from 'react';
+import {Pressable, StyleSheet, Text, View} from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {Colors} from '../Constants/Colors';
 import {Fonts} from '../Constants/Fonts';
@@ -9,57 +8,72 @@ import {Strings} from '../Constants/Strings';
 import {wp, hp} from '../Constants/Responsive';
 
 const AttendanceStudentDropdown = props => {
+  const [open, setOpen] = useState(false);
+  const readOnly = !!props?.readOnly;
+  const students = props?.students || [];
+
+  const handleSelect = item => {
+    props?.onSelect?.(item);
+    setOpen(false);
+  };
+
   return (
-    <View style={styles.card}>
-      <View style={styles.avatar}>
-        <Text style={styles.avatarText} numberOfLines={1}>
-          {props?.student?.initials}
-        </Text>
-      </View>
+    <View style={styles.wrap}>
+      <Pressable
+        style={styles.card}
+        onPress={() => {
+          if (!readOnly) {
+            setOpen(prev => !prev);
+          }
+        }}>
+        <View style={styles.avatar}>
+          <Text style={styles.avatarText} numberOfLines={1}>
+            {props?.student?.initials}
+          </Text>
+        </View>
 
-      <View style={styles.info}>
-        <Text style={styles.studentLabel} numberOfLines={1}>
-          {props?.label || Strings.student}
-        </Text>
-
-        {props?.readOnly ? (
-          <Text style={styles.name}>{props?.student?.label}</Text>
-        ) : (
-          <Dropdown
-            data={props?.students}
-            labelField="label"
-            valueField="value"
-            value={props?.selectedId}
-            onChange={item => props?.onSelect?.(item)}
-            style={styles.dropdown}
-            containerStyle={styles.menuBox}
-            selectedTextStyle={styles.name}
-            itemContainerStyle={styles.itemContainer}
-            maxHeight={hp(15)}
-            dropdownPosition="bottom"
-            inverted={false}
-            showsVerticalScrollIndicator={false}
-            flatListProps={{
-              nestedScrollEnabled: true,
-              scrollEnabled: true,
-            }}
-            renderItem={item => (
-              <View style={styles.itemRow}>
-                <Text style={styles.itemName}>{item.label}</Text>
-              </View>
-            )}
-            renderRightIcon={() => (
+        <View style={styles.info}>
+          <Text style={styles.studentLabel} numberOfLines={1}>
+            {props?.label || Strings.student}
+          </Text>
+          <View style={styles.nameRow}>
+            <Text style={styles.name} numberOfLines={1}>
+              {props?.student?.label}
+            </Text>
+            {!readOnly ? (
               <View style={styles.chevronBtn}>
-                <Icon name="chevron-down" size={wp(4)} color={Colors.black} />
+                <Icon
+                  name={open ? 'chevron-up' : 'chevron-down'}
+                  size={wp(4)}
+                  color={Colors.black}
+                />
               </View>
-            )}
-          />
-        )}
+            ) : null}
+          </View>
+          <Text style={styles.classText} numberOfLines={1}>
+            {props?.student?.classInfo}
+          </Text>
+        </View>
+      </Pressable>
 
-        <Text style={styles.classText} numberOfLines={1}>
-          {props?.student?.classInfo}
-        </Text>
-      </View>
+      {open && !readOnly ? (
+        <View style={styles.menuBox}>
+          {students.map(item => {
+            const selected = item.value === props?.selectedId;
+            return (
+              <Pressable
+                key={item.value}
+                style={styles.itemRow}
+                onPress={() => handleSelect(item)}>
+                <Text
+                  style={[styles.itemName, selected && styles.itemNameActive]}>
+                  {item.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      ) : null}
     </View>
   );
 };
@@ -67,6 +81,12 @@ const AttendanceStudentDropdown = props => {
 export default AttendanceStudentDropdown;
 
 const styles = StyleSheet.create({
+  wrap: {
+    marginBottom: hp(2),
+    zIndex: 20,
+    elevation: 20,
+    position: 'relative',
+  },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -75,7 +95,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
     padding: wp(4),
-    marginBottom: hp(2),
   },
   avatar: {
     width: wp(12),
@@ -89,7 +108,7 @@ const styles = StyleSheet.create({
   avatarText: {
     color: Colors.white,
     fontFamily: Fonts.semibold,
-    fontSize: Fontsize.sm,
+    fontSize: Fontsize.xs1,
   },
   info: {
     flex: 1,
@@ -101,26 +120,37 @@ const styles = StyleSheet.create({
     marginBottom: hp(0.2),
     width: wp(25),
   },
-  dropdown: {
-    padding: 0,
-    minHeight: hp(3),
-    flex: 1,
-  },
-  menuBox: {
-    borderRadius: wp(3),
-    borderWidth: 1,
-    borderColor: Colors.border,
-    marginTop: hp(0.5),
-    maxHeight: hp(15),
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   name: {
+    flex: 1,
     color: Colors.black,
     fontFamily: Fonts.bold,
     fontSize: wp(3.73),
-    flexShrink: 1,
+    marginRight: wp(2),
+  },
+  menuBox: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    marginTop: hp(0.8),
+    borderRadius: wp(3),
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.white,
+    overflow: 'hidden',
+    zIndex: 30,
+    elevation: 16,
+    shadowColor: Colors.black,
+    shadowOffset: {width: 0, height: 6},
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
   },
   itemRow: {
-    height: hp(5),
+    minHeight: hp(5),
     paddingHorizontal: wp(4),
     justifyContent: 'center',
   },
@@ -129,8 +159,9 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.regular,
     fontSize: Fontsize.normal,
   },
-  itemContainer: {
-    padding: 0,
+  itemNameActive: {
+    color: Colors.primary,
+    fontFamily: Fonts.semibold,
   },
   classText: {
     color: Colors.grayText,

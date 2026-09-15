@@ -1,5 +1,5 @@
 import React from 'react';
-import {Alert, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {Colors} from '../../Constants/Colors';
 import {Strings} from '../../Constants/Strings';
@@ -50,11 +50,7 @@ const UpcomingClassCard = props => {
               <Icon name="link-outline" size={wp(3.5)} color={Colors.grayText} />
               <Text style={styles.zoomLink} numberOfLines={1}>{item?.zoomLink}</Text>
             </View>
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={() =>
-                Alert.alert(Strings.setReminder, Strings.setReminderSoon)
-              }>
+            <TouchableOpacity activeOpacity={0.8} onPress={() => {}}>
               <Text style={styles.reminderText} numberOfLines={1}>{Strings.setReminder}</Text>
             </TouchableOpacity>
           </View>

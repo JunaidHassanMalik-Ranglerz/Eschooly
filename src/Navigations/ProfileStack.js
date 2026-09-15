@@ -1,6 +1,5 @@
 import React from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import Setting from '../Screens/CommonScreens/Setting';
 import Syllabus from '../Screens/CommonScreens/Syllabus';
 import Dues from '../Screens/CommonScreens/Dues';
 import Profile from '../Screens/CommonScreens/Profile';
@@ -19,7 +18,6 @@ const ProfileStack = () => {
       <Stack.Screen name="Dues" component={Dues} />
       <Stack.Screen name="Profile" component={Profile} />
       <Stack.Screen name="MyProfile" component={MyProfile} />
-      <Stack.Screen name="Setting" component={Setting} />
     </Stack.Navigator>
   );
 };

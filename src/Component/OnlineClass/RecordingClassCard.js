@@ -1,5 +1,5 @@
 import React from 'react';
-import {Alert, Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {Images} from '../../Assets';
 import {Colors} from '../../Constants/Colors';
@@ -39,7 +39,7 @@ const RecordingClassCard = props => {
         <TouchableOpacity
           style={styles.actionBtn}
           activeOpacity={0.8}
-          onPress={() => Alert.alert(Strings.watch, Strings.watchSoon)}>
+          onPress={() => {}}>
           <Icon name="play-outline" size={wp(3.5)} color={Colors.black} />
           <Text style={styles.actionText} numberOfLines={1}>
             {Strings.watch}
@@ -49,7 +49,7 @@ const RecordingClassCard = props => {
         <TouchableOpacity
           style={styles.actionBtn}
           activeOpacity={0.8}
-          onPress={() => Alert.alert(Strings.download, Strings.downloadSoon)}>
+          onPress={() => {}}>
           <Icon name="download-outline" size={wp(3.5)} color={Colors.black} />
           <Text style={styles.actionText} numberOfLines={1}>
             {Strings.download}

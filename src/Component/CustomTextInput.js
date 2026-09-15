@@ -1,5 +1,6 @@
 import React from 'react';
-import {Image, StyleSheet, Text, TextInput, View} from 'react-native';
+import {Image, StyleSheet, Text, TextInput, TouchableOpacity, View} from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
 import {Colors} from '../Constants/Colors';
 import {Fonts} from '../Constants/Fonts';
 import {Fontsize} from '../Constants/Fontsize';
@@ -13,7 +14,19 @@ const CustomTextInput = props => {
       ) : null}
 
       <View style={[styles.inputBox, props?.inputBoxStyle]}>
-        {props?.icon ? (
+        {props?.vectorIcon ? (
+          <View
+            style={[
+              styles.iconWrap,
+              props?.iconBg ? {backgroundColor: props.iconBg} : null,
+            ]}>
+            <Icon
+              name={props.vectorIcon}
+              size={wp(5)}
+              color={Colors.primary}
+            />
+          </View>
+        ) : props?.icon ? (
           <View
             style={[
               styles.iconWrap,
@@ -32,14 +45,29 @@ const CustomTextInput = props => {
           value={props?.value}
           onChangeText={props?.onChangeText}
           keyboardType={props?.keyboardType}
+          secureTextEntry={!!props?.secureTextEntry}
+          autoCapitalize={props?.autoCapitalize}
         />
 
-        {props?.rightIcon ? (
-          <Image
-            source={props.rightIcon}
-            style={[styles.rightIcon, props?.rightIconStyle]}
-            resizeMode="contain"
-          />
+        {props?.rightIcon || props?.rightVectorIcon ? (
+          <TouchableOpacity
+            activeOpacity={props?.onRightPress ? 0.8 : 1}
+            onPress={props?.onRightPress}
+            disabled={!props?.onRightPress}>
+            {props?.rightVectorIcon ? (
+              <Icon
+                name={props.rightVectorIcon}
+                size={wp(5)}
+                color={Colors.grayText}
+              />
+            ) : (
+              <Image
+                source={props.rightIcon}
+                style={[styles.rightIcon, props?.rightIconStyle]}
+                resizeMode="contain"
+              />
+            )}
+          </TouchableOpacity>
         ) : null}
       </View>
 

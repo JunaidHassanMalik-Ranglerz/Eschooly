@@ -1,46 +1,45 @@
 import React from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {useNavigation} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { Images } from '../Assets';
-import { hp, wp } from '../Constants/Responsive';
-import { Colors } from '../Constants/Colors';
-import { Fontsize } from '../Constants/Fontsize';
-import { Fonts } from '../Constants/Fonts';
-import { navigateToNotification } from '../Navigations/navigationHelpers';
+import NotificationBell from './NotificationBell';
+import {hp, wp} from '../Constants/Responsive';
+import {Colors} from '../Constants/Colors';
+import {Fontsize} from '../Constants/Fontsize';
+import {Fonts} from '../Constants/Fonts';
 
 const MainHeaderComponent = props => {
   const navigation = useNavigation();
-  const hasNotification = (props.notificationCount || 0) > 0;
-  const showNotification = props.notificationCount != null;
+  const showRightIcon = !!props?.rightIcon;
+  const showNotification = !showRightIcon && !props?.hideNotification;
+  const showBack = !props?.hideBack;
 
   return (
     <View style={[styles.header, props.style]}>
-      <TouchableOpacity
-        style={styles.backBtn}
-        activeOpacity={0.8}
-        onPress={() => navigation.goBack()}
-      >
-        <Icon name="chevron-back" size={wp(5.5)} color={Colors.black} />
-      </TouchableOpacity>
+      {showBack ? (
+        <TouchableOpacity
+          style={styles.backBtn}
+          activeOpacity={0.8}
+          onPress={props?.onBackPress || (() => navigation.goBack())}>
+          <Icon name="chevron-back" size={wp(5.5)} color={Colors.black} />
+        </TouchableOpacity>
+      ) : (
+        <View style={styles.placeholder} />
+      )}
 
-      <Text style={styles.title} numberOfLines={1}>
+      <Text style={styles.title} numberOfLines={2}>
         {props?.title}
       </Text>
 
-      {showNotification ? (
+      {showRightIcon ? (
         <TouchableOpacity
           style={styles.bellWrap}
           activeOpacity={0.8}
-          onPress={() => navigateToNotification(navigation)}
-        >
-          <Image
-            source={Images.notification}
-            style={styles.notificationIcon}
-            resizeMode="contain"
-          />
-          {hasNotification && <View style={styles.badge} />}
+          onPress={props?.onRightPress}>
+          <Icon name={props.rightIcon} size={wp(5.5)} color={Colors.black} />
         </TouchableOpacity>
+      ) : showNotification ? (
+        <NotificationBell count={props.notificationCount} />
       ) : (
         <View style={styles.placeholder} />
       )}
@@ -69,29 +68,17 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'center',
     color: Colors.black,
-    fontFamily: Fonts.regular,
-    fontSize: Fontsize.mm,
-    maxWidth: wp(40),
+    fontFamily: Fonts.semibold,
+    fontSize: Fontsize.sm,
+    paddingHorizontal: wp(2),
   },
   bellWrap: {
-    position: 'relative',
-    padding: wp(1),
-  },
-  notificationIcon: {
-    width: wp(6),
-    height: wp(6),
-    tintColor: Colors.primary,
-  },
-  badge: {
-    position: 'absolute',
-    top: wp(1.2),
-    right: wp(1.2),
-    width: wp(2),
-    height: wp(2),
-    borderRadius: wp(1),
-    backgroundColor: Colors.red,
-    borderWidth: 1,
-    borderColor: Colors.white,
+    width: wp(9),
+    height: wp(9),
+    borderRadius: wp(4.5),
+    backgroundColor: Colors.cardBg,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   placeholder: {
     width: wp(9),

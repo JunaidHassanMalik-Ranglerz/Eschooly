@@ -8,6 +8,7 @@ import AttendanceStatCard from '../../Component/AttendanceStatCard';
 import AttendanceRateCard from '../../Component/AttendanceRateCard';
 import AttendanceDateDropdown from '../../Component/AttendanceDateDropdown';
 import AttendanceHistoryItem from '../../Component/AttendanceHistoryItem';
+import SegmentTabs from '../../Component/SegmentTabs';
 import Btn from '../../Component/btn';
 import {Images} from '../../Assets';
 import {Colors} from '../../Constants/Colors';
@@ -23,11 +24,30 @@ import {wp, hp} from '../../Constants/Responsive';
 import {useRoleData} from '../../hooks/useRoleData';
 
 const Attendance = () => {
-  const {studentLabel, isParent, selectedChildId, setSelectedChildId} =
-    useRoleData();
+  const {
+    studentLabel,
+    isParent,
+    selectedChildId,
+    setSelectedChildId,
+    activeStudent,
+    childList,
+    attendanceHistory,
+  } = useRoleData();
   const [showHistory, setShowHistory] = useState(false);
   const [dateRangeId, setDateRangeId] = useState('1');
-  const [student, setStudent] = useState(ATTENDANCE_STUDENTS[0]);
+  const [viewMode, setViewMode] = useState(Strings.monthly);
+  const [studentRecord, setStudentRecord] = useState(ATTENDANCE_STUDENTS[0]);
+
+  const student = isParent ? activeStudent : studentRecord;
+  const history = isParent ? attendanceHistory : ATTENDANCE_HISTORY;
+  const students = isParent ? childList : ATTENDANCE_STUDENTS;
+  const showDaily = isParent && viewMode === Strings.daily;
+  const todayStatusStyle =
+    student.todayStatus === 'Absent'
+      ? {bg: Colors.overdueBg, text: Colors.red}
+      : student.todayStatus === 'Late'
+        ? {bg: Colors.pendingBg, text: Colors.warning}
+        : {bg: Colors.successBg, text: Colors.success};
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -39,11 +59,13 @@ const Attendance = () => {
       <View style={styles.dropdownWrap}>
         <AttendanceStudentDropdown
           student={student}
-          students={ATTENDANCE_STUDENTS}
+          students={students}
           selectedId={selectedChildId}
           onSelect={item => {
             setSelectedChildId(item.value);
-            setStudent(item);
+            if (!isParent) {
+              setStudentRecord(item);
+            }
           }}
           readOnly={!isParent}
           label={studentLabel}
@@ -51,7 +73,7 @@ const Attendance = () => {
       </View>
 
       <FlatList
-        data={showHistory ? ATTENDANCE_HISTORY : []}
+        data={isParent || showHistory ? history : []}
         keyExtractor={item => item.id}
         renderItem={({item}) => <AttendanceHistoryItem item={item} />}
         showsVerticalScrollIndicator={false}
@@ -59,49 +81,79 @@ const Attendance = () => {
         contentContainerStyle={styles.content}
         ListHeaderComponent={
           <View>
-            <View style={styles.monthRow}>
-              <Text style={styles.monthTitle} numberOfLines={1}>
-                {Strings.thisMonth}
+            {isParent ? (
+              <SegmentTabs
+                tabs={[Strings.daily, Strings.monthly]}
+                activeTab={viewMode}
+                onChange={setViewMode}
+              />
+            ) : null}
+
+            {showDaily ? (
+              <View style={styles.todayCard}>
+                <Text style={styles.todayLabel}>{Strings.todayAttendance}</Text>
+                <Text style={styles.todayDate}>{student.todayDate}</Text>
+                <View style={[styles.todayStatus, {backgroundColor: todayStatusStyle.bg}]}>
+                  <Text style={[styles.todayStatusText, {color: todayStatusStyle.text}]}>
+                    {student.todayStatus}
+                  </Text>
+                </View>
+              </View>
+            ) : (
+              <View>
+                <View style={styles.monthRow}>
+                  <Text style={styles.monthTitle} numberOfLines={1}>
+                    {isParent ? Strings.monthlyAttendance : Strings.thisMonth}
+                  </Text>
+                  <Text style={styles.monthText} numberOfLines={1}>
+                    {student.month}
+                  </Text>
+                </View>
+
+                <View style={styles.statsRow}>
+                  <AttendanceStatCard
+                    image={Images.tick}
+                    iconBg={Colors.successBg}
+                    label={Strings.present}
+                    count={student.present}
+                  />
+                  <AttendanceStatCard
+                    image={Images.cross}
+                    iconBg={Colors.overdueBg}
+                    label={Strings.absent}
+                    count={student.absent}
+                  />
+                  <AttendanceStatCard
+                    image={isParent ? undefined : Images.clock}
+                    icon={isParent ? 'alert-circle-outline' : undefined}
+                    iconBg={Colors.pendingBg}
+                    iconColor={Colors.warning}
+                    label={isParent ? Strings.late : Strings.leave}
+                    count={isParent ? student.late : student.leave}
+                  />
+                </View>
+
+                <AttendanceRateCard
+                  rate={student.rate}
+                  rateText={student.rateText}
+                />
+              </View>
+            )}
+
+            {isParent ? (
+              <Text style={styles.historyTitle} numberOfLines={1}>
+                {Strings.attendanceHistory}
               </Text>
-              <Text style={styles.monthText} numberOfLines={1}>
-                {student.month}
-              </Text>
-            </View>
-
-            <View style={styles.statsRow}>
-              <AttendanceStatCard
-                image={Images.tick}
-                iconBg={Colors.successBg}
-                label={Strings.present}
-                count={student.present}
+            ) : (
+              <Btn
+                title={showHistory ? Strings.hideHistory : Strings.seeHistory}
+                icon={showHistory ? 'eye-off-outline' : 'time-outline'}
+                style={styles.historyBtn}
+                onPress={() => setShowHistory(!showHistory)}
               />
-              <AttendanceStatCard
-                image={Images.cross}
-                iconBg={Colors.overdueBg}
-                label={Strings.absent}
-                count={student.absent}
-              />
-              <AttendanceStatCard
-                image={Images.clock}
-                iconBg={Colors.pendingBg}
-                label={Strings.leave}
-                count={student.leave}
-              />
-            </View>
+            )}
 
-            <AttendanceRateCard
-              rate={student.rate}
-              rateText={student.rateText}
-            />
-
-            <Btn
-              title={showHistory ? Strings.hideHistory : Strings.seeHistory}
-              icon={showHistory ? 'eye-off-outline' : 'time-outline'}
-              style={styles.historyBtn}
-              onPress={() => setShowHistory(!showHistory)}
-            />
-
-            {showHistory ? (
+            {!isParent && showHistory ? (
               <View>
                 <View style={styles.historyHeader}>
                   <Text style={styles.historyTitle} numberOfLines={1}>
@@ -147,6 +199,8 @@ const styles = StyleSheet.create({
   dropdownWrap: {
     paddingHorizontal: wp(4),
     marginTop: -hp(0.6),
+    zIndex: 20,
+    elevation: 20,
   },
   monthRow: {
     flexDirection: 'row',
@@ -158,7 +212,7 @@ const styles = StyleSheet.create({
     color: Colors.black,
     fontFamily: Fonts.semibold,
     fontSize: wp(3.77),
-    width: wp(40),
+    width: wp(50),
   },
   monthText: {
     color: Colors.grayText,
@@ -185,7 +239,9 @@ const styles = StyleSheet.create({
     color: Colors.black,
     fontFamily: Fonts.regular,
     fontSize: wp(3.73),
-    width: wp(40),
+    width: wp(50),
+    marginBottom: hp(1.5),
+    marginTop: hp(1),
   },
   filterBtn: {
     flexDirection: 'row',
@@ -197,5 +253,35 @@ const styles = StyleSheet.create({
     fontSize: wp(3.2),
     marginLeft: wp(1),
     width: wp(9.82),
+  },
+  todayCard: {
+    backgroundColor: Colors.blueSoft,
+    borderRadius: wp(4),
+    padding: wp(4),
+    marginBottom: hp(1),
+    alignItems: 'flex-start',
+  },
+  todayLabel: {
+    color: Colors.mutedText,
+    fontFamily: Fonts.medium,
+    fontSize: Fontsize.xs0,
+  },
+  todayDate: {
+    color: Colors.black,
+    fontFamily: Fonts.bold,
+    fontSize: Fontsize.sm,
+    marginTop: hp(0.4),
+  },
+  todayStatus: {
+    marginTop: hp(1.2),
+    backgroundColor: Colors.successBg,
+    borderRadius: wp(4),
+    paddingHorizontal: wp(3.5),
+    paddingVertical: hp(0.5),
+  },
+  todayStatusText: {
+    color: Colors.success,
+    fontFamily: Fonts.semibold,
+    fontSize: Fontsize.xs1,
   },
 });

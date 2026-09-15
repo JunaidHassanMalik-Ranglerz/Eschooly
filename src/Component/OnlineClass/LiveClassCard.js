@@ -1,5 +1,5 @@
 import React from 'react';
-import {Alert, Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {Images} from '../../Assets';
@@ -64,7 +64,7 @@ const LiveClassCard = props => {
         <TouchableOpacity
           style={styles.joinBtn}
           activeOpacity={0.85}
-          onPress={() => Alert.alert(Strings.joinClass, Strings.joinClassSoon)}>
+          onPress={() => {}}>
           <Icon name="videocam" size={wp(4.5)} color={Colors.white} />
           <Text style={styles.joinText} numberOfLines={1}>
             {Strings.joinClass}

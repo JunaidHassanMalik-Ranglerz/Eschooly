@@ -54,8 +54,8 @@ const styles = StyleSheet.create({
   },
   chipText: {
     color: Colors.black,
-    fontFamily: Fonts.medium,
-    fontSize: Fontsize.small,
+    fontFamily: Fonts.semibold,
+    fontSize: Fontsize.xs1,
   },
   chipTextActive: {
     color: Colors.white,

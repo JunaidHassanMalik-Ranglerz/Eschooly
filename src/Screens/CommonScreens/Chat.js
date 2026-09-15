@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import ChatHeader from '../../Component/Chat/ChatHeader';
 import ChatAnnouncementCard from '../../Component/Chat/ChatAnnouncementCard';
 import ChatBubble from '../../Component/Chat/ChatBubble';
@@ -18,17 +18,18 @@ import {Colors} from '../../Constants/Colors';
 import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
-import {
-  CHAT_ANNOUNCEMENT,
-  CHAT_MESSAGES,
-  CHAT_USER,
-} from '../../Constants/dummydata';
+import {CHAT_ANNOUNCEMENT, CHAT_MESSAGES, CHAT_USER} from '../../Constants/dummydata';
 import {wp, hp} from '../../Constants/Responsive';
+import {useRoleData} from '../../hooks/useRoleData';
 
 const Chat = () => {
   const navigation = useNavigation();
+  const route = useRoute();
+  const {isParent, parentChatUser} = useRoleData();
   const [messages, setMessages] = useState(CHAT_MESSAGES);
   const [input, setInput] = useState('');
+  const chatUser =
+    route.params?.chatUser || (isParent ? parentChatUser : CHAT_USER);
 
   const sendMessage = () => {
     const text = input.trim();
@@ -57,7 +58,7 @@ const Chat = () => {
       />
 
       <ChatHeader
-        user={CHAT_USER}
+        user={chatUser}
         onBack={() => navigation.navigate('Home')}
       />
 

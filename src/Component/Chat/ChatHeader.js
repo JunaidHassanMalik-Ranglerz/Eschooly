@@ -30,7 +30,7 @@ const ChatHeader = props => {
           <View style={styles.statusRow}>
             <View style={styles.onlineDot} />
             <Text style={styles.statusText} numberOfLines={1}>
-              {Strings.schoolAdminOnline}
+              {props?.user?.role || Strings.schoolAdminOnline}
             </Text>
           </View>
         </View>

@@ -1,6 +1,7 @@
 import React from 'react';
 import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import NotificationBell from './NotificationBell';
 import {Colors} from '../Constants/Colors';
 import {Fonts} from '../Constants/Fonts';
 import {Fontsize} from '../Constants/Fontsize';
@@ -22,14 +23,7 @@ const ScreenHeader = props => {
 
       <Text style={styles.title}>{props?.title}</Text>
 
-      <View style={styles.bellWrap}>
-        <Icon
-          name="notifications-outline"
-          size={wp(6)}
-          color={Colors.primary}
-        />
-        <View style={styles.badge} />
-      </View>
+      <NotificationBell count={props?.notificationCount ?? 1} />
     </View>
   );
 };
@@ -59,20 +53,5 @@ const styles = StyleSheet.create({
     color: Colors.black,
     fontFamily: Fonts.bold,
     fontSize: Fontsize.normal,
-  },
-  bellWrap: {
-    position: 'relative',
-    padding: wp(1),
-  },
-  badge: {
-    position: 'absolute',
-    top: wp(1.2),
-    right: wp(1.2),
-    width: wp(2),
-    height: wp(2),
-    borderRadius: wp(1),
-    backgroundColor: Colors.red,
-    borderWidth: 1,
-    borderColor: Colors.white,
   },
 });

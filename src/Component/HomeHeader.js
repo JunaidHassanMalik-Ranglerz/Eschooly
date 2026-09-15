@@ -1,6 +1,6 @@
 import React from 'react';
-import {Image, StyleSheet, Text, View} from 'react-native';
-import {Images} from '../Assets';
+import {StyleSheet, Text, View} from 'react-native';
+import NotificationBell from './NotificationBell';
 import {Colors} from '../Constants/Colors';
 import {Fonts} from '../Constants/Fonts';
 import {Fontsize} from '../Constants/Fontsize';
@@ -27,13 +27,7 @@ const HomeHeader = () => {
         </View>
       </View>
 
-      <View style={styles.bellWrap}>
-        <Image
-          source={Images.notification}
-          style={styles.notificationIcon}
-          resizeMode="contain"
-        />
-      </View>
+      <NotificationBell count={1} />
     </View>
   );
 };
@@ -79,14 +73,5 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.regular,
     fontSize: wp(4.3),
     width: wp(40),
-  },
-  bellWrap: {
-    position: 'relative',
-    padding: wp(1),
-  },
-  notificationIcon: {
-    width: wp(6),
-    height: wp(6),
-    tintColor: Colors.primary,
   },
 });

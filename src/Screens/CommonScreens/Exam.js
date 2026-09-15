@@ -21,27 +21,28 @@ const DEFAULT_START = new Date(2025, 10, 8);
 const DEFAULT_END = new Date(2025, 10, 15);
 
 const Exam = () => {
-  const {studentLabel, isParent, selectedChildId, setSelectedChildId} =
+  const {studentLabel, isParent, selectedChildId, setSelectedChildId, activeStudent, childList} =
     useRoleData();
   const [showHistory, setShowHistory] = useState(false);
   const [startDate, setStartDate] = useState(DEFAULT_START);
   const [endDate, setEndDate] = useState(DEFAULT_END);
   const [student, setStudent] = useState(ATTENDANCE_STUDENTS[0]);
-  const [examStudent, setExamStudent] = useState(EXAM_STUDENTS[0]);
+  const examStudent =
+    EXAM_STUDENTS.find(item => item.value === selectedChildId) || EXAM_STUDENTS[0];
+  const dropdownStudent = isParent ? activeStudent : student;
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <MainHeaderComponent title={Strings.exam} notificationCount={1} />
+      <MainHeaderComponent title={isParent ? Strings.results : Strings.exam} notificationCount={1} />
 
       <View style={styles.dropdownWrap}>
         <AttendanceStudentDropdown
-          student={student}
-          students={ATTENDANCE_STUDENTS}
+          student={dropdownStudent}
+          students={isParent ? childList : ATTENDANCE_STUDENTS}
           selectedId={selectedChildId}
           onSelect={item => {
             setSelectedChildId(item.value);
             setStudent(item);
-            setExamStudent(EXAM_STUDENTS[item.value - 1] || EXAM_STUDENTS[0]);
           }}
           readOnly={!isParent}
           label={studentLabel}
@@ -57,7 +58,9 @@ const Exam = () => {
         contentContainerStyle={styles.content}
         ListHeaderComponent={
           <View>
-            <Text style={styles.sectionTitle}>{Strings.examOverview}</Text>
+            <Text style={styles.sectionTitle}>
+              {isParent ? Strings.resultOverview : Strings.examOverview}
+            </Text>
 
             <View style={styles.overviewGrid}>
               <ExamOverviewCard
@@ -167,6 +170,8 @@ const styles = StyleSheet.create({
   dropdownWrap: {
     paddingHorizontal: wp(4),
     marginTop: -hp(0.6),
+    zIndex: 20,
+    elevation: 20,
   },
   sectionTitle: {
     color: Colors.black,

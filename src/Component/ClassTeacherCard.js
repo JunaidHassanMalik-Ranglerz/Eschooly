@@ -44,13 +44,13 @@ const ClassTeacherCard = props => {
           </View>
         </View>
 
-        <Btn
+          <Btn
           title={Strings.message}
           image={Images.messageIcon}
           iconSize={wp(3.7)}
           style={styles.messageBtn}
           textStyle={styles.messageBtnText}
-          onPress={props?.onMessage}
+          onPress={() => props?.onMessage?.(props?.teacher)}
         />
       </View>
     </View>
