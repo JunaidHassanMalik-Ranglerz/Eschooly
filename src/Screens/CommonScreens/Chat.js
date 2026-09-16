@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   FlatList,
   KeyboardAvoidingView,
@@ -30,6 +30,12 @@ const Chat = () => {
   const [input, setInput] = useState('');
   const chatUser =
     route.params?.chatUser || (isParent ? parentChatUser : CHAT_USER);
+  const isTeacherChat = !!route.params?.chatUser;
+
+  useEffect(() => {
+    setMessages(CHAT_MESSAGES);
+    setInput('');
+  }, [chatUser?.id, chatUser?.name]);
 
   const sendMessage = () => {
     const text = input.trim();
@@ -78,7 +84,9 @@ const Chat = () => {
                   {Strings.chatToday}
                 </Text>
               </View>
-              <ChatAnnouncementCard item={CHAT_ANNOUNCEMENT} />
+              {isTeacherChat ? null : (
+                <ChatAnnouncementCard item={CHAT_ANNOUNCEMENT} />
+              )}
             </View>
           }
         />

@@ -71,6 +71,8 @@ const Role = () => {
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <StatusBar
+        animated={false}
+        translucent={false}
         backgroundColor={Colors.BlueBackground}
         barStyle="light-content"
       />

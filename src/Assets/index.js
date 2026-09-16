@@ -1,5 +1,6 @@
 export const Images = {
   notification: require('./Notification.png'),
+  threeDots: require('./threedots.png'),
   announcementDay: require('./AnnouncmentDay.png'),
   pendingDues: require('./PendingDues.png'),
   profile: require('./MyProfile.png'),

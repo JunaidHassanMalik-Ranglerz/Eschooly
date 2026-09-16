@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useMemo, useState} from 'react';
 import {FlatList, Image, StyleSheet, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import MainHeaderComponent from '../../Component/MainHeaderComponent';
@@ -17,8 +17,15 @@ import {ATTENDANCE_STUDENTS} from '../../Constants/dummydata';
 import {wp, hp} from '../../Constants/Responsive';
 import {useRoleData} from '../../hooks/useRoleData';
 
-const DEFAULT_START = new Date(2025, 10, 8);
-const DEFAULT_END = new Date(2025, 10, 15);
+const DEFAULT_START = new Date(2025, 10, 13);
+const DEFAULT_END = new Date(2025, 10, 21);
+
+const toDateKey = date => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
 
 const Exam = () => {
   const {studentLabel, isParent, selectedChildId, setSelectedChildId, activeStudent, childList} =
@@ -30,6 +37,16 @@ const Exam = () => {
   const examStudent =
     EXAM_STUDENTS.find(item => item.value === selectedChildId) || EXAM_STUDENTS[0];
   const dropdownStudent = isParent ? activeStudent : student;
+  const filteredHistory = useMemo(() => {
+    if (!startDate || !endDate) {
+      return EXAM_HISTORY;
+    }
+    const startKey = toDateKey(startDate);
+    const endKey = toDateKey(endDate);
+    return EXAM_HISTORY.filter(
+      item => item.dateISO >= startKey && item.dateISO <= endKey,
+    );
+  }, [startDate, endDate]);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -50,7 +67,7 @@ const Exam = () => {
       </View>
 
       <FlatList
-        data={showHistory ? EXAM_HISTORY : []}
+        data={showHistory ? filteredHistory : []}
         keyExtractor={item => item.id}
         renderItem={({item}) => <ExamHistoryItem item={item} />}
         showsVerticalScrollIndicator={false}
@@ -141,6 +158,11 @@ const Exam = () => {
             ) : null}
           </View>
         }
+        ListEmptyComponent={
+          showHistory ? (
+            <Text style={styles.empty}>{Strings.noResultsInRange}</Text>
+          ) : null
+        }
         ListFooterComponent={
           showHistory ? (
             <Btn
@@ -215,5 +237,13 @@ const styles = StyleSheet.create({
   },
   downloadBtn: {
     marginTop: hp(1),
+  },
+  empty: {
+    color: Colors.grayText,
+    fontFamily: Fonts.regular,
+    fontSize: Fontsize.s,
+    textAlign: 'center',
+    marginTop: hp(2),
+    marginBottom: hp(1),
   },
 });

@@ -1,7 +1,9 @@
-import React, {useRef} from 'react';
+import React, {useEffect, useRef} from 'react';
+import {AppState} from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { applyStatusBarForRoute, getActiveRouteName } from '../Constants/MyStyling';
+import {Colors} from '../Constants/Colors';
 import SplashScreen from '../Screens/StartScreens/SplashScreen';
 import Role from '../Screens/StartScreens/Role';
 import AuthNavigation from './AuthNavigation';
@@ -30,29 +32,79 @@ import Fee from '../Screens/ParentScreens/Fee';
 import Transport from '../Screens/ParentScreens/Transport';
 import Holidays from '../Screens/CommonScreens/Holidays';
 import StudentResults from '../Screens/CommonScreens/StudentResults';
+import UpdatePassword from '../Screens/CommonScreens/UpdatePassword';
 
 const MAIN_STACK = createNativeStackNavigator();
 
 const MainNavigation = () => {
   const navigationRef = useRef(null);
+  const lastRouteNameRef = useRef(null);
+  const restoreTimeoutRef = useRef(null);
 
-  const syncStatusBar = () => {
+  const syncStatusBar = (force = false) => {
     const state = navigationRef.current?.getRootState();
     const routeName = getActiveRouteName(state);
-    applyStatusBarForRoute(routeName);
+    if (!routeName) {
+      return;
+    }
+    if (!force && routeName === lastRouteNameRef.current) {
+      return;
+    }
+    lastRouteNameRef.current = routeName;
+    applyStatusBarForRoute(routeName, force);
   };
+
+  useEffect(() => {
+    const restoreStatusBar = () => {
+      const routeName = getActiveRouteName(
+        navigationRef.current?.getRootState(),
+      );
+      if (!routeName) {
+        return;
+      }
+      lastRouteNameRef.current = routeName;
+      applyStatusBarForRoute(routeName, true);
+    };
+
+    const subscription = AppState.addEventListener('change', nextState => {
+      if (nextState !== 'active') {
+        return;
+      }
+      restoreStatusBar();
+      if (restoreTimeoutRef.current) {
+        clearTimeout(restoreTimeoutRef.current);
+      }
+      restoreTimeoutRef.current = setTimeout(restoreStatusBar, 50);
+    });
+
+    return () => {
+      subscription.remove();
+      if (restoreTimeoutRef.current) {
+        clearTimeout(restoreTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <NavigationContainer
       ref={navigationRef}
-      onReady={syncStatusBar}
-      onStateChange={syncStatusBar}>
+      onReady={() => syncStatusBar()}
+      onStateChange={() => syncStatusBar()}>
       <MAIN_STACK.Navigator
         initialRouteName="SplashScreen"
         screenOptions={{headerShown: false, headerShadowVisible: false}}
       >
         <MAIN_STACK.Screen name="SplashScreen" component={SplashScreen} />
-        <MAIN_STACK.Screen name="Role" component={Role} />
+        <MAIN_STACK.Screen
+          name="Role"
+          component={Role}
+          options={{
+            statusBarStyle: 'light',
+            statusBarBackgroundColor: Colors.BlueBackground,
+            statusBarTranslucent: false,
+            statusBarAnimation: 'none',
+          }}
+        />
         <MAIN_STACK.Screen name="AuthNavigation" component={AuthNavigation} />
         <MAIN_STACK.Screen
           name="BottomTab"
@@ -89,6 +141,7 @@ const MainNavigation = () => {
         <MAIN_STACK.Screen name="Fee" component={Fee} />
         <MAIN_STACK.Screen name="Transport" component={Transport} />
         <MAIN_STACK.Screen name="Holidays" component={Holidays} />
+        <MAIN_STACK.Screen name="UpdatePassword" component={UpdatePassword} />
       </MAIN_STACK.Navigator>
     </NavigationContainer>
   );

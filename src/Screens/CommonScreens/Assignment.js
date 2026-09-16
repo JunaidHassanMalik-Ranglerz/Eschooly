@@ -16,7 +16,7 @@ import {useRoleData} from '../../hooks/useRoleData';
 
 const Assignment = () => {
   const {isParent, activeStudent} = useRoleData();
-  const [openSubjectId, setOpenSubjectId] = useState('1');
+  const [openSubjectId, setOpenSubjectId] = useState(null);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -41,7 +41,7 @@ const Assignment = () => {
             subject={item}
             open={openSubjectId === item.id}
             onToggle={() =>
-              setOpenSubjectId(openSubjectId === item.id ? '' : item.id)
+              setOpenSubjectId(openSubjectId === item.id ? null : item.id)
             }
           />
         )}

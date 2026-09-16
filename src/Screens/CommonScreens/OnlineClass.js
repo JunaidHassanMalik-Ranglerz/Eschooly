@@ -43,10 +43,7 @@ const OnlineClass = () => {
 
         {showUpcoming ? (
           <>
-            <ClassSectionHeader
-              title={Strings.upcomingSessions}
-              linkText={Strings.viewAll}
-            />
+            <ClassSectionHeader title={Strings.upcomingSessions} />
             {UPCOMING_CLASSES.map(item => (
               <UpcomingClassCard key={item.id} item={item} />
             ))}
@@ -55,10 +52,7 @@ const OnlineClass = () => {
 
         {showEnded ? (
           <>
-            <ClassSectionHeader
-              title={Strings.recentRecordings}
-              linkText={Strings.all}
-            />
+            <ClassSectionHeader title={Strings.recentRecordings} />
             {RECORDING_CLASSES.map(item => (
               <RecordingClassCard key={item.id} item={item} />
             ))}

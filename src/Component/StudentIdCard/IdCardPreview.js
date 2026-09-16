@@ -2,7 +2,6 @@ import React from 'react';
 import {Image, StyleSheet, Text, View} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
-import QRCode from 'react-native-qrcode-svg';
 import {Images} from '../../Assets';
 import {Colors} from '../../Constants/Colors';
 import {Fonts} from '../../Constants/Fonts';
@@ -101,20 +100,12 @@ const IdCardPreview = ({data, isBack}) => {
             <StatItem label={Strings.rollShort} value={data.rollNo} />
           </View>
 
-          <View style={styles.detailRow}>
-            <View style={styles.detailLeft}>
-              <View style={styles.idBadge}>
-                <Text style={styles.idText}>{data.studentId}</Text>
-              </View>
-              <Text style={styles.address}>{data.schoolLine}</Text>
-              <Text style={styles.address}>{data.cityLine}</Text>
+          <View style={styles.detailBlock}>
+            <View style={styles.idBadge}>
+              <Text style={styles.idText}>{data.studentId}</Text>
             </View>
-            <QRCode
-              value={data.studentId}
-              size={wp(17)}
-              color={Colors.black}
-              backgroundColor={Colors.white}
-            />
+            <Text style={styles.address}>{data.schoolLine}</Text>
+            <Text style={styles.address}>{data.cityLine}</Text>
           </View>
         </View>
 
@@ -146,8 +137,8 @@ const styles = StyleSheet.create({
   label: {
     color: Colors.grayText,
     fontFamily: Fonts.medium,
-    fontSize: Fontsize.xs2,
-    letterSpacing: 1,
+    fontSize: Fontsize.xs1,
+    letterSpacing: 0.8,
     marginBottom: hp(1.2),
     textTransform: 'uppercase',
   },
@@ -196,13 +187,13 @@ const styles = StyleSheet.create({
   schoolTag: {
     color: Colors.whiteMuted85,
     fontFamily: Fonts.regular,
-    fontSize: Fontsize.xs2,
+    fontSize: Fontsize.xs0,
     marginTop: hp(0.2),
   },
   year: {
     color: Colors.whiteMuted85,
     fontFamily: Fonts.regular,
-    fontSize: Fontsize.xs2,
+    fontSize: Fontsize.xs0,
   },
   body: {
     paddingHorizontal: wp(4),
@@ -233,32 +224,32 @@ const styles = StyleSheet.create({
   avatarText: {
     color: Colors.mutedText,
     fontFamily: Fonts.bold,
-    fontSize: Fontsize.lg,
+    fontSize: Fontsize.sm,
   },
   nameCol: {
     flex: 1,
-    paddingTop: hp(3.8),
-    paddingLeft: wp(3),
+    paddingTop: hp(3.2),
+    paddingLeft: wp(2),
   },
   studentName: {
     color: Colors.black,
     fontFamily: Fonts.bold,
-    fontSize: 15,
+    fontSize: Fontsize.sm,
   },
   role: {
     color: Colors.grayText,
     fontFamily: Fonts.regular,
-    fontSize: Fontsize.small,
-    marginTop: hp(0.8),
+    fontSize: Fontsize.xs0,
+    marginTop: hp(0.25),
   },
   statsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
     marginLeft: AVATAR + wp(3),
-    marginTop: hp(0.6),
+    marginTop: hp(0.45),
     gap: wp(2.5),
-    marginBottom: hp(1.5),
+    marginBottom: hp(1.6),
   },
   statItem: {
     alignItems: 'center',
@@ -272,23 +263,18 @@ const styles = StyleSheet.create({
   statLabel: {
     color: Colors.grayText,
     fontFamily: Fonts.regular,
-    fontSize: Fontsize.xxs0,
-    letterSpacing: 0.5,
-    marginBottom: hp(0.25),
+    fontSize: Fontsize.xs0,
+    letterSpacing: 0.4,
+    marginBottom: hp(0.2),
   },
   statValue: {
     color: Colors.black,
     fontFamily: Fonts.bold,
-    fontSize: Fontsize.sm,
+    fontSize: Fontsize.xs5,
   },
-  detailRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-  },
-  detailLeft: {
-    flex: 1,
-    paddingRight: wp(3),
+  detailBlock: {
+    width: '100%',
+    paddingTop: hp(0.2),
   },
   idBadge: {
     alignSelf: 'flex-start',
@@ -301,17 +287,13 @@ const styles = StyleSheet.create({
   idText: {
     color: Colors.mutedText,
     fontFamily: Fonts.semibold,
-    fontSize: Fontsize.xs2,
+    fontSize: Fontsize.xs1,
   },
   address: {
     color: Colors.grayText,
     fontFamily: Fonts.regular,
     fontSize: Fontsize.xs1,
-    lineHeight: hp(2.1),
-  },
-  qr: {
-    width: wp(17),
-    height: wp(17),
+    lineHeight: Fontsize.m,
   },
   footer: {
     flexDirection: 'row',
@@ -337,7 +319,7 @@ const styles = StyleSheet.create({
   verifiedText: {
     color: Colors.success,
     fontFamily: Fonts.semibold,
-    fontSize: Fontsize.xs2,
+    fontSize: Fontsize.xs1,
     marginLeft: wp(1.2),
   },
   backHeader: {
@@ -356,7 +338,7 @@ const styles = StyleSheet.create({
   backYear: {
     color: Colors.whiteMuted85,
     fontFamily: Fonts.regular,
-    fontSize: Fontsize.xs2,
+    fontSize: Fontsize.xs0,
   },
   backBody: {
     paddingHorizontal: wp(4),
@@ -365,15 +347,15 @@ const styles = StyleSheet.create({
   backTitle: {
     color: Colors.grayText,
     fontFamily: Fonts.medium,
-    fontSize: Fontsize.xs2,
-    letterSpacing: 0.8,
+    fontSize: Fontsize.xs1,
+    letterSpacing: 0.6,
     marginBottom: hp(0.5),
   },
   backNote: {
     color: Colors.grayText,
     fontFamily: Fonts.regular,
     fontSize: Fontsize.xs1,
-    lineHeight: hp(2.2),
+    lineHeight: Fontsize.m,
     marginTop: hp(1.5),
     textAlign: 'center',
   },

@@ -1,6 +1,7 @@
 import React from 'react';
-import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import {Images} from '../../Assets';
 import {Colors} from '../../Constants/Colors';
 import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
@@ -37,7 +38,11 @@ const ChatHeader = props => {
       </View>
 
       <TouchableOpacity style={styles.menuBtn} activeOpacity={0.8}>
-        <Icon name="ellipsis-vertical" size={wp(5)} color={Colors.black} />
+        <Image
+          source={Images.threeDots}
+          style={styles.menuIcon}
+          resizeMode="contain"
+        />
       </TouchableOpacity>
     </View>
   );
@@ -105,5 +110,12 @@ const styles = StyleSheet.create({
   },
   menuBtn: {
     padding: wp(1),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  menuIcon: {
+    width: wp(5),
+    height: wp(5),
+    tintColor: Colors.black,
   },
 });

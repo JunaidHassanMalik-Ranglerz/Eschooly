@@ -2,8 +2,9 @@ import React from 'react';
 import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {Colors} from '../../Constants/Colors';
+import {Fonts} from '../../Constants/Fonts';
+import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
-import {ocText, ocTitle} from './onlineClassText';
 import {wp, hp} from '../../Constants/Responsive';
 
 const UpcomingClassCard = props => {
@@ -66,11 +67,14 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     backgroundColor: Colors.white,
-    borderRadius: wp(4),
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderRadius: wp(5),
     marginBottom: hp(1.5),
     overflow: 'hidden',
+    elevation: 3,
+    shadowColor: Colors.black,
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
   },
   stripe: {
     width: wp(1.2),
@@ -91,7 +95,9 @@ const styles = StyleSheet.create({
     paddingVertical: hp(0.5),
   },
   month: {
-    ...ocText,
+    fontFamily: Fonts.semibold,
+    fontSize: Fontsize.xxm,
+    includeFontPadding: false,
   },
   badge: {
     borderRadius: wp(4),
@@ -99,16 +105,20 @@ const styles = StyleSheet.create({
     paddingVertical: hp(0.35),
   },
   badgeText: {
-    ...ocText,
+    fontFamily: Fonts.semibold,
+    fontSize: Fontsize.xxm,
+    includeFontPadding: false,
   },
   title: {
-    ...ocTitle,
     color: Colors.black,
+    fontFamily: Fonts.bold,
+    fontSize: Fontsize.xs5,
     marginBottom: hp(0.3),
   },
   classInfo: {
-    ...ocText,
     color: Colors.grayText,
+    fontFamily: Fonts.regular,
+    fontSize: Fontsize.xs0,
     marginBottom: hp(1),
   },
   infoRow: {
@@ -119,9 +129,11 @@ const styles = StyleSheet.create({
     marginLeft: wp(3),
   },
   infoText: {
-    ...ocText,
     color: Colors.grayText,
+    fontFamily: Fonts.medium,
+    fontSize: Fontsize.xs1,
     marginLeft: wp(1.5),
+    includeFontPadding: false,
   },
   footer: {
     flexDirection: 'row',
@@ -139,11 +151,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   zoomLink: {
-    ...ocText,
     color: Colors.grayText,
+    fontFamily: Fonts.regular,
+    fontSize: Fontsize.xs0,
   },
   reminderText: {
-    ...ocText,
-    color: Colors.onlineClassviewsColor,
+    color: Colors.primary,
+    fontFamily: Fonts.semibold,
+    fontSize: Fontsize.xs1,
   },
 });

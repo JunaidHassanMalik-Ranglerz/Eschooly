@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import {FlatList, StyleSheet, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
@@ -7,14 +7,25 @@ import OverallProgressCard from '../../Component/OverallProgressCard';
 import ChapterCard from '../../Component/ChapterCard';
 import {Colors} from '../../Constants/Colors';
 import {Strings} from '../../Constants/Strings';
-import {SYLLABUS_DATA, SYLLABUS_LIST, SYLLABUS_CLASS_NAME} from '../../Constants/dummydata';
+import {getSyllabusListForClass} from '../../Constants/dummydata';
 import {wp, hp} from '../../Constants/Responsive';
 import MainHeaderComponent from '../../Component/MainHeaderComponent';
+import {useRoleData} from '../../hooks/useRoleData';
 
 const Syllabus = () => {
   const navigation = useNavigation();
-  const [syllabus, setSyllabus] = useState(SYLLABUS_DATA);
-  const [openChapterId, setOpenChapterId] = useState('1');
+  const {classLabel, activeStudent} = useRoleData();
+  const subjects = useMemo(
+    () => getSyllabusListForClass(activeStudent?.className),
+    [activeStudent?.className],
+  );
+  const [syllabus, setSyllabus] = useState(subjects[0]);
+  const [openChapterId, setOpenChapterId] = useState(null);
+
+  useEffect(() => {
+    setSyllabus(subjects[0]);
+    setOpenChapterId(null);
+  }, [subjects]);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -33,7 +44,7 @@ const Syllabus = () => {
             chapter={item}
             open={openChapterId === item.id}
             onToggle={() =>
-              setOpenChapterId(openChapterId === item.id ? '' : item.id)
+              setOpenChapterId(openChapterId === item.id ? null : item.id)
             }
           />
         )}
@@ -42,14 +53,14 @@ const Syllabus = () => {
         ListHeaderComponent={
           <View>
             <SyllabusFilter
-              subjects={SYLLABUS_LIST}
+              subjects={subjects}
               value={syllabus?.value}
               label={syllabus?.label}
               onChange={item => {
                 setSyllabus(item);
-                setOpenChapterId('1');
+                setOpenChapterId(null);
               }}
-              className={SYLLABUS_CLASS_NAME}
+              className={classLabel}
             />
 
             <OverallProgressCard overview={syllabus} />

@@ -126,6 +126,10 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontFamily: Fonts.bold,
     fontSize: Fontsize.xs1,
+    lineHeight: Fontsize.sm,
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    includeFontPadding: false,
   },
   list: {
     marginTop: hp(1.5),

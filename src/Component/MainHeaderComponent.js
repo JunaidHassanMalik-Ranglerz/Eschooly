@@ -1,5 +1,5 @@
 import React from 'react';
-import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import NotificationBell from './NotificationBell';
@@ -10,8 +10,9 @@ import {Fonts} from '../Constants/Fonts';
 
 const MainHeaderComponent = props => {
   const navigation = useNavigation();
-  const showRightIcon = !!props?.rightIcon;
-  const showNotification = !showRightIcon && !props?.hideNotification;
+  const showRightImage = !!props?.rightImage;
+  const showRightIcon = !showRightImage && !!props?.rightIcon;
+  const showNotification = !showRightImage && !showRightIcon && !props?.hideNotification;
   const showBack = !props?.hideBack;
 
   return (
@@ -31,7 +32,18 @@ const MainHeaderComponent = props => {
         {props?.title}
       </Text>
 
-      {showRightIcon ? (
+      {showRightImage ? (
+        <TouchableOpacity
+          style={styles.menuBtn}
+          activeOpacity={0.8}
+          onPress={props?.onRightPress}>
+          <Image
+            source={props.rightImage}
+            style={styles.menuIcon}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+      ) : showRightIcon ? (
         <TouchableOpacity
           style={styles.bellWrap}
           activeOpacity={0.8}
@@ -82,6 +94,17 @@ const styles = StyleSheet.create({
   },
   placeholder: {
     width: wp(9),
+  },
+  menuBtn: {
+    width: wp(9),
+    height: wp(9),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  menuIcon: {
+    width: wp(5),
+    height: wp(5),
+    tintColor: Colors.black,
   },
 });
 

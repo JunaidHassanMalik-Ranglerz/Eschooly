@@ -6,7 +6,7 @@ import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
 import {wp, hp} from '../../Constants/Responsive';
 
-const LibraryResourceCard = ({item, onPress, onDownload}) => {
+const LibraryResourceCard = ({item, onPress}) => {
   return (
     <View style={styles.card}>
       <TouchableOpacity
@@ -26,7 +26,7 @@ const LibraryResourceCard = ({item, onPress, onDownload}) => {
           )}
         </View>
 
-        <Text style={styles.title} numberOfLines={2}>
+        <Text style={styles.title} numberOfLines={2} ellipsizeMode="tail">
           {item.title}
         </Text>
         <Text style={styles.subtitle}>{item.subtitle}</Text>
@@ -37,9 +37,9 @@ const LibraryResourceCard = ({item, onPress, onDownload}) => {
           {item.fileType} - {item.fileSize}
         </Text>
         <TouchableOpacity
-          activeOpacity={0.8}
+          activeOpacity={1}
           hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
-          onPress={() => onDownload?.(item)}>
+          onPress={() => {}}>
           <Icon
             name="download-outline"
             size={wp(4.5)}
@@ -96,8 +96,10 @@ const styles = StyleSheet.create({
     color: Colors.black,
     fontFamily: Fonts.bold,
     fontSize: Fontsize.xs5,
+    lineHeight: Fontsize.sm + 1,
     marginBottom: hp(0.4),
-    minHeight: hp(4.5),
+    minHeight: (Fontsize.sm + 1) * 2,
+    includeFontPadding: false,
   },
   subtitle: {
     color: Colors.grayText,

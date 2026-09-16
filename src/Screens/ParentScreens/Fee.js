@@ -76,14 +76,11 @@ const DETAIL_ICONS = {
 
 const Fee = () => {
   const navigation = useNavigation();
-  const {activeStudent, feeDetails, unreadNotificationCount} = useRoleData();
+  const {activeStudent, feeDetails, unreadNotificationCount, classLabel} = useRoleData();
   const fee = feeDetails || {};
   const [feeTab, setFeeTab] = useState('school');
   const [viewMode, setViewMode] = useState('home');
   const current = feeTab === 'transport' ? fee.transport : fee.school;
-  const classLabel = activeStudent?.section
-    ? `${activeStudent.className} - ${activeStudent.section}`
-    : activeStudent?.classBadge;
   const actionItems = feeTab === 'transport' ? TRANSPORT_ACTIONS : SCHOOL_ACTIONS;
   const headerTitle = VIEW_TITLES[viewMode] || Strings.fee;
   const details = fee.details || [];

@@ -1,15 +1,32 @@
 import React from 'react';
-import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {Colors} from '../../Constants/Colors';
 import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
 import {wp, hp} from '../../Constants/Responsive';
 
-const ParentStatCard = ({icon, iconBg, iconColor, value, label, hint, onPress}) => (
+const ParentStatCard = ({
+  icon,
+  iconSource,
+  iconBg,
+  iconColor,
+  value,
+  label,
+  hint,
+  onPress,
+}) => (
   <TouchableOpacity style={styles.card} activeOpacity={1} onPress={onPress}>
     <View style={[styles.iconWrap, {backgroundColor: iconBg}]}>
-      <Icon name={icon} size={wp(5)} color={iconColor} />
+      {iconSource ? (
+        <Image
+          source={iconSource}
+          style={[styles.iconImage, iconColor ? {tintColor: iconColor} : null]}
+          resizeMode="contain"
+        />
+      ) : (
+        <Icon name={icon} size={wp(5)} color={iconColor} />
+      )}
     </View>
     <View style={styles.textWrap}>
       <Text style={styles.label} numberOfLines={2}>
@@ -49,6 +66,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: wp(2.5),
+  },
+  iconImage: {
+    width: wp(5),
+    height: wp(5),
   },
   textWrap: {
     flex: 1,

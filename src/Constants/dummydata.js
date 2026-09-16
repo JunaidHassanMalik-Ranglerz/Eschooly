@@ -340,8 +340,15 @@ export const SYLLABUS_LIST = [
         percentText: '60%',
         topics: [
           {id: '2-1', title: 'Lines & Angles', duration: '2h', status: 'completed'},
-          {id: '2-2', title: 'Triangles', duration: '2h', status: 'in_progress'},
-          {id: '2-3', title: 'Circles', duration: '1.5h', status: 'pending'},
+          {id: '2-2', title: 'Triangles', duration: '2h', status: 'completed'},
+          {id: '2-3', title: 'Congruence of Triangles', duration: '1.5h', status: 'completed'},
+          {id: '2-4', title: 'Quadrilaterals', duration: '1.5h', status: 'in_progress'},
+          {id: '2-5', title: 'Circles', duration: '1.5h', status: 'in_progress'},
+          {id: '2-6', title: 'Polygons', duration: '1h', status: 'pending'},
+          {id: '2-7', title: 'Constructions', duration: '1.5h', status: 'pending'},
+          {id: '2-8', title: 'Area of Plane Figures', duration: '1.5h', status: 'pending'},
+          {id: '2-9', title: 'Coordinate Geometry', duration: '1h', status: 'pending'},
+          {id: '2-10', title: 'Practical Geometry', duration: '1h', status: 'pending'},
         ],
       },
       {
@@ -353,7 +360,12 @@ export const SYLLABUS_LIST = [
         percentText: '45%',
         topics: [
           {id: '3-1', title: 'Trigonometric Ratios', duration: '2h', status: 'completed'},
-          {id: '3-2', title: 'Identities', duration: '1.5h', status: 'pending'},
+          {id: '3-2', title: 'Trigonometric Identities', duration: '1.5h', status: 'completed'},
+          {id: '3-3', title: 'Complementary Angles', duration: '1.5h', status: 'in_progress'},
+          {id: '3-4', title: 'Heights and Distances', duration: '1.5h', status: 'pending'},
+          {id: '3-5', title: 'Trigonometric Tables', duration: '1h', status: 'pending'},
+          {id: '3-6', title: 'Word Problems', duration: '1.5h', status: 'pending'},
+          {id: '3-7', title: 'Revision Exercise', duration: '1h', status: 'pending'},
         ],
       },
       {
@@ -364,8 +376,15 @@ export const SYLLABUS_LIST = [
         progress: 0.2,
         percentText: '20%',
         topics: [
-          {id: '4-1', title: 'Mean & Median', duration: '2h', status: 'in_progress'},
-          {id: '4-2', title: 'Probability', duration: '1.5h', status: 'pending'},
+          {id: '4-1', title: 'Collection of Data', duration: '1h', status: 'completed'},
+          {id: '4-2', title: 'Frequency Tables', duration: '1.5h', status: 'in_progress'},
+          {id: '4-3', title: 'Mean & Median', duration: '1.5h', status: 'pending'},
+          {id: '4-4', title: 'Mode', duration: '1h', status: 'pending'},
+          {id: '4-5', title: 'Bar Graphs', duration: '1.5h', status: 'pending'},
+          {id: '4-6', title: 'Pie Charts', duration: '1h', status: 'pending'},
+          {id: '4-7', title: 'Range', duration: '1h', status: 'pending'},
+          {id: '4-8', title: 'Class Interval', duration: '1.5h', status: 'pending'},
+          {id: '4-9', title: 'Practice Problems', duration: '1h', status: 'pending'},
         ],
       },
     ],
@@ -385,7 +404,14 @@ export const SYLLABUS_LIST = [
         meta: '6 topics · 10 hours',
         progress: 0.75,
         percentText: '75%',
-        topics: [],
+        topics: [
+          {id: '1-1', title: 'Distance and Displacement', duration: '1.5h', status: 'completed'},
+          {id: '1-2', title: 'Speed and Velocity', duration: '2h', status: 'completed'},
+          {id: '1-3', title: 'Acceleration', duration: '1.5h', status: 'completed'},
+          {id: '1-4', title: 'Equations of Motion', duration: '2h', status: 'in_progress'},
+          {id: '1-5', title: 'Graphs of Motion', duration: '1.5h', status: 'pending'},
+          {id: '1-6', title: 'Numerical Practice', duration: '1.5h', status: 'pending'},
+        ],
       },
       {
         id: '2',
@@ -394,7 +420,16 @@ export const SYLLABUS_LIST = [
         meta: '8 topics · 12 hours',
         progress: 0.4,
         percentText: '40%',
-        topics: [],
+        topics: [
+          {id: '2-1', title: 'Types of Forces', duration: '1.5h', status: 'completed'},
+          {id: '2-2', title: "Newton's First Law", duration: '1.5h', status: 'completed'},
+          {id: '2-3', title: "Newton's Second Law", duration: '2h', status: 'in_progress'},
+          {id: '2-4', title: "Newton's Third Law", duration: '1.5h', status: 'pending'},
+          {id: '2-5', title: 'Mass and Weight', duration: '1.5h', status: 'pending'},
+          {id: '2-6', title: 'Friction', duration: '1.5h', status: 'pending'},
+          {id: '2-7', title: 'Momentum', duration: '1.5h', status: 'pending'},
+          {id: '2-8', title: 'Numerical Practice', duration: '1h', status: 'pending'},
+        ],
       },
     ],
   },
@@ -413,7 +448,13 @@ export const SYLLABUS_LIST = [
         meta: '5 topics · 8 hours',
         progress: 0.55,
         percentText: '55%',
-        topics: [],
+        topics: [
+          {id: '1-1', title: 'Introduction to Reactions', duration: '1.5h', status: 'completed'},
+          {id: '1-2', title: 'Types of Chemical Reactions', duration: '2h', status: 'completed'},
+          {id: '1-3', title: 'Balancing Chemical Equations', duration: '2h', status: 'in_progress'},
+          {id: '1-4', title: 'Signs of a Chemical Change', duration: '1.5h', status: 'pending'},
+          {id: '1-5', title: 'Everyday Chemical Reactions', duration: '1h', status: 'pending'},
+        ],
       },
     ],
   },
@@ -432,11 +473,266 @@ export const SYLLABUS_LIST = [
         meta: '4 topics · 6 hours',
         progress: 0.8,
         percentText: '80%',
-        topics: [],
+        topics: [
+          {id: '1-1', title: 'The Selfish Giant', duration: '1.5h', status: 'completed'},
+          {id: '1-2', title: 'Comprehension Questions', duration: '1.5h', status: 'completed'},
+          {id: '1-3', title: 'Vocabulary & Meanings', duration: '1.5h', status: 'completed'},
+          {id: '1-4', title: 'Character Sketch', duration: '1.5h', status: 'in_progress'},
+        ],
       },
     ],
   },
 ];
+
+const syllabusSubject = (value, label, progress, completedTopics, totalTopics, chapters) => ({
+  value,
+  label,
+  progress,
+  percentText: `${Math.round(progress * 100)}%`,
+  completedTopics,
+  totalTopics,
+  chapters,
+});
+
+const syllabusChapter = (id, number, title, meta, progress, topics = []) => ({
+  id,
+  number,
+  title,
+  meta,
+  progress,
+  percentText: `${Math.round(progress * 100)}%`,
+  topics,
+});
+
+const SYLLABUS_CLASS_2 = [
+  syllabusSubject('1', 'English', 0.72, 9, 12, [
+    syllabusChapter('1', '01', 'Chapter 1 — Phonics', '4 topics · 6 hours', 0.85, [
+      {id: '1-1', title: 'Letter Sounds A to M', duration: '1.5h', status: 'completed'},
+      {id: '1-2', title: 'Letter Sounds N to Z', duration: '1.5h', status: 'completed'},
+      {id: '1-3', title: 'Three-Letter Words', duration: '1.5h', status: 'completed'},
+      {id: '1-4', title: 'Reading Practice', duration: '1.5h', status: 'in_progress'},
+    ]),
+    syllabusChapter('2', '02', 'Chapter 2 — Stories', '3 topics · 5 hours', 0.5, [
+      {id: '2-1', title: 'The Thirsty Crow', duration: '1.5h', status: 'completed'},
+      {id: '2-2', title: 'The Lion and the Mouse', duration: '1.5h', status: 'in_progress'},
+      {id: '2-3', title: 'Story Questions', duration: '2h', status: 'pending'},
+    ]),
+  ]),
+  syllabusSubject('2', 'Urdu', 0.64, 8, 12, [
+    syllabusChapter('1', '01', 'Chapter 1 — Alphabets', '4 topics · 6 hours', 0.7, [
+      {id: '1-1', title: 'Haroof-e-Tahajji', duration: '1.5h', status: 'completed'},
+      {id: '1-2', title: 'Joining Letters', duration: '1.5h', status: 'completed'},
+      {id: '1-3', title: 'Simple Words', duration: '1.5h', status: 'in_progress'},
+      {id: '1-4', title: 'Reading Drill', duration: '1.5h', status: 'pending'},
+    ]),
+    syllabusChapter('2', '02', 'Chapter 2 — Words', '3 topics · 5 hours', 0.45, [
+      {id: '2-1', title: 'Everyday Words', duration: '1.5h', status: 'completed'},
+      {id: '2-2', title: 'Two-Letter Words', duration: '1.5h', status: 'in_progress'},
+      {id: '2-3', title: 'Picture Dictionary', duration: '2h', status: 'pending'},
+    ]),
+  ]),
+  syllabusSubject('3', 'Mathematics', 0.8, 10, 12, [
+    syllabusChapter('1', '01', 'Chapter 1 — Numbers', '4 topics · 6 hours', 0.9, [
+      {id: '1-1', title: 'Counting 1 to 100', duration: '1.5h', status: 'completed'},
+      {id: '1-2', title: 'Place Value', duration: '1.5h', status: 'completed'},
+      {id: '1-3', title: 'Before and After', duration: '1.5h', status: 'completed'},
+      {id: '1-4', title: 'Comparing Numbers', duration: '1.5h', status: 'in_progress'},
+    ]),
+    syllabusChapter('2', '02', 'Chapter 2 — Addition', '3 topics · 5 hours', 0.65, [
+      {id: '2-1', title: 'Adding Single Digits', duration: '1.5h', status: 'completed'},
+      {id: '2-2', title: 'Adding Two-Digit Numbers', duration: '2h', status: 'in_progress'},
+      {id: '2-3', title: 'Word Problems', duration: '1.5h', status: 'pending'},
+    ]),
+  ]),
+  syllabusSubject('4', 'General Knowledge', 0.58, 6, 10, [
+    syllabusChapter('1', '01', 'Chapter 1 — Myself', '3 topics · 4 hours', 0.7, [
+      {id: '1-1', title: 'My Name and Family', duration: '1.5h', status: 'completed'},
+      {id: '1-2', title: 'Parts of the Body', duration: '1.5h', status: 'completed'},
+      {id: '1-3', title: 'My School', duration: '1h', status: 'in_progress'},
+    ]),
+    syllabusChapter('2', '02', 'Chapter 2 — Animals', '3 topics · 4 hours', 0.4, [
+      {id: '2-1', title: 'Pet Animals', duration: '1.5h', status: 'completed'},
+      {id: '2-2', title: 'Farm Animals', duration: '1.5h', status: 'in_progress'},
+      {id: '2-3', title: 'Wild Animals', duration: '1h', status: 'pending'},
+    ]),
+  ]),
+  syllabusSubject('5', 'Islamiat', 0.7, 7, 10, [
+    syllabusChapter('1', '01', 'Chapter 1 — Kalimas', '3 topics · 4 hours', 0.8, [
+      {id: '1-1', title: 'First Kalima', duration: '1.5h', status: 'completed'},
+      {id: '1-2', title: 'Second Kalima', duration: '1.5h', status: 'completed'},
+      {id: '1-3', title: 'Practice and Recitation', duration: '1h', status: 'in_progress'},
+    ]),
+  ]),
+];
+
+const SYLLABUS_CLASS_4 = [
+  syllabusSubject('1', 'English', 0.66, 14, 22, [
+    syllabusChapter('1', '01', 'Chapter 1 — Grammar', '5 topics · 8 hours', 0.75, [
+      {id: '1-1', title: 'Nouns', duration: '1.5h', status: 'completed'},
+      {id: '1-2', title: 'Pronouns', duration: '1.5h', status: 'completed'},
+      {id: '1-3', title: 'Verbs', duration: '2h', status: 'completed'},
+      {id: '1-4', title: 'Adjectives', duration: '1.5h', status: 'in_progress'},
+      {id: '1-5', title: 'Simple Tenses', duration: '1.5h', status: 'pending'},
+    ]),
+    syllabusChapter('2', '02', 'Chapter 2 — Comprehension', '4 topics · 6 hours', 0.5, [
+      {id: '2-1', title: 'Reading a Passage', duration: '1.5h', status: 'completed'},
+      {id: '2-2', title: 'Finding the Main Idea', duration: '1.5h', status: 'in_progress'},
+      {id: '2-3', title: 'True or False', duration: '1.5h', status: 'pending'},
+      {id: '2-4', title: 'Short Answers', duration: '1.5h', status: 'pending'},
+    ]),
+  ]),
+  syllabusSubject('2', 'Urdu', 0.6, 12, 20, [
+    syllabusChapter('1', '01', 'Chapter 1 — Reading', '4 topics · 6 hours', 0.65, [
+      {id: '1-1', title: 'Lesson Reading', duration: '1.5h', status: 'completed'},
+      {id: '1-2', title: 'Meanings of Words', duration: '1.5h', status: 'completed'},
+      {id: '1-3', title: 'Question Answers', duration: '1.5h', status: 'in_progress'},
+      {id: '1-4', title: 'Oral Practice', duration: '1.5h', status: 'pending'},
+    ]),
+    syllabusChapter('2', '02', 'Chapter 2 — Writing', '4 topics · 6 hours', 0.4, [
+      {id: '2-1', title: 'Sentence Making', duration: '1.5h', status: 'completed'},
+      {id: '2-2', title: 'Fill in the Blanks', duration: '1.5h', status: 'in_progress'},
+      {id: '2-3', title: 'Dictation', duration: '1.5h', status: 'pending'},
+      {id: '2-4', title: 'Short Paragraph', duration: '1.5h', status: 'pending'},
+    ]),
+  ]),
+  syllabusSubject('3', 'Mathematics', 0.71, 16, 22, [
+    syllabusChapter('1', '01', 'Chapter 1 — Fractions', '5 topics · 8 hours', 0.8, [
+      {id: '1-1', title: 'Proper Fractions', duration: '1.5h', status: 'completed'},
+      {id: '1-2', title: 'Improper Fractions', duration: '1.5h', status: 'completed'},
+      {id: '1-3', title: 'Mixed Numbers', duration: '1.5h', status: 'completed'},
+      {id: '1-4', title: 'Equivalent Fractions', duration: '2h', status: 'in_progress'},
+      {id: '1-5', title: 'Adding Fractions', duration: '1.5h', status: 'pending'},
+    ]),
+    syllabusChapter('2', '02', 'Chapter 2 — Geometry', '4 topics · 6 hours', 0.55, [
+      {id: '2-1', title: 'Points and Lines', duration: '1.5h', status: 'completed'},
+      {id: '2-2', title: 'Shapes Around Us', duration: '1.5h', status: 'completed'},
+      {id: '2-3', title: 'Types of Angles', duration: '1.5h', status: 'in_progress'},
+      {id: '2-4', title: 'Measuring Length', duration: '1.5h', status: 'pending'},
+    ]),
+  ]),
+  syllabusSubject('4', 'Science', 0.54, 10, 18, [
+    syllabusChapter('1', '01', 'Chapter 1 — Plants', '4 topics · 6 hours', 0.6, [
+      {id: '1-1', title: 'Parts of a Plant', duration: '1.5h', status: 'completed'},
+      {id: '1-2', title: 'How Plants Grow', duration: '1.5h', status: 'completed'},
+      {id: '1-3', title: 'Uses of Plants', duration: '1.5h', status: 'in_progress'},
+      {id: '1-4', title: 'Seeds and Fruits', duration: '1.5h', status: 'pending'},
+    ]),
+    syllabusChapter('2', '02', 'Chapter 2 — Human Body', '4 topics · 6 hours', 0.35, [
+      {id: '2-1', title: 'Sense Organs', duration: '1.5h', status: 'completed'},
+      {id: '2-2', title: 'Bones and Muscles', duration: '1.5h', status: 'in_progress'},
+      {id: '2-3', title: 'Healthy Food', duration: '1.5h', status: 'pending'},
+      {id: '2-4', title: 'Keeping Clean', duration: '1.5h', status: 'pending'},
+    ]),
+  ]),
+  syllabusSubject('5', 'Social Studies', 0.48, 8, 16, [
+    syllabusChapter('1', '01', 'Chapter 1 — Our Country', '3 topics · 5 hours', 0.55, [
+      {id: '1-1', title: 'Map of Pakistan', duration: '2h', status: 'completed'},
+      {id: '1-2', title: 'National Symbols', duration: '1.5h', status: 'in_progress'},
+      {id: '1-3', title: 'Our Provinces', duration: '1.5h', status: 'pending'},
+    ]),
+  ]),
+];
+
+const SYLLABUS_CLASS_6 = [
+  syllabusSubject('1', 'English', 0.62, 16, 26, [
+    syllabusChapter('1', '01', 'Chapter 1 — Grammar', '5 topics · 8 hours', 0.7, [
+      {id: '1-1', title: 'Parts of Speech', duration: '1.5h', status: 'completed'},
+      {id: '1-2', title: 'Tenses Overview', duration: '2h', status: 'completed'},
+      {id: '1-3', title: 'Active and Passive', duration: '1.5h', status: 'in_progress'},
+      {id: '1-4', title: 'Direct and Indirect Speech', duration: '1.5h', status: 'pending'},
+      {id: '1-5', title: 'Punctuation', duration: '1.5h', status: 'pending'},
+    ]),
+    syllabusChapter('2', '02', 'Chapter 2 — Composition', '4 topics · 6 hours', 0.45, [
+      {id: '2-1', title: 'Paragraph Writing', duration: '1.5h', status: 'completed'},
+      {id: '2-2', title: 'Letter Writing', duration: '1.5h', status: 'in_progress'},
+      {id: '2-3', title: 'Story Writing', duration: '1.5h', status: 'pending'},
+      {id: '2-4', title: 'Essay Outline', duration: '1.5h', status: 'pending'},
+    ]),
+  ]),
+  syllabusSubject('2', 'Urdu', 0.57, 14, 24, [
+    syllabusChapter('1', '01', 'Chapter 1 — Poetry', '4 topics · 6 hours', 0.6, [
+      {id: '1-1', title: 'Nazm Reading', duration: '1.5h', status: 'completed'},
+      {id: '1-2', title: 'Meanings and Explanation', duration: '1.5h', status: 'completed'},
+      {id: '1-3', title: 'Central Idea', duration: '1.5h', status: 'in_progress'},
+      {id: '1-4', title: 'Question Answers', duration: '1.5h', status: 'pending'},
+    ]),
+    syllabusChapter('2', '02', 'Chapter 2 — Prose', '4 topics · 6 hours', 0.4, [
+      {id: '2-1', title: 'Lesson Summary', duration: '1.5h', status: 'completed'},
+      {id: '2-2', title: 'Word Meanings', duration: '1.5h', status: 'in_progress'},
+      {id: '2-3', title: 'Grammar in Context', duration: '1.5h', status: 'pending'},
+      {id: '2-4', title: 'Creative Response', duration: '1.5h', status: 'pending'},
+    ]),
+  ]),
+  syllabusSubject('3', 'Mathematics', 0.69, 20, 30, [
+    syllabusChapter('1', '01', 'Chapter 1 — Integers', '5 topics · 8 hours', 0.8, [
+      {id: '1-1', title: 'Positive & Negative Numbers', duration: '1.5h', status: 'completed'},
+      {id: '1-2', title: 'Number Line', duration: '1.5h', status: 'completed'},
+      {id: '1-3', title: 'Addition of Integers', duration: '1.5h', status: 'completed'},
+      {id: '1-4', title: 'Subtraction of Integers', duration: '2h', status: 'in_progress'},
+      {id: '1-5', title: 'Word Problems', duration: '1.5h', status: 'pending'},
+    ]),
+    syllabusChapter('2', '02', 'Chapter 2 — Algebra Basics', '5 topics · 8 hours', 0.5, [
+      {id: '2-1', title: 'Algebraic Expressions', duration: '1.5h', status: 'completed'},
+      {id: '2-2', title: 'Like and Unlike Terms', duration: '1.5h', status: 'completed'},
+      {id: '2-3', title: 'Simplification', duration: '2h', status: 'in_progress'},
+      {id: '2-4', title: 'Simple Equations', duration: '1.5h', status: 'pending'},
+      {id: '2-5', title: 'Practice Exercise', duration: '1.5h', status: 'pending'},
+    ]),
+  ]),
+  syllabusSubject('4', 'General Science', 0.5, 12, 24, [
+    syllabusChapter('1', '01', 'Chapter 1 — Matter', '4 topics · 6 hours', 0.55, [
+      {id: '1-1', title: 'States of Matter', duration: '1.5h', status: 'completed'},
+      {id: '1-2', title: 'Solids, Liquids and Gases', duration: '1.5h', status: 'completed'},
+      {id: '1-3', title: 'Change of State', duration: '1.5h', status: 'in_progress'},
+      {id: '1-4', title: 'Physical and Chemical Changes', duration: '1.5h', status: 'pending'},
+    ]),
+    syllabusChapter('2', '02', 'Chapter 2 — Energy', '4 topics · 6 hours', 0.35, [
+      {id: '2-1', title: 'Forms of Energy', duration: '1.5h', status: 'completed'},
+      {id: '2-2', title: 'Heat and Light', duration: '1.5h', status: 'in_progress'},
+      {id: '2-3', title: 'Sound', duration: '1.5h', status: 'pending'},
+      {id: '2-4', title: 'Energy Conservation', duration: '1.5h', status: 'pending'},
+    ]),
+  ]),
+  syllabusSubject('5', 'Computer', 0.73, 10, 14, [
+    syllabusChapter('1', '01', 'Chapter 1 — Computer Basics', '4 topics · 6 hours', 0.8, [
+      {id: '1-1', title: 'What is a Computer', duration: '1.5h', status: 'completed'},
+      {id: '1-2', title: 'Hardware and Software', duration: '1.5h', status: 'completed'},
+      {id: '1-3', title: 'Input and Output Devices', duration: '1.5h', status: 'completed'},
+      {id: '1-4', title: 'Uses of Computer', duration: '1.5h', status: 'in_progress'},
+    ]),
+  ]),
+  syllabusSubject('6', 'Islamiat', 0.61, 9, 14, [
+    syllabusChapter('1', '01', 'Chapter 1 — Seerah', '3 topics · 5 hours', 0.65, [
+      {id: '1-1', title: 'Birth of the Holy Prophet (PBUH)', duration: '2h', status: 'completed'},
+      {id: '1-2', title: 'Life in Makkah', duration: '1.5h', status: 'in_progress'},
+      {id: '1-3', title: 'Hijrah to Madinah', duration: '1.5h', status: 'pending'},
+    ]),
+  ]),
+];
+
+export const getClassGrade = className => {
+  const grade = Number(String(className || '').match(/\d+/)?.[0] || 0);
+  return Number.isFinite(grade) ? grade : 0;
+};
+
+export const getSyllabusListForClass = className => {
+  const grade = getClassGrade(className);
+
+  if (grade <= 0) {
+    return SYLLABUS_LIST;
+  }
+  if (grade <= 2) {
+    return SYLLABUS_CLASS_2;
+  }
+  if (grade <= 4) {
+    return SYLLABUS_CLASS_4;
+  }
+  if (grade <= 6) {
+    return SYLLABUS_CLASS_6;
+  }
+
+  return SYLLABUS_LIST;
+};
 
 export const SYLLABUS_DATA = SYLLABUS_LIST[0];
 
@@ -899,8 +1195,8 @@ export const STUDENT_RESULTS = {
     ],
   },
   [Strings.term3]: {
-    overall: 'A',
-    hint: 'Great Progress!',
+    overall: 'A+',
+    hint: 'Excellent work!',
     subjects: [
       {id: '1', name: 'Mathematics', grade: 'A+', score: 94, color: '#16A34A'},
       {id: '2', name: 'Science', grade: 'A+', score: 93, color: '#2563EB'},
@@ -910,3 +1206,98 @@ export const STUDENT_RESULTS = {
     ],
   },
 };
+
+export const STUDENT_NOTIFICATIONS = [
+  {
+    id: 's1',
+    type: 'academic',
+    title: 'New assignment uploaded',
+    message:
+      'Mathematics Chapter 4 assignment is now in your portal. Submit the PDF before 18 Sep, 11:59 PM.',
+    date: 'Today',
+    time: '10 min ago',
+    icon: 'document-text-outline',
+    iconBg: '#EEF2FF',
+    iconColor: '#2563EB',
+    unread: true,
+  },
+  {
+    id: 's2',
+    type: 'academic',
+    title: 'Upcoming exam reminder',
+    message:
+      'Science mid-term is on 22 Sep at 9:00 AM in Hall B. Revise chapters 1–3 and bring your admit card.',
+    date: 'Today',
+    time: '1h ago',
+    icon: 'calendar-outline',
+    iconBg: '#FFF4E5',
+    iconColor: '#EA580C',
+    unread: true,
+  },
+  {
+    id: 's3',
+    type: 'general',
+    title: 'Fee payment due',
+    message:
+      'September tuition fee of Rs. 8,500 is due by 20 Sep. Pay from the Fee section to avoid a late fine.',
+    date: 'Today',
+    time: '3h ago',
+    icon: 'card-outline',
+    iconBg: '#FCE7F3',
+    iconColor: '#DB2777',
+    unread: true,
+  },
+  {
+    id: 's4',
+    type: 'academic',
+    title: 'Online class starting soon',
+    message:
+      'Algebra — Linear Equations starts in 15 minutes. Join from Online Classes to avoid missing attendance.',
+    date: 'Today',
+    time: '4h ago',
+    icon: 'videocam-outline',
+    iconBg: '#CFFAFE',
+    iconColor: '#0891B2',
+    unread: true,
+  },
+  {
+    id: 's5',
+    type: 'academic',
+    title: 'Attendance update',
+    message:
+      'Your September attendance is 88%. One leave is marked for 12 Sep. Contact class teacher for a correction.',
+    date: 'Yesterday',
+    time: 'Yesterday',
+    icon: 'checkmark-circle-outline',
+    iconBg: '#E8F8EE',
+    iconColor: '#16A34A',
+    unread: false,
+  },
+  {
+    id: 's6',
+    type: 'academic',
+    title: 'Exam result published',
+    message:
+      'Term-1 results are live. Overall grade: A (92%). Open Results to view subject-wise marks.',
+    date: '13 Sep',
+    time: '2d ago',
+    icon: 'trophy-outline',
+    iconBg: '#F3E8FF',
+    iconColor: '#7C3AED',
+    unread: false,
+  },
+  {
+    id: 's7',
+    type: 'general',
+    title: 'School holiday announcement',
+    message:
+      'School will remain closed on 16 Sep for a public holiday. Regular classes resume on 17 Sep.',
+    date: '12 Sep',
+    time: '3d ago',
+    icon: 'sunny-outline',
+    iconBg: '#CCFBF1',
+    iconColor: '#0D9488',
+    unread: false,
+  },
+];
+

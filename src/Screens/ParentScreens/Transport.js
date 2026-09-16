@@ -27,11 +27,8 @@ const INFO_ROWS = [
 ];
 
 const Transport = () => {
-  const {activeStudent, transportDetails} = useRoleData();
+  const {activeStudent, transportDetails, classLabel} = useRoleData();
   const transport = transportDetails || {};
-  const classLabel = activeStudent?.section
-    ? `${activeStudent.className} - ${activeStudent.section}`
-    : activeStudent?.classBadge;
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -91,7 +88,11 @@ const Transport = () => {
 
         <View style={styles.notifyCard}>
           <View style={styles.notifyIcon}>
-            <Icon name="notifications" size={wp(4.5)} color={Colors.iconOrange} />
+            <Image
+              source={Images.notification}
+              style={styles.notifyImage}
+              resizeMode="contain"
+            />
           </View>
           <Text style={styles.notifyText}>{Strings.busNotify}</Text>
         </View>
@@ -239,6 +240,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: wp(3),
+  },
+  notifyImage: {
+    width: wp(4.5),
+    height: wp(4.5),
+    tintColor: Colors.iconOrange,
   },
   notifyText: {
     flex: 1,

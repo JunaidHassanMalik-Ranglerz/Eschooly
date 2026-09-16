@@ -1,7 +1,8 @@
 import React from 'react';
 import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {Colors} from '../../Constants/Colors';
-import {ocText} from './onlineClassText';
+import {Fonts} from '../../Constants/Fonts';
+import {Fontsize} from '../../Constants/Fontsize';
 import {wp, hp} from '../../Constants/Responsive';
 
 const ClassSectionHeader = props => {
@@ -24,16 +25,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: hp(1.2),
-    marginTop: hp(0.5),
+    marginBottom: hp(1.3),
+    marginTop: hp(0.4),
   },
   title: {
-    ...ocText,
-    color: Colors.grayText,
-    letterSpacing: 0.8,
+    color: Colors.black,
+    fontFamily: Fonts.bold,
+    fontSize: Fontsize.sm,
   },
   link: {
-    ...ocText,
-    color: Colors.onlineClassviewsColor,
+    color: Colors.primary,
+    fontFamily: Fonts.medium,
+    fontSize: Fontsize.xs1,
   },
 });

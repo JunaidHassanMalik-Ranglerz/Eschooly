@@ -44,8 +44,8 @@ const styles = StyleSheet.create({
   label: {
     color: Colors.grayText,
     fontFamily: Fonts.medium,
-    fontSize: Fontsize.xs2,
-    letterSpacing: 1,
+    fontSize: Fontsize.xs1,
+    letterSpacing: 0.8,
     marginBottom: hp(1.2),
     textTransform: 'uppercase',
   },

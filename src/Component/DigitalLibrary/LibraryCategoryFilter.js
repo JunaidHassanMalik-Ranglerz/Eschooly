@@ -20,7 +20,9 @@ const LibraryCategoryFilter = ({categories, selected, onSelect}) => {
             activeOpacity={0.8}
             style={[styles.chip, active && styles.chipActive]}
             onPress={() => onSelect(item.id)}>
-            <Text style={[styles.chipText, active && styles.chipTextActive]}>
+            <Text
+              style={[styles.chipText, active && styles.chipTextActive]}
+              allowFontScaling={false}>
               {item.label}
             </Text>
           </TouchableOpacity>
@@ -37,16 +39,22 @@ const styles = StyleSheet.create({
     marginBottom: hp(2),
   },
   list: {
-    paddingRight: wp(2),
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: hp(0.2),
     gap: wp(2),
   },
   chip: {
     backgroundColor: Colors.cardBg,
     borderRadius: wp(5),
+    minHeight: hp(4.6),
     paddingHorizontal: wp(4),
     paddingVertical: hp(1),
     borderWidth: 1,
     borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   chipActive: {
     backgroundColor: Colors.primary,
@@ -56,6 +64,10 @@ const styles = StyleSheet.create({
     color: Colors.black,
     fontFamily: Fonts.semibold,
     fontSize: Fontsize.xs1,
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    includeFontPadding: false,
+    lineHeight: Fontsize.sm,
   },
   chipTextActive: {
     color: Colors.white,

@@ -30,13 +30,13 @@ const styles = StyleSheet.create({
   label: {
     color: Colors.grayText,
     fontFamily: Fonts.regular,
-    fontSize: Fontsize.small,
+    fontSize: Fontsize.xs1,
     flex: 1,
   },
   value: {
     color: Colors.black,
     fontFamily: Fonts.semibold,
-    fontSize: Fontsize.small,
+    fontSize: Fontsize.xs1,
     textAlign: 'right',
     flex: 1,
   },

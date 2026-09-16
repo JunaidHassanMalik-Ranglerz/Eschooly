@@ -16,6 +16,7 @@ import {
 import {wp, hp} from '../../Constants/Responsive';
 import MainHeaderComponent from '../../Component/MainHeaderComponent';
 import {useRoleData} from '../../hooks/useRoleData';
+import {navigateToChat} from '../../Navigations/navigationHelpers';
 
 const Teacher = () => {
   const navigation = useNavigation();
@@ -37,29 +38,16 @@ const Teacher = () => {
       return;
     }
 
-    const chatUser = {
-      name: teacher.name,
-      initials: teacher.initials,
-      role: teacher.subject
-        ? `${teacher.subject} Teacher`
-        : Strings.classTeacher,
-    };
-
-    const parentNav = navigation.getParent();
-    if (parentNav) {
-      parentNav.navigate({
-        name: 'BottomTab',
-        params: {
-          screen: 'Chat',
-          params: {chatUser},
-          merge: true,
-        },
-        merge: true,
-      });
-      return;
-    }
-
-    navigation.navigate('Chat', {chatUser});
+    navigateToChat(navigation, {
+      chatUser: {
+        id: teacher.id,
+        name: teacher.name,
+        initials: teacher.initials,
+        role: teacher.subject
+          ? `${teacher.subject} Teacher`
+          : Strings.classTeacher,
+      },
+    });
   };
 
   return (

@@ -2,8 +2,9 @@ import React from 'react';
 import {Image, StyleSheet, Text, View} from 'react-native';
 import {Images} from '../../Assets';
 import {Colors} from '../../Constants/Colors';
+import {Fonts} from '../../Constants/Fonts';
+import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
-import {ocTitle16} from './onlineClassText';
 import {wp, hp} from '../../Constants/Responsive';
 
 const ZoomInfoBanner = () => {
@@ -33,7 +34,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.duesCardBg,
-    borderRadius: wp(4),
+    borderRadius: wp(5),
     padding: wp(4),
     marginTop: hp(1),
   },
@@ -46,13 +47,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    ...ocTitle16,
     color: Colors.black,
-    marginBottom: hp(0.4),
+    fontFamily: Fonts.bold,
+    fontSize: Fontsize.xs5,
+    marginBottom: hp(0.35),
   },
   desc: {
-    ...ocTitle16,
     color: Colors.grayText,
-    lineHeight: 22,
+    fontFamily: Fonts.regular,
+    fontSize: Fontsize.xs1,
+    lineHeight: Fontsize.m,
   },
 });

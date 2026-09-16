@@ -13,11 +13,9 @@ import LibraryProfileCard from '../../Component/DigitalLibrary/LibraryProfileCar
 import LibrarySearchBar from '../../Component/DigitalLibrary/LibrarySearchBar';
 import LibraryCategoryFilter from '../../Component/DigitalLibrary/LibraryCategoryFilter';
 import LibraryResourceCard from '../../Component/DigitalLibrary/LibraryResourceCard';
-import ClassCategoryCard from '../../Component/DigitalLibrary/ClassCategoryCard';
 import {useProfileStudent} from '../../hooks/useProfileStudent';
 import {
   LIBRARY_CATEGORIES,
-  LIBRARY_CLASS_CATEGORIES,
   LIBRARY_RESOURCES,
   getFilteredResources,
 } from '../../Constants/DigitalLibraryData';
@@ -27,7 +25,6 @@ import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
 import {MyStyling} from '../../Constants/MyStyling';
 import {wp, hp} from '../../Constants/Responsive';
-import {downloadFile} from '../../utils/downloadFile';
 
 const DigitalLibrary = () => {
   const navigation = useNavigation();
@@ -45,20 +42,6 @@ const DigitalLibrary = () => {
       pdfUrl: item.pdfUrl,
       title: item.title,
     });
-  };
-
-  const handleDownload = async item => {
-    if (!item.pdfUrl) {
-      return;
-    }
-
-    try {
-      await downloadFile({
-        url: item.pdfUrl,
-        fileName: item.title,
-        title: item.title,
-      });
-    } catch (error) {}
   };
 
   return (
@@ -99,7 +82,6 @@ const DigitalLibrary = () => {
               key={item.id}
               item={item}
               onPress={handleOpen}
-              onDownload={handleDownload}
             />
           ))}
         </View>
@@ -107,18 +89,6 @@ const DigitalLibrary = () => {
         {books.length === 0 ? (
           <Text style={styles.emptyText}>{Strings.libraryNoResults}</Text>
         ) : null}
-
-        <Text style={[styles.sectionTitle, styles.classTitle]}>
-          {Strings.classWiseCategories}
-        </Text>
-
-        {LIBRARY_CLASS_CATEGORIES.map(item => (
-          <ClassCategoryCard
-            key={item.id}
-            item={item}
-            onPress={() => {}}
-          />
-        ))}
       </ScrollView>
     </SafeAreaView>
   );
@@ -156,9 +126,6 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     marginBottom: hp(2),
-  },
-  classTitle: {
-    marginBottom: hp(1.5),
   },
   emptyText: {
     color: Colors.grayText,

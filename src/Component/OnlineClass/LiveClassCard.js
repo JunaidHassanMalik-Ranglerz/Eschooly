@@ -4,8 +4,9 @@ import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {Images} from '../../Assets';
 import {Colors} from '../../Constants/Colors';
+import {Fonts} from '../../Constants/Fonts';
+import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
-import {ocText, ocLiveTitle} from './onlineClassText';
 import {wp, hp} from '../../Constants/Responsive';
 
 const LiveClassCard = props => {
@@ -87,20 +88,21 @@ export default LiveClassCard;
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: wp(4),
-    marginBottom: hp(2.5),
+    borderRadius: wp(5),
+    marginBottom: hp(2.2),
     backgroundColor: Colors.white,
-    elevation: 6,
+    overflow: 'hidden',
+    elevation: 4,
     shadowColor: Colors.black,
-    shadowOffset: {width: 0, height: hp(0.5)},
-    shadowOpacity: 0.12,
-    shadowRadius: wp(2),
+    shadowOffset: {width: 0, height: 6},
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
   },
   topPart: {
     padding: wp(4),
     paddingBottom: hp(2),
-    borderTopLeftRadius: wp(4),
-    borderTopRightRadius: wp(4),
+    borderTopLeftRadius: wp(5),
+    borderTopRightRadius: wp(5),
   },
   topRow: {
     flexDirection: 'row',
@@ -124,10 +126,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   zoomText: {
-    ...ocText,
     color: Colors.whiteMuted85,
-    letterSpacing: 0.8,
+    fontFamily: Fonts.medium,
+    fontSize: Fontsize.xs0,
+    letterSpacing: 0.6,
     flex: 1,
+    includeFontPadding: false,
   },
   liveBadge: {
     flexDirection: 'row',
@@ -145,18 +149,22 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
   },
   liveText: {
-    ...ocText,
     color: Colors.white,
-    letterSpacing: 0.5,
+    fontFamily: Fonts.semibold,
+    fontSize: Fontsize.xxm,
+    letterSpacing: 0.4,
+    includeFontPadding: false,
   },
   title: {
-    ...ocLiveTitle,
     color: Colors.white,
+    fontFamily: Fonts.bold,
+    fontSize: Fontsize.ml,
     marginBottom: hp(0.4),
   },
   classInfo: {
-    ...ocText,
     color: Colors.whiteMuted85,
+    fontFamily: Fonts.regular,
+    fontSize: Fontsize.xs1,
     marginBottom: hp(1.5),
   },
   infoRow: {
@@ -171,9 +179,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   infoText: {
-    ...ocText,
     color: Colors.whiteMuted85,
+    fontFamily: Fonts.medium,
+    fontSize: Fontsize.xs1,
     flex: 1,
+    includeFontPadding: false,
   },
   bottomPart: {
     flexDirection: 'row',
@@ -181,8 +191,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
     padding: wp(3),
     gap: wp(2),
-    borderBottomLeftRadius: wp(4),
-    borderBottomRightRadius: wp(4),
+    borderBottomLeftRadius: wp(5),
+    borderBottomRightRadius: wp(5),
     borderTopWidth: 1,
     borderTopColor: Colors.border,
   },
@@ -193,12 +203,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: Colors.primary,
     borderRadius: wp(8),
-    paddingVertical: hp(1.4),
+    paddingVertical: hp(1.35),
     gap: wp(2),
   },
   joinText: {
-    ...ocText,
     color: Colors.white,
+    fontFamily: Fonts.semibold,
+    fontSize: Fontsize.xs1,
+    includeFontPadding: false,
   },
   noteBtn: {
     width: wp(12),

@@ -35,7 +35,7 @@ export const LIBRARY_RESOURCES = [
   },
   {
     id: '3',
-    title: 'Physics Chapter 5',
+    title: 'Laws of Motion Notes',
     subtitle: 'Science - Class 10',
     fileType: 'PDF',
     fileSize: '3.8 MB',
@@ -64,7 +64,7 @@ export const LIBRARY_RESOURCES = [
 export const LIBRARY_CLASS_CATEGORIES = [
   {
     id: '1',
-    title: 'Class 10A',
+    title: 'Class 7 - B',
     subtitle: '24 resources - Current class',
     resourceCount: 24,
     isCurrent: true,

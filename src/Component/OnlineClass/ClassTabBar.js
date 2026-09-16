@@ -1,7 +1,8 @@
 import React from 'react';
 import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {Colors} from '../../Constants/Colors';
-import {ocText} from './onlineClassText';
+import {Fonts} from '../../Constants/Fonts';
+import {Fontsize} from '../../Constants/Fontsize';
 import {wp, hp} from '../../Constants/Responsive';
 
 const ClassTabBar = props => {
@@ -38,23 +39,25 @@ export default ClassTabBar;
 const styles = StyleSheet.create({
   wrap: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: wp(2),
     marginBottom: hp(2),
   },
   tab: {
     flex: 1,
+    minHeight: hp(4.8),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: hp(1.3),
-    borderRadius: wp(3),
+    paddingVertical: hp(1.15),
+    borderRadius: wp(5),
     gap: wp(1.5),
   },
   tabActive: {
     backgroundColor: Colors.primary,
   },
   tabInactive: {
-    backgroundColor: Colors.lightGray,
+    backgroundColor: Colors.cardBg,
   },
   dot: {
     width: wp(1.8),
@@ -63,13 +66,16 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.red,
   },
   tabText: {
-    ...ocText,
-    color: Colors.black,
+    color: Colors.grayText,
+    fontFamily: Fonts.semibold,
+    fontSize: Fontsize.xs1,
+    textAlign: 'center',
+    includeFontPadding: false,
   },
   tabTextActive: {
     color: Colors.white,
   },
   endedText: {
-    color: Colors.EndColor,
+    color: Colors.mutedText,
   },
 });

@@ -11,6 +11,7 @@ import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
+import NotificationBell from '../../Component/NotificationBell';
 import StudentHubCard from '../../Component/Student/StudentHubCard';
 import {Colors} from '../../Constants/Colors';
 import {Fonts} from '../../Constants/Fonts';
@@ -75,16 +76,13 @@ const HUB_ITEMS = [
 
 const StudentHome = () => {
   const navigation = useNavigation();
-  const {profilePerson} = useRoleData();
+  const {profilePerson, unreadNotificationCount, classLabel} = useRoleData();
   const avatarInitials = (profilePerson.label || '')
     .split(' ')
     .map(part => part[0])
     .join('')
     .slice(0, 2)
     .toUpperCase();
-  const classLabel = profilePerson.section
-    ? `${profilePerson.className}-${profilePerson.section}`
-    : profilePerson.classBadge;
 
   useLayoutEffect(() => {
     setDarkStatusBar();
@@ -128,6 +126,7 @@ const StudentHome = () => {
                 {classLabel}
               </Text>
             </View>
+            <NotificationBell count={unreadNotificationCount} />
           </View>
         </LinearGradient>
 
@@ -207,6 +206,7 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
   avatar: {
     width: wp(13.5),
@@ -224,6 +224,7 @@ const styles = StyleSheet.create({
   },
   headerText: {
     flex: 1,
+    marginRight: wp(3),
   },
   greeting: {
     color: Colors.whiteMuted85,

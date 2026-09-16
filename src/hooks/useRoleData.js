@@ -5,6 +5,7 @@ import {
   PARENT_DATA,
   PARENT_PROFILE_MENU_LIST,
   PROFILE_MENU_LIST,
+  STUDENT_NOTIFICATIONS,
   STUDENT_TIMETABLE,
 } from '../Constants/dummydata';
 import {LINKED_STUDENTS, Strings} from '../Constants/Strings';
@@ -31,7 +32,15 @@ export const useRoleData = () => {
     PARENT_CHILDREN.find(item => item.value === selectedChildId) ||
     PARENT_CHILDREN[0];
 
-  const activeStudent = isParent ? activeChild : LOGGED_IN_STUDENT;
+  const selectedStudent = isParent ? activeChild : LOGGED_IN_STUDENT;
+  const classLabel =
+    selectedStudent?.className && selectedStudent?.section
+      ? `${selectedStudent.className}${selectedStudent.section}`
+      : selectedStudent?.classBadge || '';
+  const activeStudent = {
+    ...selectedStudent,
+    classLabel,
+  };
 
   return useMemo(
     () => ({
@@ -39,6 +48,7 @@ export const useRoleData = () => {
       isParent,
       isStudent,
       activeStudent,
+      classLabel,
       childList: isParent ? PARENT_CHILDREN : LINKED_STUDENTS,
       selectedChildId,
       setSelectedChildId,
@@ -50,7 +60,7 @@ export const useRoleData = () => {
         ? PARENT_NOTIFICATIONS.filter(
             item => item.unread && item.childIds.includes(selectedChildId),
           ).length
-        : 0,
+        : STUDENT_NOTIFICATIONS.filter(item => item.unread).length,
       schedule: isParent ? getChildRecords(PARENT_SCHEDULE, selectedChildId) : [],
       timetable: isParent
         ? getChildRecords(PARENT_TIMETABLE, selectedChildId)
@@ -73,7 +83,7 @@ export const useRoleData = () => {
         ? PARENT_NOTIFICATIONS.filter(item =>
             item.childIds.includes(selectedChildId),
           )
-        : [],
+        : STUDENT_NOTIFICATIONS,
       feeDetails: isParent
         ? PARENT_FEES[selectedChildId] || PARENT_FEES['1']
         : null,
@@ -81,6 +91,6 @@ export const useRoleData = () => {
         ? PARENT_TRANSPORT[selectedChildId] || PARENT_TRANSPORT['1']
         : null,
     }),
-    [role, isParent, isStudent, activeStudent, selectedChildId, setSelectedChildId],
+    [role, isParent, isStudent, activeStudent, classLabel, selectedChildId, setSelectedChildId],
   );
 };

@@ -24,14 +24,6 @@ import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
 import {wp, hp} from '../../Constants/Responsive';
 
-const STUDENT_MENU_META = {
-  mySyllabus: {icon: 'book-outline', bg: Colors.blueSoft, color: Colors.iconBlue},
-  onlineExams: {icon: 'clipboard-outline', bg: Colors.pinkSoft, color: Colors.iconPink},
-  onlineClasses: {icon: 'videocam-outline', bg: Colors.cyanSoft, color: Colors.iconCyan},
-  digitalLibrary: {icon: 'library-outline', bg: Colors.orangeSoft, color: Colors.iconOrange},
-  studentIdCard: {icon: 'id-card-outline', bg: Colors.tealSoft, color: Colors.iconTeal},
-};
-
 const DETAIL_ICONS = {
   cnic: 'card-outline',
   email: 'mail-outline',
@@ -46,7 +38,7 @@ const DETAIL_ICONS = {
 
 const MyProfile = ({isTab = false}) => {
   const navigation = useNavigation();
-  const {profilePerson, profileDetails, isParent, menuList} = useProfileStudent();
+  const {profilePerson, profileDetails, isParent} = useProfileStudent();
   const {childList, setSelectedChildId} = useRoleData();
   const [showChildren, setShowChildren] = useState(false);
   const title = isParent ? Strings.parentAccount : Strings.myProfile;
@@ -56,14 +48,19 @@ const MyProfile = ({isTab = false}) => {
     .join('')
     .slice(0, 2)
     .toUpperCase();
-  const shortcuts = (menuList || []).filter(
-    item =>
-      item.screen && item.value !== 'myProfile' && item.value !== 'menu',
-  );
 
   const openChildProfile = child => {
     setSelectedChildId(child.value);
     navigation.navigate('ChildProfile');
+  };
+
+  const openUpdatePassword = () => {
+    const parentNav = navigation.getParent();
+    if (parentNav) {
+      parentNav.navigate('UpdatePassword');
+      return;
+    }
+    navigation.navigate('UpdatePassword');
   };
 
   const handleLogout = () => {
@@ -88,7 +85,9 @@ const MyProfile = ({isTab = false}) => {
       <MainHeaderComponent
         title={title}
         notificationCount={1}
-        hideBack={isTab}
+        onBackPress={
+          isTab ? () => navigation.navigate('Home') : undefined
+        }
       />
 
       <ScrollView
@@ -203,44 +202,24 @@ const MyProfile = ({isTab = false}) => {
               </View>
             ) : null}
           </View>
-        ) : (
-          <View style={styles.moreWrap}>
-            <Text style={styles.sectionTitle}>{Strings.quickAccess}</Text>
-            <View style={styles.detailsCard}>
-              {shortcuts.map((item, index) => {
-                const meta = STUDENT_MENU_META[item.value] || {
-                  icon: 'grid-outline',
-                  bg: Colors.blueSoft,
-                  color: Colors.primary,
-                };
-                return (
-                  <Pressable
-                    key={item.value}
-                    style={[
-                      styles.detailRow,
-                      index === shortcuts.length - 1 && styles.detailRowLast,
-                    ]}
-                    onPress={() => navigation.navigate(item.screen)}
-                    android_ripple={{color: Colors.lightGray}}>
-                    <View style={[styles.detailIcon, {backgroundColor: meta.bg}]}>
-                      <Icon name={meta.icon} size={wp(5)} color={meta.color} />
-                    </View>
-                    <View style={styles.detailText}>
-                      <Text style={styles.shortcutTitle} numberOfLines={1}>
-                        {item.label}
-                      </Text>
-                    </View>
-                    <Icon
-                      name="chevron-forward"
-                      size={wp(4.5)}
-                      color={Colors.grayText}
-                    />
-                  </Pressable>
-                );
-              })}
+        ) : null}
+
+        <View style={styles.moreWrap}>
+          <Pressable
+            style={styles.moreBtn}
+            onPress={openUpdatePassword}
+            android_ripple={{color: Colors.lightGray}}>
+            <View style={[styles.moreIcon, {backgroundColor: Colors.orangeSoft}]}>
+              <Icon name="lock-closed-outline" size={wp(5.2)} color={Colors.iconOrange} />
             </View>
-          </View>
-        )}
+            <Text style={styles.moreTitle}>{Strings.updatePassword}</Text>
+            <Icon
+              name="chevron-forward"
+              size={wp(4.5)}
+              color={Colors.grayText}
+            />
+          </Pressable>
+        </View>
 
         <Btn
           variant="outline"
@@ -376,11 +355,6 @@ const styles = StyleSheet.create({
   },
   moreTitle: {
     flex: 1,
-    color: Colors.black,
-    fontFamily: Fonts.semibold,
-    fontSize: Fontsize.xs5,
-  },
-  shortcutTitle: {
     color: Colors.black,
     fontFamily: Fonts.semibold,
     fontSize: Fontsize.xs5,

@@ -73,10 +73,7 @@ const ExamScheduleCard = ({item}) => {
 };
 
 const ExamSchedule = () => {
-  const {activeStudent, examSchedule} = useRoleData();
-  const classLabel = activeStudent?.section
-    ? `${activeStudent.className} - ${activeStudent.section}`
-    : activeStudent?.classBadge;
+  const {activeStudent, examSchedule, classLabel} = useRoleData();
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>

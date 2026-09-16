@@ -7,41 +7,57 @@ import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
 import {wp, hp} from '../../Constants/Responsive';
 
-const CHART_BARS = [
-  {height: 0.42, opacity: 0.55},
-  {height: 0.58, opacity: 0.7},
-  {height: 0.78, opacity: 0.85},
-  {height: 1, opacity: 1},
-];
+const GRADE_CHARTS = {
+  'A+': {
+    bars: [0.58, 0.74, 0.9, 1],
+    opacities: [0.7, 0.82, 0.92, 1],
+  },
+  A: {
+    bars: [0.42, 0.58, 0.78, 0.92],
+    opacities: [0.55, 0.7, 0.85, 1],
+  },
+  'A-': {
+    bars: [0.3, 0.44, 0.58, 0.72],
+    opacities: [0.45, 0.58, 0.72, 0.88],
+  },
+  'B+': {
+    bars: [0.24, 0.36, 0.48, 0.6],
+    opacities: [0.4, 0.52, 0.66, 0.8],
+  },
+};
 
-const OverallGradeCard = ({grade, hint}) => (
-  <LinearGradient
-    colors={['#E7F0FF', '#C9DCFB']}
-    start={{x: 0, y: 0}}
-    end={{x: 1, y: 1}}
-    style={styles.card}>
-    <View style={styles.copy}>
-      <Text style={styles.label}>{Strings.overallGrade}</Text>
-      <Text style={styles.grade}>{grade}</Text>
-      <Text style={styles.hint}>{hint || Strings.greatProgress}</Text>
-    </View>
+const OverallGradeCard = ({grade, hint}) => {
+  const chart = GRADE_CHARTS[grade] || GRADE_CHARTS.A;
 
-    <View style={styles.chart}>
-      {CHART_BARS.map((bar, index) => (
-        <View
-          key={index}
-          style={[
-            styles.bar,
-            {
-              height: hp(8.8) * bar.height,
-              opacity: bar.opacity,
-            },
-          ]}
-        />
-      ))}
-    </View>
-  </LinearGradient>
-);
+  return (
+    <LinearGradient
+      colors={['#E7F0FF', '#C9DCFB']}
+      start={{x: 0, y: 0}}
+      end={{x: 1, y: 1}}
+      style={styles.card}>
+      <View style={styles.copy}>
+        <Text style={styles.label}>{Strings.overallGrade}</Text>
+        <Text style={styles.grade}>{grade}</Text>
+        <Text style={styles.hint}>{hint || Strings.greatProgress}</Text>
+      </View>
+
+      <View style={styles.chart}>
+        {chart.bars.map((height, index) => (
+          <View
+            key={index}
+            style={[
+              styles.bar,
+              {
+                height: hp(8.8) * height,
+                opacity: chart.opacities[index],
+              },
+            ]}
+          />
+        ))}
+      </View>
+    </LinearGradient>
+  );
+};
 
 export default OverallGradeCard;
 

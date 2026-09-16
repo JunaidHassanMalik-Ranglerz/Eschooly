@@ -1,7 +1,7 @@
 import React from 'react';
-import {StyleSheet, TouchableOpacity, View} from 'react-native';
+import {Image, StyleSheet, TouchableOpacity, View} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import {Images} from '../Assets';
 import {Colors} from '../Constants/Colors';
 import {wp} from '../Constants/Responsive';
 import {navigateToNotification} from '../Navigations/navigationHelpers';
@@ -17,10 +17,10 @@ const NotificationBell = ({count, onPress, style}) => {
       style={[styles.bellWrap, style]}
       activeOpacity={0.8}
       onPress={onPress || (() => navigateToNotification(navigation))}>
-      <Icon
-        name="notifications-outline"
-        size={wp(5.5)}
-        color={Colors.primary}
+      <Image
+        source={Images.notification}
+        style={styles.notificationIcon}
+        resizeMode="contain"
       />
       {badgeCount > 0 ? <View style={styles.badge} /> : null}
     </TouchableOpacity>
@@ -37,6 +37,11 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.cardBg,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  notificationIcon: {
+    width: wp(5.5),
+    height: wp(5.5),
+    tintColor: Colors.primary,
   },
   badge: {
     position: 'absolute',

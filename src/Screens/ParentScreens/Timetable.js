@@ -41,15 +41,12 @@ const buildWeek = date => {
 };
 
 const Timetable = () => {
-  const {activeStudent, timetable} = useRoleData();
+  const {timetable, classLabel} = useRoleData();
   const [viewMode, setViewMode] = useState(Strings.day);
   const [currentDate, setCurrentDate] = useState(new Date(2024, 7, 12));
   const week = useMemo(() => buildWeek(currentDate), [currentDate]);
   const visibleItems = timetable.filter(item => item.subject !== 'Break');
   const list = viewMode === Strings.week ? visibleItems.slice(0, 3) : visibleItems;
-  const classLabel = activeStudent?.section
-    ? `${activeStudent.className} - ${activeStudent.section}`
-    : activeStudent?.classBadge || activeStudent?.classInfo;
 
   const changeWeek = direction => {
     const next = new Date(currentDate);
@@ -199,17 +196,24 @@ const styles = StyleSheet.create({
   dateCircle: {
     width: wp(9),
     height: wp(9),
-    borderRadius: wp(4.5),
+    borderRadius: wp(9),
+    overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: Colors.transparent,
   },
   dateCircleActive: {
     backgroundColor: Colors.primary,
+    borderRadius: wp(9),
+    overflow: 'hidden',
   },
   dateText: {
     color: Colors.black,
     fontFamily: Fonts.medium,
     fontSize: Fontsize.xs1,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
+    textAlign: 'center',
   },
   dateTextActive: {
     color: Colors.white,

@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
   },
   initials: {
     color: Colors.mutedText,
-    fontFamily: Fonts.semibold,
+    fontFamily: Fonts.bold,
     fontSize: Fontsize.sm,
   },
   info: {
@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
   name: {
     color: Colors.black,
     fontFamily: Fonts.bold,
-    fontSize: Fontsize.sm2,
+    fontSize: Fontsize.sm,
   },
   activeBadge: {
     backgroundColor: Colors.successBg,
@@ -69,12 +69,12 @@ const styles = StyleSheet.create({
   },
   activeText: {
     color: Colors.success,
-    fontFamily: Fonts.medium,
-    fontSize: Fontsize.xxs0,
+    fontFamily: Fonts.regular,
+    fontSize: Fontsize.xs1,
   },
   meta: {
     color: Colors.grayText,
     fontFamily: Fonts.regular,
-    fontSize: Fontsize.small,
+    fontSize: Fontsize.xs1,
   },
 });

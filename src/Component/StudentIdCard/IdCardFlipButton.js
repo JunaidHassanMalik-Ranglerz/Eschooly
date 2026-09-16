@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
   text: {
     color: Colors.linkBlue,
     fontFamily: Fonts.medium,
-    fontSize: Fontsize.small,
+    fontSize: Fontsize.xs1,
     marginLeft: wp(1.5),
   },
 });

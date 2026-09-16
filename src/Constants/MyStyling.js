@@ -16,26 +16,26 @@ export const MyStyling = {
 };
 
 export const setDarkStatusBar = () => {
-  StatusBar.setBarStyle('dark-content', true);
+  StatusBar.setBarStyle('dark-content', false);
   if (Platform.OS === 'android') {
     StatusBar.setTranslucent(false);
-    StatusBar.setBackgroundColor(Colors.white, true);
+    StatusBar.setBackgroundColor(Colors.white, false);
   }
 };
 
 export const setBlueStatusBar = () => {
-  StatusBar.setBarStyle('light-content', true);
+  StatusBar.setBarStyle('light-content', false);
   if (Platform.OS === 'android') {
     StatusBar.setTranslucent(false);
-    StatusBar.setBackgroundColor(Colors.BlueBackground, true);
+    StatusBar.setBackgroundColor(Colors.BlueBackground, false);
   }
 };
 
 export const setSplashStatusBar = () => {
-  StatusBar.setBarStyle('light-content', true);
+  StatusBar.setBarStyle('light-content', false);
   if (Platform.OS === 'android') {
     StatusBar.setTranslucent(true);
-    StatusBar.setBackgroundColor(Colors.transparent, true);
+    StatusBar.setBackgroundColor(Colors.transparent, false);
   }
 };
 
@@ -52,13 +52,38 @@ export const getActiveRouteName = state => {
   return route.name;
 };
 
-export const applyStatusBarForRoute = routeName => {
+let appliedStatusBar = null;
+
+const getStatusBarAppearance = routeName => {
   if (SPLASH_STATUS_SCREENS.includes(routeName)) {
+    return 'splash';
+  }
+
+  if (BLUE_STATUS_SCREENS.includes(routeName)) {
+    return 'blue';
+  }
+
+  return 'dark';
+};
+
+export const applyStatusBarForRoute = (routeName, force = false) => {
+  if (!routeName) {
+    return;
+  }
+
+  const nextAppearance = getStatusBarAppearance(routeName);
+  if (!force && appliedStatusBar === nextAppearance) {
+    return;
+  }
+
+  appliedStatusBar = nextAppearance;
+
+  if (nextAppearance === 'splash') {
     setSplashStatusBar();
     return;
   }
 
-  if (BLUE_STATUS_SCREENS.includes(routeName)) {
+  if (nextAppearance === 'blue') {
     setBlueStatusBar();
     return;
   }

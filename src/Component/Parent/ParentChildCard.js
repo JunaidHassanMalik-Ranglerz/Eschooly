@@ -37,7 +37,10 @@ const ParentChildCard = ({
               {child.label}
             </Text>
             <Text style={styles.meta} numberOfLines={1}>
-              {child.classBadge}
+              {child.classLabel ||
+                (child.className && child.section
+                  ? `${child.className}${child.section}`
+                  : child.classBadge)}
             </Text>
             {showRoll ? (
               <Text style={styles.roll} numberOfLines={1}>

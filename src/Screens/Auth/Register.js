@@ -3,7 +3,6 @@ import {
   BackHandler,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -32,9 +31,6 @@ const Register = () => {
   const [studentId, setStudentId] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const portalLabel = isParent
-    ? Strings.parentPortalLabel
-    : Strings.studentPortalLabel;
 
   const goToHome = () => {
     navigation.getParent()?.reset({
@@ -68,6 +64,7 @@ const Register = () => {
   return (
     <View style={styles.container}>
       <StatusBar
+        animated={false}
         translucent
         backgroundColor={Colors.transparent}
         barStyle="light-content"
@@ -86,7 +83,7 @@ const Register = () => {
               compact
               showWave
               showPortalLabel
-              portalLabel={portalLabel}
+              portalLabel={Strings.learnSmarter}
               topInset={insets.top}
             />
           </View>
@@ -149,31 +146,6 @@ const Register = () => {
               style={styles.signInBtn}
               onPress={goToHome}
             />
-
-            {!isParent ? (
-              <View style={styles.studentExtras}>
-                <Pressable
-                  onPress={() => {}}
-                  hitSlop={8}>
-                  <Text style={styles.forgotText}>{Strings.forgotPassword}</Text>
-                </Pressable>
-
-                <View style={styles.orRow}>
-                  <View style={styles.orLine} />
-                  <Text style={styles.orText}>{Strings.orContinueAs}</Text>
-                  <View style={styles.orLine} />
-                </View>
-
-                <Btn
-                  variant="outline"
-                  showIcon={false}
-                  title={Strings.continueAsGuest}
-                  style={styles.guestBtn}
-                  textStyle={styles.guestBtnText}
-                  onPress={goToHome}
-                />
-              </View>
-            ) : null}
 
             <View style={styles.footer}>
               <View style={styles.footerRow}>
@@ -287,46 +259,10 @@ const styles = StyleSheet.create({
     marginTop: hp(3),
     elevation: 4,
   },
-  studentExtras: {
-    marginTop: hp(2.2),
-    alignItems: 'center',
-  },
-  forgotText: {
-    color: Colors.primary,
-    fontFamily: Fonts.medium,
-    fontSize: Fontsize.xs1,
-  },
-  orRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: hp(2.4),
-    marginBottom: hp(0.6),
-    width: '100%',
-  },
-  orLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: Colors.border,
-  },
-  orText: {
-    color: Colors.mutedText,
-    fontFamily: Fonts.regular,
-    fontSize: Fontsize.xs0,
-    marginHorizontal: wp(3),
-  },
-  guestBtn: {
-    width: '100%',
-    marginTop: hp(0.6),
-    borderColor: Colors.primary,
-  },
-  guestBtnText: {
-    color: Colors.primary,
-    fontFamily: Fonts.medium,
-  },
   footer: {
     marginTop: 'auto',
     alignItems: 'center',
-    paddingTop: hp(6),
+    paddingTop: hp(5),
     gap: hp(1.2),
   },
   footerRow: {

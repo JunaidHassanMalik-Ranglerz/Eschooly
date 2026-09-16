@@ -1,4 +1,4 @@
-import React, {useCallback, useLayoutEffect} from 'react';
+import React, {useCallback, useLayoutEffect, useState} from 'react';
 import {
   ScrollView,
   StatusBar,
@@ -13,6 +13,7 @@ import NotificationBell from '../../Component/NotificationBell';
 import ParentChildCard from '../../Component/Parent/ParentChildCard';
 import ParentStatCard from '../../Component/Parent/ParentStatCard';
 import ScheduleItem from '../../Component/Parent/ScheduleItem';
+import ChildSwitchModal from '../../Component/Parent/ChildSwitchModal';
 import {Colors} from '../../Constants/Colors';
 import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
@@ -22,6 +23,7 @@ import {useRoleData} from '../../hooks/useRoleData';
 import {getGreeting} from '../../utils/getGreeting';
 import {LIBRARY_CLASS_CATEGORIES} from '../../Constants/DigitalLibraryData';
 import {setDarkStatusBar} from '../../Constants/MyStyling';
+import {Images} from '../../Assets';
 
 const ParentHome = () => {
   const navigation = useNavigation();
@@ -30,7 +32,11 @@ const ParentHome = () => {
     activeStudent,
     schedule,
     unreadNotificationCount,
+    childList,
+    selectedChildId,
+    setSelectedChildId,
   } = useRoleData();
+  const [switchVisible, setSwitchVisible] = useState(false);
   const todayLesson =
     schedule.find(item => item.subject === 'English') || schedule[0];
 
@@ -81,7 +87,8 @@ const ParentHome = () => {
         <View style={styles.body}>
           <ParentChildCard
             child={activeStudent}
-            onPress={() => navigation.navigate('ChildProfile')}
+            chevron="chevron-down"
+            onPress={() => setSwitchVisible(true)}
           />
 
           <View style={styles.statsGrid}>
@@ -116,7 +123,7 @@ const ParentHome = () => {
               onPress={() => navigation.navigate('ExamSchedule')}
             />
             <ParentStatCard
-              icon="megaphone-outline"
+              iconSource={Images.announcementDay}
               iconBg={Colors.blueSoft}
               iconColor={Colors.iconBlue}
               label={Strings.announcements}
@@ -144,6 +151,14 @@ const ParentHome = () => {
           {todayLesson ? <ScheduleItem item={todayLesson} /> : null}
         </View>
       </ScrollView>
+
+      <ChildSwitchModal
+        visible={switchVisible}
+        childrenList={childList}
+        selectedId={selectedChildId}
+        onSelect={setSelectedChildId}
+        onClose={() => setSwitchVisible(false)}
+      />
     </SafeAreaView>
   );
 };

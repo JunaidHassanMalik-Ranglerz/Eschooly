@@ -203,6 +203,7 @@ const BottomNavigation = () => (
     tabBar={props => <EschoolTabBar {...props} />}
     sceneContainerStyle={styles.scene}
     screenOptions={{headerShown: false}}
+    backBehavior="history"
   >
     <BOTTOM_STACK.Screen name="Home" component={AFN} />
     <BOTTOM_STACK.Screen name="Attends" component={Attendance} />

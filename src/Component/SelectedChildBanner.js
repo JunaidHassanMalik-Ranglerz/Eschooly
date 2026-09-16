@@ -17,7 +17,7 @@ const SelectedChildBanner = ({child}) => {
         {Strings.viewingFor}
       </Text>
       <Text style={styles.name} numberOfLines={1}>
-        {child.label} · {child.classBadge}
+        {child.label} · {child.classLabel || child.classBadge}
       </Text>
     </View>
   );

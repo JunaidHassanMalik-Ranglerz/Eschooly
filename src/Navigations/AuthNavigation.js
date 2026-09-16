@@ -14,6 +14,7 @@ const AuthNavigation = () => {
         statusBarStyle: 'light',
         statusBarTranslucent: true,
         statusBarBackgroundColor: Colors.transparent,
+        statusBarAnimation: 'none',
         contentStyle: {backgroundColor: Colors.white},
       }}
       initialRouteName="Register">

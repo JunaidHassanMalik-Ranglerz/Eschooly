@@ -47,7 +47,7 @@ const StudentResults = () => {
     <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar backgroundColor={Colors.white} barStyle="dark-content" />
       <View style={styles.headerWrap}>
-        <MainHeaderComponent title={Strings.results} hideNotification />
+        <MainHeaderComponent title={Strings.results} notificationCount={1} />
       </View>
 
       <ScrollView

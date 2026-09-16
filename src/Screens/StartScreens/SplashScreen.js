@@ -1,9 +1,9 @@
-import React, {useEffect} from 'react';
-import {StatusBar, StyleSheet, View} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import React, { useEffect } from 'react';
+import { StatusBar, StyleSheet, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import PortalBrand from '../../Component/PortalBrand';
-import {Colors} from '../../Constants/Colors';
+import { Colors } from '../../Constants/Colors';
 
 const SplashScreen = () => {
   const navigation = useNavigation();
@@ -12,7 +12,7 @@ const SplashScreen = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       navigation.replace('Role');
-    }, 1500);
+    }, 5000);
 
     return () => clearTimeout(timer);
   }, [navigation]);

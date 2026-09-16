@@ -1,21 +1,22 @@
 import {Fonts} from '../../Constants/Fonts';
+import {Fontsize} from '../../Constants/Fontsize';
 
 export const ocTitle = {
-  fontFamily: Fonts.interRegular,
-  fontSize: 14,
+  fontFamily: Fonts.bold,
+  fontSize: Fontsize.xs5,
 };
 
 export const ocLiveTitle = {
-  fontFamily: Fonts.interRegular,
-  fontSize: 18,
+  fontFamily: Fonts.bold,
+  fontSize: Fontsize.ml,
 };
 
 export const ocTitle16 = {
-  fontFamily: Fonts.interRegular,
-  fontSize: 16,
+  fontFamily: Fonts.bold,
+  fontSize: Fontsize.sm,
 };
 
 export const ocText = {
-  fontFamily: Fonts.interRegular,
-  fontSize: 11,
+  fontFamily: Fonts.regular,
+  fontSize: Fontsize.xs1,
 };

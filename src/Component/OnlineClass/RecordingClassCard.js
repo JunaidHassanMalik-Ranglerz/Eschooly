@@ -3,8 +3,9 @@ import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {Images} from '../../Assets';
 import {Colors} from '../../Constants/Colors';
+import {Fonts} from '../../Constants/Fonts';
+import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
-import {ocText, ocTitle16} from './onlineClassText';
 import {wp, hp} from '../../Constants/Responsive';
 
 const RecordingClassCard = props => {
@@ -20,17 +21,18 @@ const RecordingClassCard = props => {
         />
 
         <View style={styles.info}>
-          <Text style={styles.title} numberOfLines={1}>
-            {item?.title}
-          </Text>
+          <View style={styles.titleRow}>
+            <Text style={styles.title} numberOfLines={1}>
+              {item?.title}
+            </Text>
+            <View style={styles.statusBadge}>
+              <Text style={styles.statusText} numberOfLines={1}>
+                {item?.status}
+              </Text>
+            </View>
+          </View>
           <Text style={styles.detail} numberOfLines={1}>
             {item?.detail}
-          </Text>
-        </View>
-
-        <View style={styles.statusBadge}>
-          <Text style={styles.statusText} numberOfLines={1}>
-            {item?.status}
           </Text>
         </View>
       </View>
@@ -65,11 +67,14 @@ export default RecordingClassCard;
 const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.white,
-    borderRadius: wp(4),
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderRadius: wp(5),
     padding: wp(4),
     marginBottom: hp(1.5),
+    elevation: 3,
+    shadowColor: Colors.black,
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
   },
   topRow: {
     flexDirection: 'row',
@@ -83,26 +88,39 @@ const styles = StyleSheet.create({
   },
   info: {
     flex: 1,
-    paddingRight: wp(2),
   },
-  title: {
-    ...ocTitle16,
-    color: Colors.black,
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: hp(0.3),
   },
+  title: {
+    flex: 1,
+    color: Colors.black,
+    fontFamily: Fonts.bold,
+    fontSize: Fontsize.xs5,
+    marginRight: wp(2),
+    includeFontPadding: false,
+  },
   detail: {
-    ...ocText,
     color: Colors.grayText,
+    fontFamily: Fonts.regular,
+    fontSize: Fontsize.xs0,
   },
   statusBadge: {
     backgroundColor: Colors.cardBg,
     borderRadius: wp(4),
     paddingHorizontal: wp(2.5),
-    paddingVertical: hp(0.35),
+    paddingVertical: hp(0.4),
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   statusText: {
-    ...ocText,
-    color: Colors.EndColor,
+    color: Colors.mutedText,
+    fontFamily: Fonts.semibold,
+    fontSize: Fontsize.xxm,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
   btnRow: {
     flexDirection: 'row',
@@ -114,12 +132,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Colors.cardBg,
-    borderRadius: wp(2.5),
-    paddingVertical: hp(1.2),
+    borderRadius: wp(5),
+    paddingVertical: hp(1.15),
     gap: wp(1.5),
   },
   actionText: {
-    ...ocText,
     color: Colors.black,
+    fontFamily: Fonts.semibold,
+    fontSize: Fontsize.xs1,
+    includeFontPadding: false,
   },
 });

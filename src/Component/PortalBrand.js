@@ -64,8 +64,8 @@ const PortalBrand = ({
     <LinearGradient
       colors={
         isSplash
-          ? ['#163EA8', '#1E62D6', '#4B8EF5']
-          : [Colors.splashStart, '#2B74E4', Colors.splashEnd]
+          ? [Colors.primary, Colors.primaryLight, Colors.splashEnd]
+          : [Colors.splashStart, Colors.primaryLight, Colors.splashEnd]
       }
       locations={isSplash ? [0, 0.38, 1] : [0, 0.5, 1]}
       start={{x: 0.1, y: 0}}
@@ -82,7 +82,7 @@ const PortalBrand = ({
           <Icon
             name="school"
             size={compact ? wp(9) : wp(14)}
-            color="#1A4F9C"
+            color={Colors.primary}
           />
         </View>
         <Text

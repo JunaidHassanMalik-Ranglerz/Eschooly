@@ -16,7 +16,9 @@ const LibraryProfileCard = ({student}) => {
         <Text style={styles.name}>{student?.label}</Text>
         <View style={styles.badges}>
           <View style={styles.classBadge}>
-            <Text style={styles.classText}>{student?.classBadge}</Text>
+            <Text style={styles.classText}>
+              {student?.classLabel || student?.classBadge}
+            </Text>
           </View>
           <View style={styles.activeBadge}>
             <Text style={styles.activeText}>{student?.status || 'Active'}</Text>

@@ -47,8 +47,8 @@ const styles = StyleSheet.create({
   },
   downloadText: {
     color: Colors.white,
-    fontFamily: Fonts.medium,
-    fontSize: Fontsize.sm2,
+    fontFamily: Fonts.semibold,
+    fontSize: Fontsize.xs1,
   },
   printBtn: {
     flexDirection: 'row',
@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
   },
   printText: {
     color: Colors.primary,
-    fontFamily: Fonts.medium,
-    fontSize: Fontsize.sm2,
+    fontFamily: Fonts.semibold,
+    fontSize: Fontsize.xs1,
   },
 });
