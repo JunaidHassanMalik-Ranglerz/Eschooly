@@ -1,93 +1,99 @@
 import React from 'react';
 import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import ProfileGradientCard from '../Profile/ProfileGradientCard';
+import {SCREEN_WAVES} from '../CardWave';
 import {Colors} from '../../Constants/Colors';
 import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
+import {getSubjectGradient} from '../../Constants/CardTheme';
 import {wp, hp} from '../../Constants/Responsive';
 
-const UpcomingClassCard = props => {
-  const item = props?.item;
-
+const UpcomingClassCard = ({
+  item,
+  animationIndex = 0,
+  gradientIndex,
+  entering,
+  replayToken = 0,
+}) => {
+  const paletteIndex = gradientIndex ?? animationIndex;
   return (
-    <View style={styles.card}>
-      <View style={[styles.stripe, {backgroundColor: item?.stripeColor}]} />
+  <ProfileGradientCard
+    innerStyle={styles.inner}
+    animationIndex={animationIndex}
+    entering={entering}
+    replayToken={replayToken}
+    colors={getSubjectGradient(paletteIndex)}
+    waveVariant={paletteIndex === 0 ? SCREEN_WAVES.onlineClass : null}>
+    <View style={styles.topRow}>
+      <View style={[styles.monthBadge, {backgroundColor: Colors.whiteOverlay22}]}>
+        <Text style={styles.month} numberOfLines={1}>
+          {item?.month}
+        </Text>
+      </View>
 
-      <View style={styles.content}>
-        <View style={styles.topRow}>
-          <View
-            style={[styles.monthBadge, {backgroundColor: item?.monthBg}]}>
-            <Text style={[styles.month, {color: item?.monthColor}]} numberOfLines={1}>
-              {item?.month}
-            </Text>
-          </View>
-
-          <View style={[styles.badge, {backgroundColor: item?.badgeBg}]}>
-            <Text style={[styles.badgeText, {color: item?.badgeColor}]} numberOfLines={1}>
-              {item?.badge}
-            </Text>
-          </View>
-        </View>
-
-        <Text style={styles.title} numberOfLines={2}>{item?.title}</Text>
-        <Text style={styles.classInfo} numberOfLines={1}>{item?.classInfo}</Text>
-
-        <View style={styles.infoRow}>
-          <Icon name="time-outline" size={wp(3.5)} color={Colors.grayText} />
-          <Text style={styles.infoText} numberOfLines={1}>{item?.time}</Text>
-          <Icon
-            name="hourglass-outline"
-            size={wp(3.5)}
-            color={Colors.grayText}
-            style={styles.hourIcon}
-          />
-          <Text style={styles.infoText} numberOfLines={1}>{item?.duration}</Text>
-        </View>
-
-        {item?.showFooter ? (
-          <View style={styles.footer}>
-            <View style={styles.zoomRow}>
-              <Icon name="link-outline" size={wp(3.5)} color={Colors.grayText} />
-              <Text style={styles.zoomLink} numberOfLines={1}>{item?.zoomLink}</Text>
-            </View>
-            <TouchableOpacity activeOpacity={0.8} onPress={() => {}}>
-              <Text style={styles.reminderText} numberOfLines={1}>{Strings.setReminder}</Text>
-            </TouchableOpacity>
-          </View>
-        ) : null}
+      <View style={[styles.badge, {backgroundColor: Colors.whiteOverlay18}]}>
+        <Text style={styles.badgeText} numberOfLines={1}>
+          {item?.badge}
+        </Text>
       </View>
     </View>
+
+    <Text style={styles.title} numberOfLines={2}>
+      {item?.title}
+    </Text>
+    <Text style={styles.classInfo} numberOfLines={1}>
+      {item?.classInfo}
+    </Text>
+
+    <View style={styles.infoRow}>
+      <Icon name="time-outline" size={wp(3.5)} color={Colors.whiteMuted85} />
+      <Text style={styles.infoText} numberOfLines={1}>
+        {item?.time}
+      </Text>
+      <Icon
+        name="hourglass-outline"
+        size={wp(3.5)}
+        color={Colors.whiteMuted85}
+        style={styles.hourIcon}
+      />
+      <Text style={styles.infoText} numberOfLines={1}>
+        {item?.duration}
+      </Text>
+    </View>
+
+    {item?.showFooter ? (
+      <View style={styles.footer}>
+        <View style={styles.zoomRow}>
+          <Icon name="link-outline" size={wp(3.5)} color={Colors.whiteMuted85} />
+          <Text style={styles.zoomLink} numberOfLines={1}>
+            {item?.zoomLink}
+          </Text>
+        </View>
+        <TouchableOpacity activeOpacity={0.8} onPress={() => {}}>
+          <Text style={styles.reminderText} numberOfLines={1}>
+            {Strings.setReminder}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    ) : null}
+  </ProfileGradientCard>
   );
 };
 
 export default UpcomingClassCard;
 
 const styles = StyleSheet.create({
-  card: {
-    flexDirection: 'row',
-    backgroundColor: Colors.white,
-    borderRadius: wp(5),
-    marginBottom: hp(1.5),
-    overflow: 'hidden',
-    elevation: 3,
-    shadowColor: Colors.black,
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-  },
-  stripe: {
-    width: wp(1.2),
-  },
-  content: {
-    flex: 1,
-    padding: wp(4),
+  inner: {
+    paddingVertical: hp(1.3),
   },
   topRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
     marginBottom: hp(1),
+    zIndex: 1,
   },
   monthBadge: {
     borderRadius: wp(4),
@@ -95,6 +101,7 @@ const styles = StyleSheet.create({
     paddingVertical: hp(0.5),
   },
   month: {
+    color: Colors.white,
     fontFamily: Fonts.semibold,
     fontSize: Fontsize.xxm,
     includeFontPadding: false,
@@ -105,31 +112,35 @@ const styles = StyleSheet.create({
     paddingVertical: hp(0.35),
   },
   badgeText: {
+    color: Colors.whiteMuted85,
     fontFamily: Fonts.semibold,
     fontSize: Fontsize.xxm,
     includeFontPadding: false,
   },
   title: {
-    color: Colors.black,
+    color: Colors.white,
     fontFamily: Fonts.bold,
     fontSize: Fontsize.xs5,
     marginBottom: hp(0.3),
+    zIndex: 1,
   },
   classInfo: {
-    color: Colors.grayText,
+    color: Colors.whiteMuted75,
     fontFamily: Fonts.regular,
     fontSize: Fontsize.xs0,
     marginBottom: hp(1),
+    zIndex: 1,
   },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    zIndex: 1,
   },
   hourIcon: {
     marginLeft: wp(3),
   },
   infoText: {
-    color: Colors.grayText,
+    color: Colors.whiteMuted85,
     fontFamily: Fonts.medium,
     fontSize: Fontsize.xs1,
     marginLeft: wp(1.5),
@@ -140,9 +151,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
+    borderTopColor: Colors.whiteOverlay18,
     marginTop: hp(1),
     paddingTop: hp(1),
+    zIndex: 1,
   },
   zoomRow: {
     flexDirection: 'row',
@@ -151,12 +163,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   zoomLink: {
-    color: Colors.grayText,
+    color: Colors.whiteMuted75,
     fontFamily: Fonts.regular,
     fontSize: Fontsize.xs0,
   },
   reminderText: {
-    color: Colors.primary,
+    color: '#93C5FD',
     fontFamily: Fonts.semibold,
     fontSize: Fontsize.xs1,
   },

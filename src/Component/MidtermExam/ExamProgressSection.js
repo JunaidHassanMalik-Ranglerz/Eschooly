@@ -57,18 +57,18 @@ const styles = StyleSheet.create({
     marginBottom: hp(1),
   },
   progressText: {
-    color: Colors.black,
+    color: Colors.primary,
     fontFamily: Fonts.medium,
     fontSize: Fontsize.small,
   },
   percent: {
-    color: Colors.grayText,
+    color: Colors.primaryLight,
     fontFamily: Fonts.medium,
     fontSize: Fontsize.small,
   },
   barBg: {
     height: hp(0.7),
-    backgroundColor: Colors.lightGray,
+    backgroundColor: '#DCEBFD',
     borderRadius: wp(2),
     overflow: 'hidden',
     marginBottom: hp(1.2),
@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
     borderRadius: wp(0.5),
   },
   legendText: {
-    color: Colors.grayText,
+    color: Colors.primary,
     fontFamily: Fonts.regular,
     fontSize: Fontsize.xs2,
   },

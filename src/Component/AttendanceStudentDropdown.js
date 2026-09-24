@@ -1,181 +1,218 @@
-import React, {useState} from 'react';
-import {Pressable, StyleSheet, Text, View} from 'react-native';
+import React, {useCallback, useEffect} from 'react';
+import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import ChildSwitchModal from './Parent/ChildSwitchModal';
+import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
+import PersonAvatar from './Profile/PersonAvatar';
+import CardWave, {SCREEN_WAVES} from './CardWave';
+import {
+  CARD_RADIUS,
+  GRADIENT_END,
+  GRADIENT_START,
+  IDENTITY_CARD_SHADOW,
+  PROFILE_GRADIENT,
+} from './Profile/ProfileTheme';
 import {Colors} from '../Constants/Colors';
 import {Fonts} from '../Constants/Fonts';
 import {Fontsize} from '../Constants/Fontsize';
 import {Strings} from '../Constants/Strings';
 import {wp, hp} from '../Constants/Responsive';
+import AnimatedCard from './AnimatedCard';
 
 const AttendanceStudentDropdown = props => {
-  const [open, setOpen] = useState(false);
-  const readOnly = !!props?.readOnly;
+  const [open, setOpen] = React.useState(false);
   const students = props?.students || [];
+  const readOnly =
+    typeof props?.readOnly === 'boolean'
+      ? props.readOnly
+      : students.length <= 1;
+  const premium = props?.premium !== false;
+  const embedded = props?.embedded === true;
+  const externalPicker = props?.externalPicker === true;
+  const useModal =
+    props?.useModal !== false &&
+    !externalPicker &&
+    !readOnly &&
+    students.length > 1;
+  const waveVariant = props?.waveVariant || SCREEN_WAVES.attendance;
+  useEffect(() => {
+    props?.onOpenChange?.(open);
+  }, [open, props?.onOpenChange]);
 
-  const handleSelect = item => {
-    props?.onSelect?.(item);
-    setOpen(false);
+  const setMenuOpen = next => {
+    setOpen(next);
   };
 
-  return (
-    <View style={styles.wrap}>
-      <Pressable
-        style={styles.card}
-        onPress={() => {
-          if (!readOnly) {
-            setOpen(prev => !prev);
-          }
-        }}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText} numberOfLines={1}>
-            {props?.student?.initials}
-          </Text>
-        </View>
+  const handleSelect = useCallback(
+    item => {
+      props?.onSelect?.(item);
+      setMenuOpen(false);
+    },
+    [props?.onSelect],
+  );
 
-        <View style={styles.info}>
-          <Text style={styles.studentLabel} numberOfLines={1}>
-            {props?.label || Strings.student}
-          </Text>
-          <View style={styles.nameRow}>
-            <Text style={styles.name} numberOfLines={1}>
-              {props?.student?.label}
-            </Text>
-            {!readOnly ? (
-              <View style={styles.chevronBtn}>
-                <Icon
-                  name={open ? 'chevron-up' : 'chevron-down'}
-                  size={wp(4)}
-                  color={Colors.black}
-                />
-              </View>
-            ) : null}
-          </View>
-          <Text style={styles.classText} numberOfLines={1}>
-            {props?.student?.classInfo}
-          </Text>
-        </View>
-      </Pressable>
+  const selectedId = props?.selectedId;
 
-      {open && !readOnly ? (
-        <View style={styles.menuBox}>
-          {students.map(item => {
-            const selected = item.value === props?.selectedId;
-            return (
-              <Pressable
-                key={item.value}
-                style={styles.itemRow}
-                onPress={() => handleSelect(item)}>
-                <Text
-                  style={[styles.itemName, selected && styles.itemNameActive]}>
-                  {item.label}
-                </Text>
-              </Pressable>
-            );
-          })}
+  const classText =
+    props?.student?.classInfo ||
+    props?.student?.classLabel ||
+    props?.student?.classBadge;
+
+  const cardContent = (
+    <>
+      <PersonAvatar person={props?.student} size={wp(12)} />
+      <View style={styles.info}>
+        <Text style={styles.studentLabel} numberOfLines={1}>
+          {props?.label || Strings.student}
+        </Text>
+        <View style={styles.nameRow}>
+          <Text style={styles.name} numberOfLines={1}>
+            {props?.student?.label}
+          </Text>
+          {!readOnly ? (
+            <View
+              style={{
+                transform: [{rotate: open ? '180deg' : '0deg'}],
+              }}>
+              <Icon name="chevron-down" size={wp(4.5)} color={Colors.whiteMuted85} />
+            </View>
+          ) : null}
         </View>
+        <Text style={styles.classText} numberOfLines={1}>
+          {classText}
+        </Text>
+      </View>
+    </>
+  );
+
+  const openPicker = () => {
+    if (readOnly) {
+      return;
+    }
+    if (externalPicker) {
+      props?.onPickerPress?.();
+      return;
+    }
+    setMenuOpen(true);
+  };
+
+  const shell = (
+    <View
+      style={[styles.wrap, embedded && styles.embeddedWrap]}
+      collapsable={false}>
+      <TouchableOpacity
+        style={styles.cardPress}
+        disabled={readOnly}
+        activeOpacity={0.88}
+        onPress={openPicker}>
+        {premium ? (
+          <LinearGradient
+            colors={PROFILE_GRADIENT}
+            start={GRADIENT_START}
+            end={GRADIENT_END}
+            style={[styles.card, IDENTITY_CARD_SHADOW]}>
+            <CardWave variant={waveVariant} />
+            <View style={styles.cardContent}>{cardContent}</View>
+          </LinearGradient>
+        ) : (
+          <View style={styles.cardPlain}>{cardContent}</View>
+        )}
+      </TouchableOpacity>
+
+      {useModal ? (
+        <ChildSwitchModal
+          visible={open}
+          childrenList={students}
+          selectedId={selectedId}
+          onSelect={value => {
+            const item = students.find(s => s.value === value);
+            if (item) {
+              handleSelect(item);
+            }
+          }}
+          onClose={() => setMenuOpen(false)}
+        />
       ) : null}
     </View>
   );
+
+  if (props?.animationIndex != null) {
+    return (
+      <AnimatedCard index={props.animationIndex} style={styles.enterWrap}>
+        {shell}
+      </AnimatedCard>
+    );
+  }
+
+  return shell;
 };
 
 export default AttendanceStudentDropdown;
 
 const styles = StyleSheet.create({
+  enterWrap: {
+    width: '100%',
+  },
   wrap: {
+    width: '100%',
     marginBottom: hp(2),
-    zIndex: 20,
-    elevation: 20,
     position: 'relative',
   },
+  embeddedWrap: {
+    marginBottom: hp(0.4),
+  },
+  cardPress: {
+    borderRadius: CARD_RADIUS,
+    overflow: 'hidden',
+  },
   card: {
+    borderRadius: CARD_RADIUS,
+    paddingHorizontal: wp(4),
+    paddingVertical: hp(1.5),
+    minHeight: hp(14),
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  cardContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.white,
+    zIndex: 1,
+  },
+  cardPlain: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EEF5FD',
     borderRadius: wp(4),
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: '#C0D5F2',
     padding: wp(4),
-  },
-  avatar: {
-    width: wp(12),
-    height: wp(12),
-    borderRadius: wp(6),
-    backgroundColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: wp(3),
-  },
-  avatarText: {
-    color: Colors.white,
-    fontFamily: Fonts.semibold,
-    fontSize: Fontsize.xs1,
   },
   info: {
     flex: 1,
+    marginLeft: wp(3),
   },
   studentLabel: {
-    color: Colors.grayText,
+    color: Colors.whiteMuted75,
     fontFamily: Fonts.regular,
-    fontSize: wp(3.2),
+    fontSize: Fontsize.xxm,
     marginBottom: hp(0.2),
-    width: wp(25),
   },
   nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
   name: {
     flex: 1,
-    color: Colors.black,
+    color: Colors.white,
     fontFamily: Fonts.bold,
-    fontSize: wp(3.73),
+    fontSize: Fontsize.xs5,
     marginRight: wp(2),
   },
-  menuBox: {
-    position: 'absolute',
-    top: '100%',
-    left: 0,
-    right: 0,
-    marginTop: hp(0.8),
-    borderRadius: wp(3),
-    borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.white,
-    overflow: 'hidden',
-    zIndex: 30,
-    elevation: 16,
-    shadowColor: Colors.black,
-    shadowOffset: {width: 0, height: 6},
-    shadowOpacity: 0.12,
-    shadowRadius: 10,
-  },
-  itemRow: {
-    minHeight: hp(5),
-    paddingHorizontal: wp(4),
-    justifyContent: 'center',
-  },
-  itemName: {
-    color: Colors.black,
-    fontFamily: Fonts.regular,
-    fontSize: Fontsize.normal,
-  },
-  itemNameActive: {
-    color: Colors.primary,
-    fontFamily: Fonts.semibold,
-  },
   classText: {
-    color: Colors.grayText,
+    color: Colors.whiteMuted85,
     fontFamily: Fonts.regular,
-    fontSize: wp(3.2),
+    fontSize: Fontsize.xs0,
     marginTop: hp(0.2),
-    width: wp(40),
-  },
-  chevronBtn: {
-    width: wp(7),
-    height: wp(7),
-    borderRadius: wp(3.5),
-    backgroundColor: Colors.lightGray,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });

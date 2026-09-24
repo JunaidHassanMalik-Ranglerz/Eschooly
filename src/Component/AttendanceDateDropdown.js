@@ -1,59 +1,95 @@
-import React, {useRef} from 'react';
-import {Image, StyleSheet, TouchableOpacity, View} from 'react-native';
-import {Dropdown} from 'react-native-element-dropdown';
+import React, {useMemo, useState} from 'react';
+import {Image, Pressable, StyleSheet, Text, View} from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import LinearGradient from 'react-native-linear-gradient';
+import AnimatedCard from './AnimatedCard';
+import OptionPickerSheetModal from './OptionPickerSheetModal';
+import {
+  CARD_RADIUS,
+  GRADIENT_END,
+  GRADIENT_START,
+  PROFILE_GRADIENT,
+} from './Profile/ProfileTheme';
 import {Images} from '../Assets';
 import {Colors} from '../Constants/Colors';
 import {Fonts} from '../Constants/Fonts';
+import {Fontsize} from '../Constants/Fontsize';
+import {Strings} from '../Constants/Strings';
 import {wp, hp} from '../Constants/Responsive';
 
 const AttendanceDateDropdown = props => {
-  const dropdownRef = useRef(null);
+  const [open, setOpen] = useState(false);
+  const premium = props?.premium !== false;
+  const ranges = props?.ranges || [];
+
+  const selectedLabel = useMemo(() => {
+    const match = ranges.find(r => r.value === props?.selectedId);
+    return match?.label || ranges[0]?.label || '';
+  }, [props?.selectedId, ranges]);
+
+  const trigger = (
+    <Pressable
+      style={styles.trigger}
+      onPress={() => setOpen(true)}
+      android_ripple={{color: Colors.whiteOverlay18}}>
+      <View style={styles.calendarWrap}>
+        <Image
+          source={Images.calendar}
+          style={[styles.calendarIcon, premium && styles.calendarIconPremium]}
+          resizeMode="contain"
+        />
+      </View>
+      <Text
+        style={[styles.dateText, premium && styles.dateTextPremium]}
+        numberOfLines={1}>
+        {selectedLabel}
+      </Text>
+      <Icon
+        name="chevron-down"
+        size={wp(4)}
+        color={premium ? Colors.whiteMuted85 : Colors.linkBlue}
+      />
+    </Pressable>
+  );
+
+  const sheet = (
+    <OptionPickerSheetModal
+      visible={open}
+      onClose={() => setOpen(false)}
+      title={Strings.dateRange}
+      subtitle={selectedLabel}
+      data={ranges}
+      selectedValue={props?.selectedId}
+      onSelect={item => props?.onSelect?.(item?.value)}
+    />
+  );
+
+  if (premium) {
+    return (
+      <>
+        <AnimatedCard
+          index={props?.animationIndex ?? 0}
+          entering={props?.entering}
+          replayToken={props?.replayToken ?? 0}
+          style={styles.wrap}>
+          <LinearGradient
+            colors={PROFILE_GRADIENT}
+            start={GRADIENT_START}
+            end={GRADIENT_END}
+            style={styles.gradient}>
+            {trigger}
+          </LinearGradient>
+        </AnimatedCard>
+        {sheet}
+      </>
+    );
+  }
 
   return (
-    <View style={styles.wrap}>
-      <Dropdown
-        ref={dropdownRef}
-        data={props?.ranges}
-        labelField="label"
-        valueField="value"
-        value={props?.selectedId}
-        onChange={item => props?.onSelect?.(item?.value)}
-        style={styles.dropdown}
-        containerStyle={styles.menuBox}
-        selectedTextStyle={styles.dateText}
-        selectedTextProps={{numberOfLines: 1}}
-        itemTextStyle={styles.itemText}
-        itemTextProps={{numberOfLines: 1}}
-        maxHeight={hp(25)}
-        renderLeftIcon={() => (
-          <View style={styles.calendarWrap}>
-            <Image
-              source={Images.calendar}
-              style={styles.calendarIcon}
-              resizeMode="contain"
-            />
-          </View>
-        )}
-        renderRightIcon={open => (
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={() => {
-              if (open) {
-                dropdownRef.current?.close();
-              } else {
-                dropdownRef.current?.open();
-              }
-            }}>
-            <Icon
-              name={open ? 'chevron-up' : 'chevron-down'}
-              size={wp(4)}
-              color={Colors.linkBlue}
-            />
-          </TouchableOpacity>
-        )}
-      />
-    </View>
+    <>
+      <View style={styles.wrapPlain}>{trigger}</View>
+      {sheet}
+    </>
   );
 };
 
@@ -61,21 +97,25 @@ export default AttendanceDateDropdown;
 
 const styles = StyleSheet.create({
   wrap: {
-    backgroundColor: Colors.duesCardBg,
-    borderRadius: wp(3),
+    borderRadius: CARD_RADIUS,
+    overflow: 'hidden',
     marginBottom: hp(1.5),
   },
-  dropdown: {
+  wrapPlain: {
+    backgroundColor: Colors.duesCardBg,
+    borderRadius: wp(3),
+    overflow: 'hidden',
+    marginBottom: hp(1.5),
+  },
+  gradient: {
+    borderRadius: CARD_RADIUS,
+    overflow: 'hidden',
+  },
+  trigger: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: wp(4),
     paddingVertical: hp(1.6),
-  },
-  menuBox: {
-    borderRadius: wp(3),
-    borderWidth: 1,
-    borderColor: Colors.border,
-    marginTop: hp(0.5),
   },
   calendarWrap: {
     justifyContent: 'center',
@@ -87,14 +127,17 @@ const styles = StyleSheet.create({
     height: wp(4),
     tintColor: Colors.black,
   },
+  calendarIconPremium: {
+    tintColor: Colors.white,
+  },
   dateText: {
+    flex: 1,
     color: Colors.linkBlue,
     fontFamily: Fonts.regular,
-    fontSize: wp(3.73),
+    fontSize: Fontsize.xs4,
+    marginRight: wp(2),
   },
-  itemText: {
-    color: Colors.black,
-    fontFamily: Fonts.regular,
-    fontSize: wp(3.73),
+  dateTextPremium: {
+    color: Colors.white,
   },
 });

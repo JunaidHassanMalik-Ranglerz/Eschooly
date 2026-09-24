@@ -11,7 +11,7 @@ const ExamFooterBar = ({timeLeft, className, totalMarks, marksLabel}) => {
   return (
     <View style={styles.wrap}>
       <View style={styles.timerPill}>
-        <Icon name="time-outline" size={wp(4.5)} color={Colors.red} />
+        <Icon name="time-outline" size={wp(4.5)} color={Colors.iconSky} />
         <Text style={styles.timer}>{formatTime(timeLeft)}</Text>
       </View>
       <Text style={styles.meta}>
@@ -31,27 +31,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(4),
     paddingVertical: hp(1.5),
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
-    backgroundColor: Colors.white,
+    borderTopColor: Colors.whiteOverlay22,
+    backgroundColor: '#071A3D',
   },
   timerPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF5F5',
+    backgroundColor: Colors.whiteOverlay18,
     borderWidth: 1,
-    borderColor: '#FFD6D6',
+    borderColor: Colors.iconSky,
     borderRadius: wp(8),
     paddingHorizontal: wp(3),
     paddingVertical: hp(0.8),
     gap: wp(1.5),
   },
   timer: {
-    color: Colors.red,
+    color: Colors.iconSky,
     fontFamily: Fonts.bold,
     fontSize: Fontsize.sm,
   },
   meta: {
-    color: Colors.grayText,
+    color: Colors.whiteMuted75,
     fontFamily: Fonts.regular,
     fontSize: Fontsize.xs2,
   },

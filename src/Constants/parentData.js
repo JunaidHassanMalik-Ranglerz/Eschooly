@@ -1,13 +1,18 @@
+import {STUDENT_LIST} from './dummydata';
+
+/** All linked student ids (Class 2 … Class 10) for school-wide alerts */
+export const ALL_LINKED_CHILD_IDS = STUDENT_LIST.map(student => student.value);
+
 export const PARENT_PROFILE = {
-  label: 'Bilal Khaliq',
-  initials: 'BKH',
+  label: 'Imran Khaliq',
+  initials: 'IK',
   classBadge: 'Parent Account',
   cnic: '35202-1234567-1',
   fatherName: 'Muhammad Khaliq',
   gender: 'Male',
   dateOfIssue: '12 Apr 2024',
   validUntil: '31 Mar 2027',
-  email: 'bilal.khaliq@email.com',
+  email: 'imran.khaliq@email.com',
   phone: '+92 300 1234567',
   address: 'House 12, Street 5, Islamabad',
 };
@@ -15,14 +20,16 @@ export const PARENT_PROFILE = {
 export const PARENT_CHILDREN = [
   {
     value: '1',
-    label: 'Ahmed Hassan',
-    initials: 'AHA',
+    label: 'Bilal Khaliq',
+    initials: 'BKH',
+    gender: 'Male',
     className: 'Class 7',
     section: 'B',
     classBadge: 'Class 7 - Section B',
     classInfo: 'Class 7 - Section B',
-    meta: 'Class 7 - Section B · Roll 15',
-    rollNo: '15',
+    meta: 'Class 7 - Section B · Roll 12',
+    rollNo: '12',
+    studentId: 'SCH-2025-0412',
     month: 'September 2026',
     present: '22',
     absent: '01',
@@ -36,53 +43,10 @@ export const PARENT_CHILDREN = [
     examsUpcoming: '6',
     announcementsNew: '3',
   },
-  {
-    value: '2',
-    label: 'Ayesha Hassan',
-    initials: 'AYS',
-    className: 'Class 4',
-    section: 'A',
-    classBadge: 'Class 4 - Section A',
-    classInfo: 'Class 4 - Section A',
-    meta: 'Class 4 - Section A · Roll 09',
-    rollNo: '09',
-    month: 'September 2026',
-    present: '20',
-    absent: '02',
-    late: '01',
-    leave: '01',
-    rate: 0.91,
-    rateText: '91%',
-    todayStatus: 'Late',
-    todayDate: 'Mon, 14 Sep 2026',
-    homeworkPending: '3',
-    examsUpcoming: '4',
-    announcementsNew: '2',
-  },
-  {
-    value: '3',
-    label: 'Zain Hassan',
-    initials: 'ZHN',
-    className: 'Class 2',
-    section: 'A',
-    classBadge: 'Class 2 - Section A',
-    classInfo: 'Class 2 - Section A',
-    meta: 'Class 2 - Section A · Roll 07',
-    rollNo: '07',
-    month: 'September 2026',
-    present: '21',
-    absent: '01',
-    late: '01',
-    leave: '00',
-    rate: 0.94,
-    rateText: '94%',
-    todayStatus: 'Present',
-    todayDate: 'Mon, 14 Sep 2026',
-    homeworkPending: '2',
-    examsUpcoming: '3',
-    announcementsNew: '1',
-  },
 ];
+
+/** Dummy UI ships with one linked child. Set false to preview multi-child switching. */
+export const PARENT_HAS_MULTIPLE_CHILDREN = false;
 
 export const PARENT_ATTENDANCE_HISTORY = {
   '1': [
@@ -290,132 +254,216 @@ export const PARENT_EXAM_SCHEDULE = {
 export const PARENT_ANNOUNCEMENTS = [
   {
     id: '1',
+    category: 'Notice',
+    title: 'Parent-Teacher Meeting',
+    message:
+      'Parent-Teacher Meeting is scheduled for all classes on 20 September. Please confirm your slot with the class teacher and arrive 10 minutes before your appointment.',
+    date: '20 Sep 2026',
+    time: '11:00 AM',
+    icon: 'people-outline',
+    childIds: ['1', '2', '3'],
+  },
+  {
+    id: '2',
     category: 'Event',
     title: 'Annual Sports Day',
     message:
-      'Annual Sports Day registration is now open for all classes. Parents are requested to confirm participation from the portal.',
+      'Annual Sports Day registration is now open for all classes. Parents are requested to confirm participation from the portal before Friday, 19 September.',
     date: '18 Sep 2026',
     time: '08:00 AM',
+    icon: 'trophy-outline',
     childIds: ['1', '2', '3'],
   },
   {
-    id: '2',
+    id: '3',
     category: 'Notice',
-    title: 'Mid-Term Exam Schedule Published',
+    title: 'Examination Schedule Released',
     message:
-      'The mid-term examination timetable is now available. Please review dates, subjects and venues for your child.',
+      'The mid-term examination timetable is now available on the portal. Please review dates, subjects, and venues for your child and note any clashes with co-curricular activities.',
     date: '14 Sep 2026',
     time: '10:00 AM',
-    childIds: ['1', '2', '3'],
-  },
-  {
-    id: '3',
-    category: 'Update',
-    title: 'Parent-Teacher Meeting',
-    message:
-      'PTM is scheduled for all classes. Kindly confirm your attendance with the school administration.',
-    date: '20 Sep 2026',
-    time: '11:00 AM',
-    childIds: ['1', '2', '3'],
-  },
-  {
-    id: '4',
-    category: 'Notice',
-    title: 'Library Books Return',
-    message:
-      'Students of Class 7 must return borrowed library books before 30 September.',
-    date: '12 Sep 2026',
-    time: '09:00 AM',
-    childIds: ['1'],
-  },
-];
-
-export const PARENT_NOTIFICATIONS = [
-  {
-    id: '1',
-    type: 'academic',
-    title: 'New Homework Assigned',
-    message:
-      'Mathematics homework for Chapter 4 is assigned for tomorrow. Please complete exercise 4.2 and upload it before class.',
-    date: 'Today',
-    time: '2h ago',
-    icon: 'document-text-outline',
-    iconBg: '#EEF2FF',
-    iconColor: '#2563EB',
-    unread: true,
-    childIds: ['1'],
-  },
-  {
-    id: '2',
-    type: 'academic',
-    title: 'Exam Schedule Published',
-    message:
-      'Mid-term exam schedule is now available. Science paper is on 22 Sep at 9:00 AM. Check the Exam section for the full timetable.',
-    date: 'Today',
-    time: '5h ago',
     icon: 'calendar-outline',
-    iconBg: '#FFF4E5',
-    iconColor: '#EA580C',
-    unread: true,
-    childIds: ['1', '2', '3'],
-  },
-  {
-    id: '3',
-    type: 'general',
-    title: 'School Announcement',
-    message:
-      'Annual Sports Day registration is now open for all classes. Confirm your child’s participation from the portal before Friday.',
-    date: 'Yesterday',
-    time: '1d ago',
-    icon: 'megaphone-outline',
-    iconBg: '#FCE7F3',
-    iconColor: '#DB2777',
-    unread: false,
     childIds: ['1', '2', '3'],
   },
   {
     id: '4',
-    type: 'academic',
-    title: 'Diary Update',
+    category: 'Update',
+    title: 'School Timing Update',
     message:
-      'A new entry has been added in your child’s daily diary. Please review the teacher note and acknowledge it from Parent Diary.',
-    date: 'Yesterday',
-    time: '1d ago',
-    icon: 'journal-outline',
-    iconBg: '#CFFAFE',
-    iconColor: '#0891B2',
-    unread: false,
-    childIds: ['1'],
+      'From 22 September, school will start at 7:45 AM and close at 1:30 PM on weekdays. Friday timings remain unchanged. Kindly adjust pick-and-drop accordingly.',
+    date: '16 Sep 2026',
+    time: '09:30 AM',
+    icon: 'time-outline',
+    childIds: ['1', '2', '3'],
   },
   {
     id: '5',
-    type: 'academic',
-    title: 'Result Published',
+    category: 'Notice',
+    title: 'Winter Uniform Notice',
     message:
-      'Term test results are now available. Overall grade is A (92%). Open Results to review subject-wise marks and teacher remarks.',
-    date: '13 Sep',
-    time: '2d ago',
-    icon: 'trophy-outline',
-    iconBg: '#F3E8FF',
-    iconColor: '#7C3AED',
-    unread: false,
+      'Winter uniform is mandatory from 1 October. Students must wear the prescribed navy blazer, tie, and full-length trousers or skirt as per the school dress code.',
+    date: '15 Sep 2026',
+    time: '08:45 AM',
+    icon: 'shirt-outline',
     childIds: ['1', '2', '3'],
   },
   {
     id: '6',
-    type: 'general',
-    title: 'Teacher Message',
+    category: 'Notice',
+    title: 'Fee Submission Reminder',
     message:
-      'You have a new message from Mr. Salman Khan. Open Chat to reply and stay updated on class progress and upcoming work.',
-    date: '12 Sep',
-    time: '2d ago',
-    icon: 'chatbubble-ellipses-outline',
-    iconBg: '#E8F8EE',
-    iconColor: '#16A34A',
-    unread: false,
+      'September tuition fee is due by 20 September. Late submissions after the due date will incur a fine of Rs. 500. Pay securely through the Fee section of the parent portal.',
+    date: '13 Sep 2026',
+    time: '02:00 PM',
+    icon: 'card-outline',
+    childIds: ['1', '2', '3'],
+  },
+  {
+    id: '7',
+    category: 'Event',
+    title: 'Science Exhibition Registration',
+    message:
+      'Inter-house Science Exhibition registrations are open until 25 September. Students may submit project titles through their class teacher. Exhibition day is 5 October in the main hall.',
+    date: '12 Sep 2026',
+    time: '10:30 AM',
+    icon: 'flask-outline',
+    childIds: ['1', '2'],
+  },
+  {
+    id: '8',
+    category: 'Notice',
+    title: 'Holiday Announcement',
+    message:
+      'School will remain closed on 16 September for a public holiday. Regular classes resume on 17 September. Transport and cafeteria services will also remain suspended on the holiday.',
+    date: '11 Sep 2026',
+    time: '04:00 PM',
+    icon: 'sunny-outline',
+    childIds: ['1', '2', '3'],
+  },
+  {
+    id: '9',
+    category: 'Notice',
+    title: 'Library Books Return',
+    message:
+      'Students of Class 7 must return all borrowed library books before 30 September. Overdue books may affect report card clearance. Contact the librarian for renewal if needed.',
+    date: '10 Sep 2026',
+    time: '09:00 AM',
+    icon: 'book-outline',
     childIds: ['1'],
   },
+  {
+    id: '10',
+    category: 'Update',
+    title: 'Transport Route Adjustment',
+    message:
+      'Bus Route 12 has a temporary stop change near Sector G-11 from 18 September. Updated pickup times are shared on the Transport screen. Allow an extra 5 minutes at the stop.',
+    date: '09 Sep 2026',
+    time: '03:15 PM',
+    icon: 'bus-outline',
+    childIds: ['1', '3'],
+  },
 ];
+
+const buildParentNotificationMessage = (student, templateIndex) => {
+  const classLabel = `${student.className} Section ${student.section}`;
+  const messages = [
+    `Mathematics assignment for ${classLabel} is in the portal. ${student.label} should complete exercise 4.2 and upload the PDF before 18 September.`,
+    `${student.label} was marked Present today. Review ${classLabel} attendance from the Attendance section.`,
+    `September tuition fee for ${student.label} is due by 20 September. Pay from the Fee section to avoid a late fine.`,
+    `Term test results for ${classLabel} are available. Open Results to view marks and download the report card.`,
+    `Weekly timetable for ${classLabel} has been revised. Check Timetable for the full updated schedule.`,
+    `Class teacher sent a message for ${student.label}. Open Chat to read the note about the upcoming practical.`,
+    `A new school announcement for ${classLabel} is posted. Open Announcements for Sports Day and event details.`,
+    `Holiday calendar updated for ${classLabel}. School remains closed on 16 September; classes resume on 17 September.`,
+  ];
+  return messages[templateIndex];
+};
+
+const PARENT_NOTIFICATION_TEMPLATES = [
+  {
+    type: 'academic',
+    title: 'New assignment uploaded',
+    date: 'Today',
+    time: '2h ago',
+    icon: 'document-text-outline',
+    iconBg: 'rgba(37, 99, 235, 0.14)',
+    iconColor: '#2563EB',
+  },
+  {
+    type: 'academic',
+    title: 'Attendance marked successfully',
+    date: 'Today',
+    time: '3h ago',
+    icon: 'checkmark-circle-outline',
+    iconBg: '#E8F8EE',
+    iconColor: '#16A34A',
+  },
+  {
+    type: 'general',
+    title: 'Fee payment reminder',
+    date: 'Today',
+    time: '5h ago',
+    icon: 'card-outline',
+    iconBg: '#FFF4E5',
+    iconColor: '#EA580C',
+  },
+  {
+    type: 'academic',
+    title: 'Exam result published',
+    date: 'Yesterday',
+    time: '1d ago',
+    icon: 'trophy-outline',
+    iconBg: '#F3E8FF',
+    iconColor: '#7C3AED',
+  },
+  {
+    type: 'academic',
+    title: 'Timetable updated',
+    date: 'Yesterday',
+    time: '1d ago',
+    icon: 'calendar-outline',
+    iconBg: '#CFFAFE',
+    iconColor: '#0891B2',
+  },
+  {
+    type: 'general',
+    title: 'Teacher shared a new message',
+    date: '13 Sep',
+    time: '2d ago',
+    icon: 'chatbubble-ellipses-outline',
+    iconBg: '#FCE7F3',
+    iconColor: '#DB2777',
+  },
+  {
+    type: 'general',
+    title: 'New announcement available',
+    date: '13 Sep',
+    time: '2d ago',
+    icon: 'megaphone-outline',
+    iconBg: '#EEF2FF',
+    iconColor: '#2563EB',
+  },
+  {
+    type: 'general',
+    title: 'Holiday schedule updated',
+    date: '12 Sep',
+    time: '3d ago',
+    icon: 'sunny-outline',
+    iconBg: '#E0F2FE',
+    iconColor: '#0284C7',
+  },
+];
+
+export const PARENT_NOTIFICATIONS = STUDENT_LIST.flatMap(student =>
+  PARENT_NOTIFICATION_TEMPLATES.map((template, index) => ({
+    id: `p-${student.value}-${index + 1}`,
+    ...template,
+    message: buildParentNotificationMessage(student, index),
+    unread: index < 3,
+    childIds: [student.value],
+    classNames: [student.className],
+  })),
+);
 
 export const PARENT_DIARY = {
   '1': [
@@ -556,6 +604,8 @@ export const PARENT_FEES = {
     history: [
       {id: '1', title: 'Term 1 Fee', date: '15 Aug 2024', amount: 'Rs. 12,500', status: 'Paid'},
       {id: '2', title: 'Lab Fee', date: '10 Jul 2024', amount: 'Rs. 2,500', status: 'Paid'},
+      {id: '3', title: 'Transport Fee', date: '10 Sep 2024', amount: 'Rs. 3,000', status: 'Pending'},
+      {id: '4', title: 'Activity Fee', date: '05 Aug 2024', amount: 'Rs. 1,500', status: 'Overdue'},
     ],
     receipts: [
       {id: '1', title: 'Term 1 Challan', date: '15 Aug 2024', type: 'Challan'},

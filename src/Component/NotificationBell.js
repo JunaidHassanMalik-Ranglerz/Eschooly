@@ -7,7 +7,7 @@ import {wp} from '../Constants/Responsive';
 import {navigateToNotification} from '../Navigations/navigationHelpers';
 import {useRoleData} from '../hooks/useRoleData';
 
-const NotificationBell = ({count, onPress, style}) => {
+const NotificationBell = ({count, onPress, style, onDark = false}) => {
   const navigation = useNavigation();
   const {unreadNotificationCount} = useRoleData();
   const badgeCount = count == null ? unreadNotificationCount : count;
@@ -19,10 +19,15 @@ const NotificationBell = ({count, onPress, style}) => {
       onPress={onPress || (() => navigateToNotification(navigation))}>
       <Image
         source={Images.notification}
-        style={styles.notificationIcon}
+        style={[
+          styles.notificationIcon,
+          {tintColor: onDark ? Colors.white : Colors.primary},
+        ]}
         resizeMode="contain"
       />
-      {badgeCount > 0 ? <View style={styles.badge} /> : null}
+      {badgeCount > 0 ? (
+        <View style={[styles.badge, onDark && styles.badgeOnDark]} />
+      ) : null}
     </TouchableOpacity>
   );
 };
@@ -34,14 +39,13 @@ const styles = StyleSheet.create({
     width: wp(9),
     height: wp(9),
     borderRadius: wp(4.5),
-    backgroundColor: Colors.cardBg,
+    backgroundColor: Colors.transparent,
     alignItems: 'center',
     justifyContent: 'center',
   },
   notificationIcon: {
     width: wp(5.5),
     height: wp(5.5),
-    tintColor: Colors.primary,
   },
   badge: {
     position: 'absolute',
@@ -53,5 +57,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.red,
     borderWidth: 1,
     borderColor: Colors.white,
+  },
+  badgeOnDark: {
+    borderColor: Colors.parentHeader,
   },
 });

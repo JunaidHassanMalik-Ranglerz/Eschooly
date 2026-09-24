@@ -6,22 +6,44 @@ import {Fonts} from '../Constants/Fonts';
 import {Fontsize} from '../Constants/Fontsize';
 import {wp, hp} from '../Constants/Responsive';
 
+const ICON_COLORS = {
+  present: '#38BDF8',
+  absent: '#6366F1',
+  late: '#0EA5E9',
+  leave: '#60A5FA',
+};
+
 const AttendanceStatCard = props => {
+  const premium = props?.premium;
+  const labelKey = String(props?.label || '').toLowerCase();
+  const iconColor =
+    props?.iconColor ||
+    ICON_COLORS[labelKey] ||
+    (props?.image ? ICON_COLORS.present : Colors.iconSky);
+
   return (
-    <View style={styles.card}>
-      <View style={[styles.iconCircle, {backgroundColor: props?.iconBg}]}>
+    <View style={[styles.card, premium && styles.cardPremium]}>
+      <View style={styles.iconSlot}>
         {props?.image ? (
           <Image
             source={props?.image}
-            style={styles.iconImage}
+            style={[styles.iconImage, {tintColor: iconColor}]}
             resizeMode="contain"
           />
         ) : (
-          <Icon name={props?.icon} size={wp(4.5)} color={props?.iconColor} />
+          <Icon name={props?.icon} size={wp(5.2)} color={iconColor} />
         )}
       </View>
-      <Text style={styles.label} numberOfLines={1}>{props?.label}</Text>
-      <Text style={styles.count} numberOfLines={1}>{props?.count}</Text>
+      <Text
+        style={[styles.label, premium && styles.labelPremium]}
+        numberOfLines={1}>
+        {props?.label}
+      </Text>
+      <Text
+        style={[styles.count, premium && styles.countPremium]}
+        numberOfLines={1}>
+        {props?.count}
+      </Text>
     </View>
   );
 };
@@ -40,28 +62,37 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(2),
     marginHorizontal: wp(1),
   },
-  iconCircle: {
+  cardPremium: {
+    backgroundColor: Colors.transparent,
+    borderColor: Colors.transparent,
+  },
+  iconSlot: {
     width: wp(10),
     height: wp(10),
-    borderRadius: wp(5),
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: hp(1),
+    marginBottom: hp(0.8),
   },
   iconImage: {
-    width: wp(4.5),
-    height: wp(4.5),
+    width: wp(5),
+    height: wp(5),
   },
   label: {
     color: Colors.grayText,
     fontFamily: Fonts.regular,
     fontSize: wp(3.2),
     marginBottom: hp(0.5),
-    maxWidth:wp(16),
+    maxWidth: wp(16),
+  },
+  labelPremium: {
+    color: Colors.whiteMuted75,
   },
   count: {
     color: Colors.black,
     fontFamily: Fonts.bold,
     fontSize: Fontsize.mx,
+  },
+  countPremium: {
+    color: Colors.white,
   },
 });

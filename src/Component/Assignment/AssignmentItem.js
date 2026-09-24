@@ -41,43 +41,62 @@ const STATUS_STYLES = {
 
 const AssignmentItem = props => {
   const assignment = props?.assignment;
+  const premium = props?.premium;
   const type = assignment?.type || 'homework';
   const status = assignment?.status || 'pending';
   const statusStyle = STATUS_STYLES[status] || STATUS_STYLES.pending;
 
   return (
-    <View style={styles.card}>
-      <View style={styles.iconWrap}>
+    <View style={[styles.card, premium && styles.cardPremium]}>
+      <View style={styles.iconSlot}>
         <Icon
           name={TYPE_ICONS[type] || TYPE_ICONS.homework}
-          size={wp(5)}
-          color={Colors.primary}
+          size={wp(5.5)}
+          color={premium ? Colors.iconSky : Colors.primary}
         />
       </View>
 
       <View style={styles.content}>
-        <Text style={styles.title} numberOfLines={2}>
+        <Text
+          style={[styles.title, premium && styles.titlePremium]}
+          numberOfLines={2}>
           {assignment?.title}
         </Text>
 
         <View style={styles.metaRow}>
-          <Icon name="person-outline" size={wp(3.2)} color={Colors.grayText} />
-          <Text style={styles.metaText} numberOfLines={1}>
+          <Icon
+            name="person-outline"
+            size={wp(3.2)}
+            color={premium ? Colors.whiteMuted75 : Colors.grayText}
+          />
+          <Text
+            style={[styles.metaText, premium && styles.metaTextPremium]}
+            numberOfLines={1}>
             {assignment?.teacher}
           </Text>
         </View>
 
         <View style={styles.metaRow}>
-          <Icon name="calendar-outline" size={wp(3.2)} color={Colors.grayText} />
-          <Text style={styles.metaText} numberOfLines={1}>
+          <Icon
+            name="calendar-outline"
+            size={wp(3.2)}
+            color={premium ? Colors.whiteMuted75 : Colors.grayText}
+          />
+          <Text
+            style={[styles.metaText, premium && styles.metaTextPremium]}
+            numberOfLines={1}>
             {Strings.dueDate}: {assignment?.dueDate}
           </Text>
         </View>
 
         <View style={styles.bottomRow}>
-          <View style={styles.typeBadge}>
-            <Text style={styles.typeText}>{TYPE_LABELS[type]}</Text>
-          </View>
+          {type !== 'homework' ? (
+            <View style={styles.typeBadge}>
+              <Text style={styles.typeText}>{TYPE_LABELS[type]}</Text>
+            </View>
+          ) : (
+            <View />
+          )}
 
           <View style={[styles.statusBadge, {backgroundColor: statusStyle.bg}]}>
             <Text style={[styles.statusText, {color: statusStyle.text}]}>
@@ -96,15 +115,16 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     backgroundColor: Colors.cardBg,
-    borderRadius: wp(3),
+    borderRadius: wp(4),
+    overflow: 'hidden',
     padding: wp(3),
     marginBottom: hp(1),
   },
-  iconWrap: {
-    width: wp(10.5),
-    height: wp(10.5),
-    borderRadius: wp(3),
-    backgroundColor: Colors.duesCardBg,
+  cardPremium: {
+    backgroundColor: Colors.whiteOverlay18,
+  },
+  iconSlot: {
+    width: wp(8),
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: wp(3),
@@ -118,6 +138,9 @@ const styles = StyleSheet.create({
     fontSize: Fontsize.xs5,
     marginBottom: hp(0.6),
   },
+  titlePremium: {
+    color: Colors.white,
+  },
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -129,6 +152,9 @@ const styles = StyleSheet.create({
     fontSize: Fontsize.xs1,
     marginLeft: wp(1.2),
     flex: 1,
+  },
+  metaTextPremium: {
+    color: Colors.whiteMuted75,
   },
   bottomRow: {
     flexDirection: 'row',

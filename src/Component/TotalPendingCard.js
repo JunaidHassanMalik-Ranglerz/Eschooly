@@ -1,6 +1,7 @@
 import React from 'react';
 import {Image, StyleSheet, Text, View} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
+import AnimatedCard from './AnimatedCard';
 import {Images} from '../Assets';
 import {Colors} from '../Constants/Colors';
 import {Fonts} from '../Constants/Fonts';
@@ -8,8 +9,8 @@ import {Fontsize} from '../Constants/Fontsize';
 import {Strings} from '../Constants/Strings';
 import {wp, hp} from '../Constants/Responsive';
 
-const TotalPendingCard = () => {
-  return (
+const TotalPendingCard = ({animationIndex = 0}) => (
+  <AnimatedCard index={animationIndex} style={styles.wrap}>
     <LinearGradient
       colors={[Colors.primary, Colors.primaryLight]}
       start={{x: 0, y: 0}}
@@ -42,12 +43,16 @@ const TotalPendingCard = () => {
         </View>
       </View>
     </LinearGradient>
-  );
-};
+  </AnimatedCard>
+);
 
 export default TotalPendingCard;
 
 const styles = StyleSheet.create({
+  wrap: {
+    borderRadius: wp(5),
+    overflow: 'hidden',
+  },
   card: {
     borderRadius: wp(5),
     padding: wp(5),

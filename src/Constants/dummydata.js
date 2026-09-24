@@ -9,62 +9,162 @@ export const LOGGED_IN_STUDENT = {
   section: 'B',
   classBadge: 'Class 7 - B',
   studentId: 'SCH-2025-0412',
+  rollNo: '12',
   guardian: 'Imran Khaliq',
   dob: '12 March 2014',
   classInfo: 'Class 7 · Section B',
+  gender: 'Male',
 };
 
 export const PARENT_DATA = {
-  label: 'Bilal Khaliq',
-  initials: 'BKH',
+  label: 'Imran Khaliq',
+  initials: 'IK',
   classBadge: 'Parent Account',
   cnic: '35202-1234567-1',
   fatherName: 'Muhammad Khaliq',
   gender: 'Male',
   dateOfIssue: '12 Apr 2024',
   validUntil: '31 Mar 2027',
-  email: 'bilal.khaliq@email.com',
+  email: 'imran.khaliq@email.com',
   phone: '+92 300 1234567',
   address: 'House 12, Street 5, Islamabad',
 };
 
+const buildStudent = ({
+  value,
+  label,
+  initials,
+  gender,
+  className,
+  section,
+  studentId,
+  guardian,
+  dob,
+  rollNo,
+}) => ({
+  value,
+  label,
+  initials,
+  gender,
+  className,
+  section,
+  classBadge: `${className} - ${section}`,
+  classInfo: `${className} · Section ${section}`,
+  studentId,
+  guardian,
+  dob,
+  rollNo,
+});
 
 export const STUDENT_LIST = [
-  {
-    value: '1',
-    label: 'Bilal Khaliq',
-    initials: 'AR',
-    className: 'Class 7',
-    section: 'B',
-    classBadge: 'Class 7 - B',
-    studentId: 'SCH-2025-0412',
-    guardian: 'Imran Khaliq',
-    dob: '12 March 2014',
-  },
-  {
+  buildStudent({
+    value: '6',
+    label: 'Hira Malik',
+    initials: 'HM',
+    gender: 'Female',
+    className: 'Class 2',
+    section: 'A',
+    studentId: 'SCH-2025-0102',
+    guardian: 'Tariq Malik',
+    dob: '18 May 2019',
+    rollNo: '05',
+  }),
+  buildStudent({
     value: '2',
     label: 'Jalal Khaliq',
     initials: 'JK',
+    gender: 'Male',
     className: 'Class 3',
     section: 'A',
-    classBadge: 'Class 3 - A',
     studentId: 'SCH-2025-0187',
     guardian: 'Imran Khaliq',
-    dob: '5 June 2016',
-    classInfo: 'Class 3 · Section A',
-  },
-  {
+    dob: '5 June 2018',
+    rollNo: '08',
+  }),
+  buildStudent({
+    value: '4',
+    label: 'Hamza Siddiqui',
+    initials: 'HS',
+    gender: 'Male',
+    className: 'Class 4',
+    section: 'C',
+    studentId: 'SCH-2025-0241',
+    guardian: 'Asif Siddiqui',
+    dob: '22 August 2017',
+    rollNo: '11',
+  }),
+  buildStudent({
+    value: '7',
+    label: 'Fahad Iqbal',
+    initials: 'FI',
+    gender: 'Male',
+    className: 'Class 5',
+    section: 'B',
+    studentId: 'SCH-2025-0315',
+    guardian: 'Nadeem Iqbal',
+    dob: '3 February 2016',
+    rollNo: '09',
+  }),
+  buildStudent({
+    value: '8',
+    label: 'Maham Noor',
+    initials: 'MN',
+    gender: 'Female',
+    className: 'Class 6',
+    section: 'A',
+    studentId: 'SCH-2025-0388',
+    guardian: 'Shahid Noor',
+    dob: '14 November 2015',
+    rollNo: '07',
+  }),
+  buildStudent({
+    value: '1',
+    label: 'Bilal Khaliq',
+    initials: 'BKH',
+    gender: 'Male',
+    className: 'Class 7',
+    section: 'B',
+    studentId: 'SCH-2025-0412',
+    guardian: 'Imran Khaliq',
+    dob: '12 March 2014',
+    rollNo: '12',
+  }),
+  buildStudent({
     value: '3',
     label: 'Aqsa Khaliq',
     initials: 'AK',
+    gender: 'Female',
     className: 'Class 8',
     section: 'C',
-    classBadge: 'Class 8 - C',
     studentId: 'SCH-2025-0299',
     guardian: 'Imran Khaliq',
-    dob: '10 Jan 2013',
-    classInfo: 'Class 8 · Section C',
-  },
+    dob: '10 January 2013',
+    rollNo: '21',
+  }),
+  buildStudent({
+    value: '9',
+    label: 'Daniyal Sheikh',
+    initials: 'DS',
+    gender: 'Male',
+    className: 'Class 9',
+    section: 'A',
+    studentId: 'SCH-2025-0510',
+    guardian: 'Kamran Sheikh',
+    dob: '9 September 2011',
+    rollNo: '16',
+  }),
+  buildStudent({
+    value: '5',
+    label: 'Laiba Ahmed',
+    initials: 'LA',
+    gender: 'Female',
+    className: 'Class 10',
+    section: 'B',
+    studentId: 'SCH-2025-0602',
+    guardian: 'Imtiaz Ahmed',
+    dob: '27 April 2010',
+    rollNo: '04',
+  }),
 ];
 
 export const MENU_LIST = [
@@ -256,9 +356,9 @@ export const STUDENT_DUES_FEES = [
 ];
 
 export const STUDENT_DUES = {
-  initials: 'AR',
+  initials: 'BKH',
   label: 'Bilal Khaliq',
-  classInfo: 'Class 5 - B • Roll 12',
+  classInfo: 'Class 7 - B • Roll 12',
   totalAmount: 'AFN.100',
 };
 
@@ -730,32 +830,21 @@ export const getSyllabusListForClass = className => {
   if (grade <= 6) {
     return SYLLABUS_CLASS_6;
   }
+  if (grade >= 9) {
+    return SYLLABUS_LIST;
+  }
 
   return SYLLABUS_LIST;
 };
 
 export const SYLLABUS_DATA = SYLLABUS_LIST[0];
 
-export const TEACHER_STUDENTS = [
-  {
-    value: '1',
-    label: 'Bilal Khaliq',
-    initials: 'BKH',
-    classInfo: 'Class 7 · Section B',
-  },
-  {
-    value: '2',
-    label: 'Jalal Khaliq',
-    initials: 'JLK',
-    classInfo: 'Class 3 · Section A',
-  },
-  {
-    value: '3',
-    label: 'Aqsa Khaliq',
-    initials: 'AQS',
-    classInfo: 'Class 8 · Section C',
-  },
-];
+export const TEACHER_STUDENTS = STUDENT_LIST.map(item => ({
+  value: item.value,
+  label: item.label,
+  initials: item.initials,
+  classInfo: item.classInfo,
+}));
 
 export const CLASS_TEACHER = {
   id: 'ct1',
@@ -806,73 +895,34 @@ export const TEACHERS_BY_STUDENT = {
   },
 };
 
-export const ATTENDANCE_STUDENTS = [
-  {
-    value: '1',
-    label: 'Bilal Khaliq',
-    initials: 'BKH',
-    classInfo: 'Class 7 · Section B',
-    month: 'November 2024',
-    present: '22',
-    absent: '02',
-    leave: '01',
-    rate: 0.88,
-    rateText: '88%',
-  },
-  {
-    value: '2',
-    label: 'Jalal Khaliq',
-    initials: 'JLK',
-    classInfo: 'Class 3 · Section A',
-    month: 'November 2024',
-    present: '20',
-    absent: '03',
-    leave: '02',
-    rate: 0.8,
-    rateText: '80%',
-  },
-  {
-    value: '3',
-    label: 'Aqsa Khaliq',
-    initials: 'AQS',
-    classInfo: 'Class 8 · Section C',
-    month: 'November 2024',
-    present: '21',
-    absent: '02',
-    leave: '02',
-    rate: 0.84,
-    rateText: '84%',
-  },
-  {
-    value: '4',
-    label: 'Zainab Khaliq',
-    initials: 'ZNB',
-    classInfo: 'Class 4 · Section C',
-    month: 'November 2024',
-    present: '21',
-    absent: '02',
-    leave: '02',
-    rate: 0.84,
-    rateText: '84%',
-  },
-  {
-    value: '5',
-    label: 'Sara Khaliq',
-    initials: 'SRK',
-    classInfo: 'Class 8 · Section C',
-    month: 'November 2024',
-    present: '21',
-    absent: '02',
-    leave: '02',
-    rate: 0.84,
-    rateText: '84%',
-  },
-];
+const ATTENDANCE_STATS = {
+  '1': {present: '22', absent: '02', leave: '01', rate: 0.88, rateText: '88%'},
+  '2': {present: '20', absent: '03', leave: '02', rate: 0.8, rateText: '80%'},
+  '3': {present: '21', absent: '02', leave: '02', rate: 0.84, rateText: '84%'},
+  '4': {present: '23', absent: '01', leave: '01', rate: 0.92, rateText: '92%'},
+  '5': {present: '19', absent: '03', leave: '03', rate: 0.76, rateText: '76%'},
+  '6': {present: '24', absent: '01', leave: '00', rate: 0.96, rateText: '96%'},
+  '7': {present: '21', absent: '02', leave: '02', rate: 0.84, rateText: '84%'},
+  '8': {present: '22', absent: '02', leave: '01', rate: 0.88, rateText: '88%'},
+  '9': {present: '20', absent: '04', leave: '01', rate: 0.8, rateText: '80%'},
+};
+
+export const ATTENDANCE_STUDENTS = STUDENT_LIST.map(item => ({
+  ...item,
+  month: 'November 2024',
+  ...(ATTENDANCE_STATS[item.value] || ATTENDANCE_STATS['1']),
+}));
 
 export const ATTENDANCE_DATE_RANGES = [
   {value: '1', label: 'Nov 1 - Nov 29, 2024'},
   {value: '2', label: 'Oct 1 - Oct 31, 2024'},
   {value: '3', label: 'Sep 1 - Sep 30, 2024'},
+  {value: '4', label: 'Aug 1 - Aug 31, 2024'},
+  {value: '5', label: 'Jul 1 - Jul 31, 2024'},
+  {value: '6', label: 'Jun 1 - Jun 30, 2024'},
+  {value: '7', label: 'May 1 - May 31, 2024'},
+  {value: '8', label: 'Apr 1 - Apr 30, 2024'},
+  {value: '9', label: 'Mar 1 - Mar 31, 2024'},
 ];
 
 export const ATTENDANCE_HISTORY = [
@@ -1133,7 +1183,7 @@ export const STUDENT_TIMETABLE = [
     period: '01',
     subject: 'Mathematics',
     time: '9:00 AM - 10:00 AM',
-    teacher: 'Mr. Ahmed Khan',
+    teacher: 'Ms. Ayesha Khan',
     room: 'Room 12',
   },
   {
@@ -1141,15 +1191,15 @@ export const STUDENT_TIMETABLE = [
     period: '02',
     subject: 'English',
     time: '10:00 AM - 11:00 AM',
-    teacher: 'Ms. Sara Ali',
+    teacher: 'Mr. Salman Khan',
     room: 'Room 08',
   },
   {
     id: '3',
     period: '03',
-    subject: 'Science',
+    subject: 'Physics',
     time: '11:00 AM - 12:00 PM',
-    teacher: 'Ms. Hina Tariq',
+    teacher: 'Mr. Naseem Khan',
     room: 'Lab 2',
   },
   {
@@ -1157,10 +1207,86 @@ export const STUDENT_TIMETABLE = [
     period: '04',
     subject: 'Computer',
     time: '12:00 PM - 1:00 PM',
-    teacher: 'Mr. Usman Farooq',
+    teacher: 'Mr. Imran Ali',
     room: 'Lab 1',
   },
 ];
+
+const TIMETABLE_CLASS_2 = [
+  {id: '1', period: '01', subject: 'English', time: '9:00 AM - 9:40 AM', teacher: 'Ms. Fatima Noor', room: 'Room 3'},
+  {id: '2', period: '02', subject: 'Mathematics', time: '9:45 AM - 10:25 AM', teacher: 'Ms. Fatima Noor', room: 'Room 3'},
+  {id: '3', period: '03', subject: 'Science', time: '10:30 AM - 11:10 AM', teacher: 'Mr. Ali Abbas', room: 'Room 5'},
+  {id: '4', period: '04', subject: 'Art', time: '11:15 AM - 11:55 AM', teacher: 'Ms. Zainab Shah', room: 'Art Room'},
+];
+
+const TIMETABLE_CLASS_4 = [
+  {id: '1', period: '01', subject: 'English', time: '9:00 AM - 10:00 AM', teacher: 'Mr. Ali Abbas', room: 'Room 6'},
+  {id: '2', period: '02', subject: 'Mathematics', time: '10:00 AM - 11:00 AM', teacher: 'Ms. Fatima Noor', room: 'Room 6'},
+  {id: '3', period: '03', subject: 'Science', time: '11:00 AM - 12:00 PM', teacher: 'Mr. Naseem Khan', room: 'Lab 1'},
+  {id: '4', period: '04', subject: 'Urdu', time: '12:00 PM - 1:00 PM', teacher: 'Ms. Zainab Shah', room: 'Room 6'},
+];
+
+const TIMETABLE_CLASS_9 = [
+  {id: '1', period: '01', subject: 'Mathematics', time: '8:30 AM - 9:30 AM', teacher: 'Mr. Tariq Mehmood', room: 'Room 15'},
+  {id: '2', period: '02', subject: 'Physics', time: '9:35 AM - 10:35 AM', teacher: 'Dr. Kamran Siddiqui', room: 'Lab 3'},
+  {id: '3', period: '03', subject: 'Chemistry', time: '10:40 AM - 11:40 AM', teacher: 'Ms. Hina Tariq', room: 'Lab 2'},
+  {id: '4', period: '04', subject: 'English', time: '11:45 AM - 12:45 PM', teacher: 'Ms. Rabia Ansari', room: 'Room 15'},
+];
+
+export const getTimetableForClass = className => {
+  const grade = getClassGrade(className);
+  if (grade <= 2) {
+    return TIMETABLE_CLASS_2;
+  }
+  if (grade <= 4) {
+    return TIMETABLE_CLASS_4;
+  }
+  if (grade >= 9) {
+    return TIMETABLE_CLASS_9;
+  }
+  return STUDENT_TIMETABLE;
+};
+
+const UPCOMING_CLASS_BY_GRADE = {
+  2: {
+    title: 'Phonics — Letter Sounds',
+    classInfo: 'Class 2A · English',
+    time: '9:00 AM',
+    subject: 'English',
+  },
+  4: {
+    title: 'Multiplication Tables',
+    classInfo: 'Class 4A · Mathematics',
+    time: '10:00 AM',
+    subject: 'Mathematics',
+  },
+  7: {
+    title: 'Geometry - Triangles',
+    classInfo: 'Class 7B · Mathematics',
+    time: '9:00 AM',
+    subject: 'Mathematics',
+  },
+  9: {
+    title: 'Organic Chemistry — Hydrocarbons',
+    classInfo: 'Class 9B · Chemistry',
+    time: '10:40 AM',
+    subject: 'Chemistry',
+  },
+};
+
+export const getUpcomingClassForClass = className => {
+  const grade = getClassGrade(className);
+  if (grade <= 2) {
+    return UPCOMING_CLASS_BY_GRADE[2];
+  }
+  if (grade <= 4) {
+    return UPCOMING_CLASS_BY_GRADE[4];
+  }
+  if (grade >= 9) {
+    return UPCOMING_CLASS_BY_GRADE[9];
+  }
+  return UPCOMING_CLASS_BY_GRADE[7];
+};
 
 export const STUDENT_UPCOMING_CLASS = {
   title: 'Geometry - Triangles',
@@ -1207,97 +1333,363 @@ export const STUDENT_RESULTS = {
   },
 };
 
-export const STUDENT_NOTIFICATIONS = [
+const buildStudentNotificationMessage = (student, templateIndex) => {
+  const classLabel = `${student.className} Section ${student.section}`;
+  const messages = [
+    `Mathematics assignment for ${classLabel} is in your portal. Complete exercise 4.2 before 18 Sep, 11:59 PM.`,
+    `You were marked Present today for ${classLabel}. Your September attendance is updated in the app.`,
+    `September tuition fee is due by 20 Sep. Pay from the Fee section to avoid a late fine.`,
+    `Term-1 results for ${classLabel} are live. Open Results to view marks and download your report card.`,
+    `Your ${classLabel} timetable has been revised. Check Timetable for the full weekly schedule.`,
+    `Your class teacher sent a message about the upcoming practical. Open Chat to read and reply.`,
+    `A new school announcement for ${classLabel} is posted. Open Announcements for event details.`,
+    `Holiday calendar updated. School remains closed on 16 Sep; ${classLabel} classes resume on 17 Sep.`,
+  ];
+  return messages[templateIndex];
+};
+
+const STUDENT_NOTIFICATION_TEMPLATES = [
   {
-    id: 's1',
     type: 'academic',
     title: 'New assignment uploaded',
-    message:
-      'Mathematics Chapter 4 assignment is now in your portal. Submit the PDF before 18 Sep, 11:59 PM.',
     date: 'Today',
     time: '10 min ago',
     icon: 'document-text-outline',
     iconBg: '#EEF2FF',
     iconColor: '#2563EB',
-    unread: true,
   },
   {
-    id: 's2',
     type: 'academic',
-    title: 'Upcoming exam reminder',
-    message:
-      'Science mid-term is on 22 Sep at 9:00 AM in Hall B. Revise chapters 1–3 and bring your admit card.',
+    title: 'Attendance marked successfully',
     date: 'Today',
     time: '1h ago',
-    icon: 'calendar-outline',
-    iconBg: '#FFF4E5',
-    iconColor: '#EA580C',
-    unread: true,
-  },
-  {
-    id: 's3',
-    type: 'general',
-    title: 'Fee payment due',
-    message:
-      'September tuition fee of Rs. 8,500 is due by 20 Sep. Pay from the Fee section to avoid a late fine.',
-    date: 'Today',
-    time: '3h ago',
-    icon: 'card-outline',
-    iconBg: '#FCE7F3',
-    iconColor: '#DB2777',
-    unread: true,
-  },
-  {
-    id: 's4',
-    type: 'academic',
-    title: 'Online class starting soon',
-    message:
-      'Algebra — Linear Equations starts in 15 minutes. Join from Online Classes to avoid missing attendance.',
-    date: 'Today',
-    time: '4h ago',
-    icon: 'videocam-outline',
-    iconBg: '#CFFAFE',
-    iconColor: '#0891B2',
-    unread: true,
-  },
-  {
-    id: 's5',
-    type: 'academic',
-    title: 'Attendance update',
-    message:
-      'Your September attendance is 88%. One leave is marked for 12 Sep. Contact class teacher for a correction.',
-    date: 'Yesterday',
-    time: 'Yesterday',
     icon: 'checkmark-circle-outline',
     iconBg: '#E8F8EE',
     iconColor: '#16A34A',
-    unread: false,
   },
   {
-    id: 's6',
+    type: 'general',
+    title: 'Fee payment reminder',
+    date: 'Today',
+    time: '3h ago',
+    icon: 'card-outline',
+    iconBg: '#FFF4E5',
+    iconColor: '#EA580C',
+  },
+  {
     type: 'academic',
     title: 'Exam result published',
-    message:
-      'Term-1 results are live. Overall grade: A (92%). Open Results to view subject-wise marks.',
-    date: '13 Sep',
-    time: '2d ago',
+    date: 'Today',
+    time: '4h ago',
     icon: 'trophy-outline',
     iconBg: '#F3E8FF',
     iconColor: '#7C3AED',
-    unread: false,
   },
   {
-    id: 's7',
+    type: 'academic',
+    title: 'Timetable updated',
+    date: 'Yesterday',
+    time: 'Yesterday',
+    icon: 'calendar-outline',
+    iconBg: '#CFFAFE',
+    iconColor: '#0891B2',
+  },
+  {
     type: 'general',
-    title: 'School holiday announcement',
-    message:
-      'School will remain closed on 16 Sep for a public holiday. Regular classes resume on 17 Sep.',
+    title: 'Teacher shared a new message',
+    date: 'Yesterday',
+    time: 'Yesterday',
+    icon: 'chatbubble-ellipses-outline',
+    iconBg: '#FCE7F3',
+    iconColor: '#DB2777',
+  },
+  {
+    type: 'general',
+    title: 'New announcement available',
+    date: '13 Sep',
+    time: '2d ago',
+    icon: 'megaphone-outline',
+    iconBg: '#EEF2FF',
+    iconColor: '#2563EB',
+  },
+  {
+    type: 'general',
+    title: 'Holiday schedule updated',
     date: '12 Sep',
     time: '3d ago',
     icon: 'sunny-outline',
-    iconBg: '#CCFBF1',
-    iconColor: '#0D9488',
-    unread: false,
+    iconBg: '#E0F2FE',
+    iconColor: '#0284C7',
   },
 ];
+
+/** Legacy export — Class 7 default student notifications (8 items). */
+export const STUDENT_NOTIFICATIONS = STUDENT_NOTIFICATION_TEMPLATES.map(
+  (template, index) => ({
+    id: `s1-${index + 1}`,
+    ...template,
+    message: buildStudentNotificationMessage(
+      STUDENT_LIST.find(s => s.value === '1') || STUDENT_LIST[0],
+      index,
+    ),
+    unread: index < 4,
+    classNames: ['Class 7'],
+    childIds: ['1'],
+  }),
+);
+
+/** 8 notifications per linked student / class (Class 2 … Class 10). */
+export const ALL_STUDENT_NOTIFICATIONS = STUDENT_LIST.flatMap(student =>
+  STUDENT_NOTIFICATION_TEMPLATES.map((template, index) => ({
+    id: `s-${student.value}-${index + 1}`,
+    ...template,
+    message: buildStudentNotificationMessage(student, index),
+    unread: index < 3,
+    childIds: [student.value],
+    classNames: [student.className],
+  })),
+);
+
+const ASSIGNMENT_SUBJECTS_CLASS_2 = [
+  {
+    id: '1',
+    name: 'English',
+    icon: 'book-outline',
+    iconBg: '#EEF2FF',
+    iconColor: '#1345A3',
+    pendingCount: 1,
+    assignments: [
+      {
+        id: '1-1',
+        title: 'Alphabet Writing Practice',
+        teacher: 'Ms. Rabia Ansari',
+        dueDate: '16 Sep 2026',
+        status: 'pending',
+        type: 'homework',
+      },
+    ],
+  },
+  {
+    id: '2',
+    name: 'Mathematics',
+    icon: 'calculator-outline',
+    iconBg: '#EEF2FF',
+    iconColor: '#2563EB',
+    pendingCount: 1,
+    assignments: [
+      {
+        id: '2-1',
+        title: 'Numbers 1–20 Worksheet',
+        teacher: 'Mr. Tariq Mehmood',
+        dueDate: '17 Sep 2026',
+        status: 'pending',
+        type: 'homework',
+      },
+    ],
+  },
+  {
+    id: '3',
+    name: 'Art',
+    icon: 'color-palette-outline',
+    iconBg: '#FFF4E5',
+    iconColor: '#EA580C',
+    pendingCount: 0,
+    assignments: [
+      {
+        id: '3-1',
+        title: 'Colour the Shapes',
+        teacher: 'Ms. Rabia Ansari',
+        dueDate: '12 Sep 2026',
+        status: 'submitted',
+        type: 'project',
+      },
+    ],
+  },
+];
+
+const ASSIGNMENT_SUBJECTS_CLASS_4 = [
+  {
+    id: '1',
+    name: 'English',
+    icon: 'book-outline',
+    iconBg: '#EEF2FF',
+    iconColor: '#1345A3',
+    pendingCount: 1,
+    assignments: [
+      {
+        id: '1-1',
+        title: 'Paragraph Writing — My School',
+        teacher: 'Ms. Sara Ali',
+        dueDate: '16 Sep 2026',
+        status: 'pending',
+        type: 'homework',
+      },
+    ],
+  },
+  {
+    id: '2',
+    name: 'Mathematics',
+    icon: 'calculator-outline',
+    iconBg: '#EEF2FF',
+    iconColor: '#2563EB',
+    pendingCount: 1,
+    assignments: [
+      {
+        id: '2-1',
+        title: 'Multiplication Tables 6–9',
+        teacher: 'Mr. Hassan Raza',
+        dueDate: '18 Sep 2026',
+        status: 'pending',
+        type: 'homework',
+      },
+    ],
+  },
+  {
+    id: '3',
+    name: 'Science',
+    icon: 'flask-outline',
+    iconBg: '#E8F8EE',
+    iconColor: '#16A34A',
+    pendingCount: 0,
+    assignments: [
+      {
+        id: '3-1',
+        title: 'Plants Around Us Chart',
+        teacher: 'Ms. Hina Tariq',
+        dueDate: '14 Sep 2026',
+        status: 'submitted',
+        type: 'project',
+      },
+    ],
+  },
+  {
+    id: '4',
+    name: 'Urdu',
+    icon: 'language-outline',
+    iconBg: '#F3E8FF',
+    iconColor: '#7C3AED',
+    pendingCount: 0,
+    assignments: [
+      {
+        id: '4-1',
+        title: 'Huroof e Tahaji Practice',
+        teacher: 'Ms. Zainab Shah',
+        dueDate: '10 Sep 2026',
+        status: 'submitted',
+        type: 'homework',
+      },
+    ],
+  },
+];
+
+const ASSIGNMENT_OVERVIEW_BY_GRADE = {
+  2: {total: 4, pending: 2, submitted: 2, overdue: 0},
+  4: {total: 6, pending: 2, submitted: 4, overdue: 0},
+  7: ASSIGNMENT_OVERVIEW,
+};
+
+const STUDENT_RESULTS_CLASS_2 = {
+  [Strings.term1]: {
+    overall: 'A',
+    hint: 'Great start!',
+    subjects: [
+      {id: '1', name: 'English', grade: 'A', score: 90, color: '#2563EB'},
+      {id: '2', name: 'Mathematics', grade: 'A-', score: 86, color: '#16A34A'},
+      {id: '3', name: 'Science', grade: 'B+', score: 82, color: '#0D9488'},
+      {id: '4', name: 'Art', grade: 'A+', score: 94, color: '#EA580C'},
+    ],
+  },
+};
+
+const STUDENT_RESULTS_CLASS_4 = {
+  [Strings.term1]: {
+    overall: 'A-',
+    hint: 'Keep it up!',
+    subjects: [
+      {id: '1', name: 'English', grade: 'A', score: 88, color: '#2563EB'},
+      {id: '2', name: 'Mathematics', grade: 'A-', score: 85, color: '#16A34A'},
+      {id: '3', name: 'Science', grade: 'B+', score: 80, color: '#0D9488'},
+      {id: '4', name: 'Urdu', grade: 'A', score: 87, color: '#7C3AED'},
+      {id: '5', name: 'Art', grade: 'A+', score: 92, color: '#EA580C'},
+    ],
+  },
+};
+
+export const getAssignmentSubjectsForClass = className => {
+  const grade = getClassGrade(className);
+  if (grade <= 2) {
+    return ASSIGNMENT_SUBJECTS_CLASS_2;
+  }
+  if (grade <= 4) {
+    return ASSIGNMENT_SUBJECTS_CLASS_4;
+  }
+  if (grade >= 9) {
+    return ASSIGNMENT_SUBJECTS;
+  }
+  return ASSIGNMENT_SUBJECTS;
+};
+
+export const getAssignmentOverviewForClass = className => {
+  const grade = getClassGrade(className);
+  if (grade <= 2) {
+    return ASSIGNMENT_OVERVIEW_BY_GRADE[2];
+  }
+  if (grade <= 4) {
+    return ASSIGNMENT_OVERVIEW_BY_GRADE[4];
+  }
+  return ASSIGNMENT_OVERVIEW_BY_GRADE[7];
+};
+
+export const getStudentResultsForClass = (className, term) => {
+  const grade = getClassGrade(className);
+  const key = term || Strings.term1;
+
+  if (grade <= 2) {
+    return STUDENT_RESULTS_CLASS_2[key] || STUDENT_RESULTS_CLASS_2[Strings.term1];
+  }
+  if (grade <= 4) {
+    return STUDENT_RESULTS_CLASS_4[key] || STUDENT_RESULTS_CLASS_4[Strings.term1];
+  }
+  return STUDENT_RESULTS[key] || STUDENT_RESULTS[Strings.term1];
+};
+
+const TEACHER_PROFILE_KEYS = ['1', '2', '3'];
+
+/** Attendance / linked students use ids like 6, 4, 7 — map each to a teacher profile. */
+export const getTeachersForChild = childId => {
+  if (TEACHERS_BY_STUDENT[childId]) {
+    return TEACHERS_BY_STUDENT[childId];
+  }
+
+  const studentIndex = STUDENT_LIST.findIndex(item => item.value === childId);
+  if (studentIndex >= 0) {
+    const profileKey =
+      TEACHER_PROFILE_KEYS[studentIndex % TEACHER_PROFILE_KEYS.length];
+    return TEACHERS_BY_STUDENT[profileKey];
+  }
+
+  return TEACHERS_BY_STUDENT['1'];
+};
+
+export const getExamStudentForChild = (child, examStudents = []) => {
+  if (!child) {
+    return examStudents[0];
+  }
+  return (
+    examStudents.find(item => item.value === child.value) || {
+      value: child.value,
+      label: child.label,
+      initials: child.initials,
+      classInfo: child.classBadge || child.classLabel,
+      totalExams: child.examsUpcoming || '6',
+      averageScore: '88',
+      highestScore: '96',
+      lowestScore: '72',
+      nextExamSubject:
+        getClassGrade(child.className) <= 4 ? 'English' : 'Mathematics',
+      nextExamDate: 'Mon, 18 Sep',
+      nextExamTime: '09:30 AM',
+    }
+  );
+};
 

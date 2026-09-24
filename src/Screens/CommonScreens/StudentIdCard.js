@@ -1,7 +1,10 @@
 import React, {useState} from 'react';
-import {ScrollView, StyleSheet} from 'react-native';
+import {StatusBar, StyleSheet} from 'react-native';
+import ScrollEnterScrollView from '../../Component/ScrollEnterScrollView';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import AnimatedCard from '../../Component/AnimatedCard';
 import MainHeaderComponent from '../../Component/MainHeaderComponent';
+import {ScreenEnterProvider} from '../../hooks/useScreenEnterGate';
 import StudentIdSummary from '../../Component/StudentIdCard/StudentIdSummary';
 import IdCardPreview from '../../Component/StudentIdCard/IdCardPreview';
 import IdCardFlipButton from '../../Component/StudentIdCard/IdCardFlipButton';
@@ -10,7 +13,7 @@ import IdCardActionButtons from '../../Component/StudentIdCard/IdCardActionButto
 import {getIdCardData} from '../../Constants/StudentIdCardData';
 import {useProfileStudent} from '../../hooks/useProfileStudent';
 import {Strings} from '../../Constants/Strings';
-import {MyStyling} from '../../Constants/MyStyling';
+import {Colors} from '../../Constants/Colors';
 import {wp, hp} from '../../Constants/Responsive';
 import {downloadIdCardPdf, printIdCard} from '../../utils/idCardActions';
 
@@ -32,39 +35,57 @@ const StudentIdCard = () => {
   };
 
   return (
-    <SafeAreaView style={MyStyling.container2} edges={['top']}>
+    <ScreenEnterProvider motion="studentIdCard">
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <StatusBar backgroundColor={Colors.parentBg} barStyle="dark-content" />
       <MainHeaderComponent
         title={Strings.studentIdCard}
         notificationCount={1}
+        navyBack
       />
 
-      <ScrollView
+      <ScrollEnterScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}>
-        <StudentIdSummary data={data} />
+        <AnimatedCard index={0} style={styles.blockWrap}>
+          <StudentIdSummary data={data} />
+        </AnimatedCard>
 
-        <IdCardPreview data={data} isBack={isBack} />
+        <AnimatedCard index={1} style={styles.blockWrap}>
+          <IdCardPreview data={data} isBack={isBack} />
+        </AnimatedCard>
 
         <IdCardFlipButton
           isBack={isBack}
           onPress={() => setIsBack(prev => !prev)}
         />
 
-        {!isBack ? <IdCardDetailsSection data={data} /> : null}
+        {!isBack ? (
+          <AnimatedCard index={2} style={styles.blockWrap}>
+            <IdCardDetailsSection data={data} />
+          </AnimatedCard>
+        ) : null}
 
-        <IdCardActionButtons
-          onDownload={handleDownload}
-          onPrint={handlePrint}
-        />
-      </ScrollView>
+        <AnimatedCard index={3} style={styles.blockWrap}>
+          <IdCardActionButtons
+            onDownload={handleDownload}
+            onPrint={handlePrint}
+          />
+        </AnimatedCard>
+      </ScrollEnterScrollView>
     </SafeAreaView>
+    </ScreenEnterProvider>
   );
 };
 
 export default StudentIdCard;
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.parentBg,
+  },
   scroll: {
     flex: 1,
   },
@@ -72,5 +93,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(4),
     paddingTop: hp(0.5),
     paddingBottom: hp(3),
+  },
+  blockWrap: {
+    width: '100%',
   },
 });

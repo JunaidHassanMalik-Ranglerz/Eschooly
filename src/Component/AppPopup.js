@@ -10,7 +10,7 @@ const AppPopup = ({visible, title, message, onClose}) => (
   <Modal
     visible={!!visible}
     transparent
-    animationType="fade"
+    animationType="none"
     statusBarTranslucent
     onRequestClose={onClose}>
     <Pressable style={styles.overlay} onPress={onClose}>

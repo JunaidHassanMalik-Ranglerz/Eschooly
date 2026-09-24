@@ -11,6 +11,7 @@ const AuthNavigation = () => {
       screenOptions={{
         headerShown: false,
         headerShadowVisible: false,
+        animation: 'none',
         statusBarStyle: 'light',
         statusBarTranslucent: true,
         statusBarBackgroundColor: Colors.transparent,

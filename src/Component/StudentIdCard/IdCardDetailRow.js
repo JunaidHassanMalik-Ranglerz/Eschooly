@@ -5,11 +5,11 @@ import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
 import {wp, hp} from '../../Constants/Responsive';
 
-const IdCardDetailRow = ({label, value, isLast}) => {
+const IdCardDetailRow = ({label, value, isLast, navy = false}) => {
   return (
-    <View style={[styles.row, !isLast && styles.border]}>
-      <Text style={styles.label}>{label}</Text>
-      <Text style={styles.value}>{value}</Text>
+    <View style={[styles.row, !isLast && (navy ? styles.borderNavy : styles.border)]}>
+      <Text style={[styles.label, navy && styles.labelNavy]}>{label}</Text>
+      <Text style={[styles.value, navy && styles.valueNavy]}>{value}</Text>
     </View>
   );
 };
@@ -39,5 +39,15 @@ const styles = StyleSheet.create({
     fontSize: Fontsize.xs1,
     textAlign: 'right',
     flex: 1,
+  },
+  borderNavy: {
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.whiteOverlay18,
+  },
+  labelNavy: {
+    color: Colors.whiteMuted85,
+  },
+  valueNavy: {
+    color: Colors.white,
   },
 });

@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react';
-import {ScrollView, StyleSheet, View} from 'react-native';
+import {StatusBar, StyleSheet, View} from 'react-native';
+import ScrollEnterScrollView from '../../Component/ScrollEnterScrollView';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useRoute} from '@react-navigation/native';
 import MainHeaderComponent from '../../Component/MainHeaderComponent';
@@ -16,8 +17,10 @@ import {
 } from '../../Constants/MidtermExamData';
 import {ACTIVE_EXAM} from '../../Constants/OnlineExamData';
 import {Strings} from '../../Constants/Strings';
-import {MyStyling} from '../../Constants/MyStyling';
+import {Colors} from '../../Constants/Colors';
 import {wp, hp} from '../../Constants/Responsive';
+import AnimatedCard from '../../Component/AnimatedCard';
+import {ScreenEnterProvider} from '../../hooks/useScreenEnterGate';
 
 const MidtermMathematics = () => {
   const route = useRoute();
@@ -49,38 +52,47 @@ const MidtermMathematics = () => {
   };
 
   return (
-    <SafeAreaView style={MyStyling.container2} edges={['top', 'bottom']}>
+    <ScreenEnterProvider motion="midtermMath">
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <StatusBar backgroundColor={Colors.parentBg} barStyle="dark-content" />
       <MainHeaderComponent
         title={MIDTERM_EXAM.title}
         notificationCount={1}
+        navyBack
       />
 
-      <ScrollView
+      <ScrollEnterScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}>
-        <ExamProgressSection
-          current={currentIndex + 1}
-          total={total}
-          answered={answeredCount}
-          remaining={remainingCount}
-          flagged={flagged.length}
-        />
+        <AnimatedCard index={0} style={styles.blockWrap}>
+          <ExamProgressSection
+            current={currentIndex + 1}
+            total={total}
+            answered={answeredCount}
+            remaining={remainingCount}
+            flagged={flagged.length}
+          />
+        </AnimatedCard>
 
-        <ExamQuestionCard
-          question={question}
-          selected={answers[currentIndex]}
-          onSelect={handleSelect}
-        />
+        <AnimatedCard index={1} style={styles.blockWrap}>
+          <ExamQuestionCard
+            question={question}
+            selected={answers[currentIndex]}
+            onSelect={handleSelect}
+          />
+        </AnimatedCard>
 
-        <QuestionNavigator
-          total={total}
-          currentIndex={currentIndex}
-          answers={answers}
-          flagged={flagged}
-          onJump={handleJump}
-        />
-      </ScrollView>
+        <AnimatedCard index={2} style={styles.blockWrap}>
+          <QuestionNavigator
+            total={total}
+            currentIndex={currentIndex}
+            answers={answers}
+            flagged={flagged}
+            onJump={handleJump}
+          />
+        </AnimatedCard>
+      </ScrollEnterScrollView>
 
       <ExamFooterBar
         timeLeft={timeLeft}
@@ -89,12 +101,17 @@ const MidtermMathematics = () => {
         marksLabel={Strings.marksLabel}
       />
     </SafeAreaView>
+    </ScreenEnterProvider>
   );
 };
 
 export default MidtermMathematics;
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.parentBg,
+  },
   scroll: {
     flex: 1,
   },
@@ -102,5 +119,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(4),
     paddingTop: hp(0.5),
     paddingBottom: hp(2),
+  },
+  blockWrap: {
+    width: '100%',
   },
 });

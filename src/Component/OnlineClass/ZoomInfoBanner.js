@@ -1,15 +1,22 @@
 import React from 'react';
 import {Image, StyleSheet, Text, View} from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import {Images} from '../../Assets';
 import {Colors} from '../../Constants/Colors';
+import {CARD_GRADIENTS} from '../../Constants/CardTheme';
 import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
 import {wp, hp} from '../../Constants/Responsive';
+import {GRADIENT_END, GRADIENT_START} from '../Profile/ProfileTheme';
 
 const ZoomInfoBanner = () => {
   return (
-    <View style={styles.banner}>
+    <LinearGradient
+      colors={CARD_GRADIENTS.deep}
+      start={GRADIENT_START}
+      end={GRADIENT_END}
+      style={styles.banner}>
       <Image
         source={Images.disclaimer}
         style={styles.disclaimerIcon}
@@ -23,7 +30,7 @@ const ZoomInfoBanner = () => {
           {Strings.zoomAppDesc}
         </Text>
       </View>
-    </View>
+    </LinearGradient>
   );
 };
 
@@ -33,27 +40,30 @@ const styles = StyleSheet.create({
   banner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.duesCardBg,
     borderRadius: wp(5),
     padding: wp(4),
     marginTop: hp(1),
+    borderWidth: 1,
+    borderColor: '#65C4FF',
+    overflow: 'hidden',
   },
   disclaimerIcon: {
     width: wp(10),
     height: wp(10),
     marginRight: wp(3),
+    tintColor: Colors.white,
   },
   textWrap: {
     flex: 1,
   },
   title: {
-    color: Colors.black,
+    color: Colors.white,
     fontFamily: Fonts.bold,
     fontSize: Fontsize.xs5,
     marginBottom: hp(0.35),
   },
   desc: {
-    color: Colors.grayText,
+    color: Colors.whiteMuted75,
     fontFamily: Fonts.regular,
     fontSize: Fontsize.xs1,
     lineHeight: Fontsize.m,

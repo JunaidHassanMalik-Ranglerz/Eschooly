@@ -1,48 +1,45 @@
-import React from 'react';
-import {
-  View,
-  StatusBar,
-  StyleSheet,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import React, {useState} from 'react';
+import {StyleSheet, View} from 'react-native';
+import ScrollEnterScrollView from '../../Component/ScrollEnterScrollView';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {useNavigation} from '@react-navigation/native';
 import MainHeaderComponent from '../../Component/MainHeaderComponent';
-import SelectedChildBanner from '../../Component/SelectedChildBanner';
+import ParentChildCard from '../../Component/Parent/ParentChildCard';
+import ChildSwitchModal from '../../Component/Parent/ChildSwitchModal';
+import AcademicMenuCard from '../../Component/AcademicMenuCard';
+import AttendanceStudentDropdown from '../../Component/AttendanceStudentDropdown';
+import AnimatedCard from '../../Component/AnimatedCard';
 import {Colors} from '../../Constants/Colors';
-import {Fonts} from '../../Constants/Fonts';
-import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
-import {MENU_LIST} from '../../Constants/dummydata';
+import {MENU_LIST, ATTENDANCE_STUDENTS} from '../../Constants/dummydata';
+import {SCREEN_WAVES} from '../../Component/CardWave';
+import {FEATURE_ICON_META} from '../../Constants/IconTheme';
 import {wp, hp} from '../../Constants/Responsive';
 import {useRoleData} from '../../hooks/useRoleData';
-
-const ITEM_META = {
-  subjects: {icon: 'book-outline', bg: Colors.blueSoft, color: Colors.iconBlue},
-  assignments: {
-    icon: 'document-text-outline',
-    bg: Colors.orangeSoft,
-    color: Colors.iconOrange,
-  },
-  teachers: {icon: 'people-outline', bg: Colors.cyanSoft, color: Colors.iconCyan},
-  attendance: {
-    icon: 'calendar-outline',
-    bg: Colors.greenSoft,
-    color: Colors.iconGreen,
-  },
-  timetable: {icon: 'time-outline', bg: Colors.purpleSoft, color: Colors.iconPurple},
-  holidays: {icon: 'sunny-outline', bg: Colors.orangeSoft, color: Colors.iconOrange},
-  exams: {icon: 'clipboard-outline', bg: Colors.pinkSoft, color: Colors.iconPink},
-  result: {icon: 'trophy-outline', bg: Colors.tealSoft, color: Colors.iconTeal},
-  fee: {icon: 'card-outline', bg: Colors.blueSoft, color: Colors.primary},
-};
+import {
+  ACADEMICS_ENTER_MOTION,
+  ScreenEnterProvider,
+} from '../../hooks/useScreenEnterGate';
+import {ACADEMICS_PROFILE_ENTERING} from '../../utils/cardAnimation';
 
 const Menu = () => {
   const navigation = useNavigation();
-  const {isParent, activeStudent} = useRoleData();
+  const {
+    isParent,
+    activeStudent,
+    childList,
+    attendanceStudents,
+    selectedChildId,
+    setSelectedChildId,
+    canSwitchChild,
+    studentLabel,
+  } = useRoleData();
+  const [switchVisible, setSwitchVisible] = useState(false);
+  const studentOptions = isParent ? childList : attendanceStudents;
+  const attendanceMeta =
+    ATTENDANCE_STUDENTS.find(item => item.value === selectedChildId) ||
+    ATTENDANCE_STUDENTS[0];
+  const dropdownStudent = {...activeStudent, ...attendanceMeta};
 
   const handlePress = item => {
     const target = isParent && item.parentScreen ? item.parentScreen : item.screen;
@@ -59,42 +56,88 @@ const Menu = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <StatusBar backgroundColor={Colors.white} barStyle="dark-content" />
-      <MainHeaderComponent
-        title={Strings.academics}
-        notificationCount={1}
-        onBackPress={() => navigation.navigate('Home')}
-      />
+    <ScreenEnterProvider motion={ACADEMICS_ENTER_MOTION}>
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <MainHeaderComponent
+          title={Strings.academics}
+          notificationCount={1}
+          onBackPress={() => navigation.navigate('Home')}
+        />
 
-      <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}>
-        {isParent ? <SelectedChildBanner child={activeStudent} /> : null}
+        {isParent ? (
+          <View style={styles.parentChildWrap}>
+            <AnimatedCard
+              index={1}
+              entering={ACADEMICS_PROFILE_ENTERING}
+              style={styles.childCard}>
+              <ParentChildCard
+                child={activeStudent}
+                chevron={canSwitchChild ? 'chevron-down' : undefined}
+                accented
+                solid
+                prominent
+                showWave
+                waveVariant={SCREEN_WAVES.academics}
+                onPress={canSwitchChild ? () => setSwitchVisible(true) : undefined}
+              />
+            </AnimatedCard>
+          </View>
+        ) : (
+          <View style={styles.dropdownWrap}>
+            <AnimatedCard
+              index={1}
+              entering={ACADEMICS_PROFILE_ENTERING}
+              style={styles.childCard}>
+              <AttendanceStudentDropdown
+                student={dropdownStudent}
+                students={studentOptions}
+                selectedId={selectedChildId}
+                premium
+                onSelect={item => setSelectedChildId(item.value)}
+                readOnly={false}
+                label={studentLabel}
+              />
+            </AnimatedCard>
+          </View>
+        )}
 
-        {MENU_LIST.filter(item => isParent || item.value !== 'fee').map(item => {
-          const meta = ITEM_META[item.value] || ITEM_META.subjects;
-          const disabled = !item.screen && !item.parentScreen;
-          return (
-            <TouchableOpacity
-              key={item.value}
-              style={[styles.row, disabled && styles.rowDisabled]}
-              activeOpacity={0.85}
-              onPress={() => handlePress(item)}>
-              <View style={[styles.iconWrap, {backgroundColor: meta.bg}]}>
-                <Icon name={meta.icon} size={wp(5)} color={meta.color} />
-              </View>
-              <Text style={styles.title} numberOfLines={1}>
-                {item.label}
-              </Text>
-              <View style={styles.arrowBtn}>
-                <Icon name="arrow-forward" size={wp(3.8)} color={Colors.white} />
-              </View>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
-    </SafeAreaView>
+        <ScrollEnterScrollView
+          style={styles.scrollArea}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+          overScrollMode="never"
+          removeClippedSubviews={false}
+          keyboardShouldPersistTaps="handled">
+          {MENU_LIST.filter(item => isParent || item.value !== 'fee').map((item, index) => {
+            const meta = FEATURE_ICON_META[item.value] || FEATURE_ICON_META.subjects;
+            const disabled = !item.screen && !item.parentScreen;
+            return (
+              <AcademicMenuCard
+                key={item.value}
+                icon={meta.icon}
+                color={meta.color}
+                title={item.label}
+                disabled={disabled}
+                animationIndex={index + 2}
+                waveKey={item.value}
+                onPress={() => handlePress(item)}
+              />
+            );
+          })}
+        </ScrollEnterScrollView>
+
+        {canSwitchChild ? (
+          <ChildSwitchModal
+            visible={switchVisible}
+            childrenList={childList}
+            selectedId={selectedChildId}
+            onSelect={setSelectedChildId}
+            onClose={() => setSwitchVisible(false)}
+          />
+        ) : null}
+      </SafeAreaView>
+    </ScreenEnterProvider>
   );
 };
 
@@ -105,42 +148,28 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.parentBg,
   },
+  scrollArea: {
+    flex: 1,
+  },
+  parentChildWrap: {
+    paddingHorizontal: wp(4),
+    paddingTop: hp(1),
+    zIndex: 20,
+    elevation: 20,
+  },
+  dropdownWrap: {
+    paddingHorizontal: wp(4),
+    paddingTop: hp(1),
+    paddingBottom: hp(0.4),
+    zIndex: 30,
+    elevation: 30,
+  },
   content: {
     paddingHorizontal: wp(4),
+    paddingTop: hp(0.4),
     paddingBottom: hp(3),
   },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.white,
-    borderRadius: wp(4),
-    paddingHorizontal: wp(3.5),
-    paddingVertical: hp(1.6),
-    marginBottom: hp(1.2),
-  },
-  rowDisabled: {
-    opacity: 0.55,
-  },
-  iconWrap: {
-    width: wp(11),
-    height: wp(11),
-    borderRadius: wp(3),
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: wp(3),
-  },
-  title: {
-    flex: 1,
-    color: Colors.black,
-    fontFamily: Fonts.medium,
-    fontSize: Fontsize.xs5,
-  },
-  arrowBtn: {
-    width: wp(7.5),
-    height: wp(7.5),
-    borderRadius: wp(3.75),
-    backgroundColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
+  childCard: {
+    marginBottom: hp(1),
   },
 });

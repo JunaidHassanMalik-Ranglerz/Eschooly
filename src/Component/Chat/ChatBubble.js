@@ -1,6 +1,9 @@
 import React from 'react';
 import {StyleSheet, Text, View} from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
+import {CARD_GRADIENTS} from '../../Constants/CardTheme';
+import {GRADIENT_END, GRADIENT_START} from '../Profile/ProfileTheme';
 import {Colors} from '../../Constants/Colors';
 import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
@@ -12,13 +15,17 @@ const ChatBubble = props => {
 
   return (
     <View style={[styles.wrap, isSent ? styles.sentWrap : styles.receivedWrap]}>
-      <View style={[styles.bubble, isSent ? styles.sentBubble : styles.receivedBubble]}>
+      <LinearGradient
+        colors={CARD_GRADIENTS.sapphire}
+        start={GRADIENT_START}
+        end={GRADIENT_END}
+        style={[styles.bubble, isSent ? styles.sentBubble : styles.receivedBubble]}>
         <Text
           style={[styles.message, isSent ? styles.sentText : styles.receivedText]}
           numberOfLines={10}>
           {item?.text}
         </Text>
-      </View>
+      </LinearGradient>
 
       <View style={[styles.metaRow, isSent ? styles.sentMeta : styles.receivedMeta]}>
         {isSent ? (
@@ -26,7 +33,7 @@ const ChatBubble = props => {
             <Text style={styles.metaText} numberOfLines={1}>
               {item?.time}
             </Text>
-            <Icon name="checkmark-done" size={wp(3.5)} color={Colors.linkBlue} />
+            <Icon name="checkmark-done" size={wp(3.5)} color="#93C5FD" />
           </>
         ) : (
           <Text style={styles.metaText} numberOfLines={1}>
@@ -57,11 +64,9 @@ const styles = StyleSheet.create({
     paddingVertical: hp(1.2),
   },
   sentBubble: {
-    backgroundColor: Colors.primary,
     borderBottomRightRadius: wp(1),
   },
   receivedBubble: {
-    backgroundColor: Colors.white,
     borderBottomLeftRadius: wp(1),
   },
   message: {
@@ -72,7 +77,7 @@ const styles = StyleSheet.create({
     color: Colors.white,
   },
   receivedText: {
-    color: Colors.black,
+    color: Colors.white,
   },
   metaRow: {
     flexDirection: 'row',
@@ -87,7 +92,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
   },
   metaText: {
-    color: Colors.grayText,
+    color: Colors.whiteMuted75,
     fontFamily: Fonts.regular,
     fontSize: 10,
   },

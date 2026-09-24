@@ -7,19 +7,42 @@ import {Fonts} from '../Constants/Fonts';
 import {Strings} from '../Constants/Strings';
 import {wp, hp} from '../Constants/Responsive';
 
-const AttendanceRateCard = ({rate, rateText}) => {
+const AttendanceRateCard = ({rate, rateText, premium = false}) => {
+  const clampedRate = Math.min(Math.max(Number(rate) || 0, 0), 1);
+
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, premium && styles.cardPremium]}>
       <View style={styles.topRow}>
-        <Text style={styles.title} numberOfLines={1}>{Strings.attendanceRate}</Text>
-        <Text style={styles.percent} numberOfLines={1}>{rateText}</Text>
+        <Text
+          style={[styles.title, premium && styles.titlePremium]}
+          numberOfLines={1}>
+          {Strings.attendanceRate}
+        </Text>
+        <Text
+          style={[styles.percent, premium && styles.percentPremium]}
+          numberOfLines={1}>
+          {rateText}
+        </Text>
       </View>
 
-      <ProgressBar progress={rate} style={styles.progressBar} />
+      <View style={styles.progressTrackWrap}>
+        <ProgressBar
+          progress={clampedRate}
+          style={[styles.progressBar, premium && styles.progressBarPremium]}
+        />
+      </View>
 
       <View style={styles.footer}>
-        <Icon name="trending-up" size={wp(4)} color={Colors.grayText} />
-        <Text style={styles.footerText} numberOfLines={1}>{Strings.greatConsistency}</Text>
+        <Icon
+          name="trending-up"
+          size={wp(4)}
+          color={premium ? Colors.whiteMuted75 : Colors.iconSky}
+        />
+        <Text
+          style={[styles.footerText, premium && styles.footerTextPremium]}
+          numberOfLines={1}>
+          {Strings.greatConsistency}
+        </Text>
       </View>
     </View>
   );
@@ -33,6 +56,13 @@ const styles = StyleSheet.create({
     borderRadius: wp(4),
     padding: wp(4),
     marginBottom: hp(2),
+    width: '100%',
+  },
+  cardPremium: {
+    backgroundColor: Colors.transparent,
+    marginBottom: 0,
+    paddingHorizontal: 0,
+    paddingBottom: 0,
   },
   topRow: {
     flexDirection: 'row',
@@ -41,23 +71,35 @@ const styles = StyleSheet.create({
     marginBottom: hp(1.5),
   },
   title: {
+    flex: 1,
     color: Colors.black,
     fontFamily: Fonts.regular,
     fontSize: wp(3.73),
-    width:wp(43),
+  },
+  titlePremium: {
+    color: Colors.whiteMuted85,
   },
   percent: {
     color: Colors.primary,
     fontFamily: Fonts.bold,
     fontSize: wp(3.73),
-    width:wp(9.7),
+    flexShrink: 0,
+  },
+  percentPremium: {
+    color: Colors.white,
+  },
+  progressTrackWrap: {
+    width: '100%',
+    marginBottom: hp(1.2),
   },
   progressBar: {
-    width: wp(84),
+    width: '100%',
     height: hp(1.2),
     borderRadius: hp(0.6),
     backgroundColor: Colors.badgeBg,
-    marginBottom: hp(1.2),
+  },
+  progressBarPremium: {
+    backgroundColor: Colors.whiteOverlay18,
   },
   footer: {
     flexDirection: 'row',
@@ -68,5 +110,9 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.regular,
     fontSize: wp(3.2),
     marginLeft: wp(1.5),
+    flex: 1,
+  },
+  footerTextPremium: {
+    color: Colors.whiteMuted75,
   },
 });

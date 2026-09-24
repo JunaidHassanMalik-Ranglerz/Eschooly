@@ -1,56 +1,71 @@
 import React from 'react';
-import {Image, StyleSheet, Text, View} from 'react-native';
+import {StyleSheet, Text, View} from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
+import Icon from 'react-native-vector-icons/Ionicons';
 import ProgressBar from './ProgressBar';
-import {Images} from '../Assets';
+import AnimatedCard from './AnimatedCard';
+import CardWave, {SCREEN_WAVES} from './CardWave';
+import {
+  CARD_RADIUS,
+  GRADIENT_END,
+  GRADIENT_START,
+  IDENTITY_CARD_SHADOW,
+} from './Profile/ProfileTheme';
+import {getSubjectTheme} from './Syllabus/SubjectTheme';
 import {Colors} from '../Constants/Colors';
 import {Fonts} from '../Constants/Fonts';
+import {Fontsize} from '../Constants/Fontsize';
 import {Strings} from '../Constants/Strings';
 import {wp, hp} from '../Constants/Responsive';
 
-const OverallProgressCard = props => {
+const OverallProgressCard = ({overview, subjectLabel, animationIndex = 0}) => {
+  const theme = getSubjectTheme(subjectLabel);
+
   return (
-    <View style={styles.card}>
-      <View style={styles.topRow}>
-        <View style={styles.percentRow}>
-          <Text style={styles.percent} numberOfLines={1}>
-            {props?.overview?.percentText}
-          </Text>
-          <Text style={styles.completeText}>{Strings.complete}</Text>
+    <AnimatedCard index={animationIndex} style={[styles.wrap, IDENTITY_CARD_SHADOW]}>
+      <LinearGradient
+        colors={theme.gradient}
+        start={GRADIENT_START}
+        end={GRADIENT_END}
+        style={styles.card}>
+        <CardWave variant={SCREEN_WAVES.syllabus} />
+        <View style={styles.topRow}>
+          <View style={styles.percentRow}>
+            <Text style={styles.percent} numberOfLines={1}>
+              {overview?.percentText}
+            </Text>
+            <Text style={styles.completeText}>{Strings.complete}</Text>
+          </View>
+
+          <View style={styles.trackBadge}>
+            <Icon name="checkmark-circle" size={wp(4)} color={Colors.iconSky} />
+            <Text style={styles.trackText}>{Strings.onTrack}</Text>
+          </View>
         </View>
 
-        <View style={styles.trackBadge}>
-          <Image
-            source={Images.greenTick}
-            style={styles.greenTickIcon}
-            resizeMode="contain"
-          />
-          <Text style={styles.trackText}>{Strings.onTrack}</Text>
-        </View>
-      </View>
+        <ProgressBar progress={overview?.progress} style={styles.progressBar} />
 
-      <ProgressBar
-        progress={props?.overview?.progress}
-        style={styles.progressBar}
-      />
-
-      <Text style={styles.subText} numberOfLines={1}>
-        {props?.overview?.completedTopics} {Strings.of}{' '}
-        {props?.overview?.totalTopics} {Strings.topicsCompleted}
-      </Text>
-    </View>
+        <Text style={styles.subText} numberOfLines={1}>
+          {overview?.completedTopics} {Strings.of} {overview?.totalTopics}{' '}
+          {Strings.topicsCompleted}
+        </Text>
+      </LinearGradient>
+    </AnimatedCard>
   );
 };
 
 export default OverallProgressCard;
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: Colors.white,
-    borderRadius: wp(4),
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: wp(4),
+  wrap: {
     marginBottom: hp(2),
+    borderRadius: CARD_RADIUS,
+    overflow: 'hidden',
+  },
+  card: {
+    borderRadius: CARD_RADIUS,
+    padding: wp(4),
+    overflow: 'hidden',
   },
   topRow: {
     flexDirection: 'row',
@@ -63,45 +78,40 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
   },
   percent: {
-    color: Colors.primary,
+    color: Colors.white,
     fontFamily: Fonts.bold,
-    fontSize: wp(5.33),
+    fontSize: Fontsize.md,
     marginRight: wp(2),
-    width:wp(13),
   },
   completeText: {
-    color: Colors.grayText,
+    color: Colors.whiteMuted75,
     fontFamily: Fonts.regular,
-    fontSize: wp(2.24),
+    fontSize: Fontsize.xs0,
   },
   trackBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.successBg,
+    backgroundColor: Colors.whiteOverlay22,
     paddingHorizontal: wp(3),
     paddingVertical: hp(0.6),
     borderRadius: wp(5),
-  },
-  greenTickIcon: {
-    width: wp(3.5),
-    height: wp(3.5),
+    gap: wp(1),
   },
   trackText: {
-    color: Colors.onTrack,
-    fontFamily: Fonts.regular,
-    fontSize: wp(2.67),
-    marginLeft: wp(1),
+    color: Colors.white,
+    fontFamily: Fonts.medium,
+    fontSize: Fontsize.xs0,
   },
   progressBar: {
-    width: wp(83.7),
+    width: '100%',
     marginBottom: hp(1.2),
     height: hp(1),
     borderRadius: hp(0.6),
+    backgroundColor: Colors.whiteOverlay18,
   },
   subText: {
-    color: Colors.grayText,
+    color: Colors.whiteMuted85,
     fontFamily: Fonts.regular,
-    fontSize: wp(2.24),
-    width:wp(45),
+    fontSize: Fontsize.xs0,
   },
 });

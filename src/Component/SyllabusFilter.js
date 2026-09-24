@@ -1,170 +1,127 @@
-import React, {useRef} from 'react';
+import React, {useState} from 'react';
 import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import {Dropdown} from 'react-native-element-dropdown';
+import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
+import OptionPickerSheetModal from './OptionPickerSheetModal';
+import {
+  CARD_RADIUS,
+  GRADIENT_END,
+  GRADIENT_START,
+  IDENTITY_CARD_SHADOW,
+} from './Profile/ProfileTheme';
+import {getSubjectTheme} from './Syllabus/SubjectTheme';
 import {Colors} from '../Constants/Colors';
 import {Fonts} from '../Constants/Fonts';
 import {Fontsize} from '../Constants/Fontsize';
 import {Strings} from '../Constants/Strings';
 import {wp, hp} from '../Constants/Responsive';
+import AnimatedCard from './AnimatedCard';
 
 const SyllabusFilter = props => {
-  const dropdownRef = useRef(null);
+  const [open, setOpen] = useState(false);
+  const theme = getSubjectTheme(props?.label);
+  const animationIndex = props?.animationIndex ?? 1;
+  const subjects = props?.subjects || [];
 
   return (
-    <View style={styles.card}>
-      <TouchableOpacity
-        style={styles.dropdownWrap}
-        activeOpacity={0.8}
-        onPress={() => dropdownRef.current?.open()}>
-        <Dropdown
-          ref={dropdownRef}
-          data={props?.subjects}
-          labelField="label"
-          valueField="value"
-          value={props?.value}
-          onChange={item => props?.onChange?.(item)}
-          style={styles.dropdown}
-          containerStyle={styles.dropdownMenu}
-          selectedTextStyle={styles.hiddenSelectedText}
-          placeholderStyle={styles.hiddenSelectedText}
-          selectedTextProps={{numberOfLines: 1}}
-          itemTextStyle={styles.itemText}
-          maxHeight={hp(30)}
-          showsVerticalScrollIndicator={false}
-          renderLeftIcon={() => (
-            <View style={styles.bookIcon}>
-              <Icon name="book-outline" size={wp(5)} color={Colors.primary} />
-            </View>
-          )}
-          renderRightIcon={() => (
-            <Icon name="chevron-down" size={wp(4.5)} color={Colors.grayText} />
-          )}
-          renderItem={(item, selected) => (
-            <View style={[styles.menuItem, selected && styles.menuItemActive]}>
-              <Text style={styles.menuItemText} numberOfLines={1}>
-                {item?.label}
-              </Text>
-            </View>
-          )}
-        />
-        <Text
-          style={styles.subjectLabel}
-          numberOfLines={1}
-          ellipsizeMode="tail"
-          pointerEvents="none">
-          {Strings.subject}
-        </Text>
-        <Text
-          style={styles.selectedText}
-          numberOfLines={1}
-          ellipsizeMode="tail"
-          pointerEvents="none">
-          {props?.label}
-        </Text>
-      </TouchableOpacity>
+    <AnimatedCard index={animationIndex} style={[styles.wrap, IDENTITY_CARD_SHADOW]}>
+      <LinearGradient
+        colors={theme.gradient}
+        start={GRADIENT_START}
+        end={GRADIENT_END}
+        style={styles.card}>
+        <TouchableOpacity
+          style={styles.dropdownWrap}
+          activeOpacity={0.8}
+          onPress={() => setOpen(true)}>
+          <Icon name={theme.icon} size={wp(5.5)} color={theme.iconColor} />
+          <View style={styles.dropdownTextCol}>
+            <Text style={styles.subjectLabel} numberOfLines={1}>
+              {Strings.subject}
+            </Text>
+            <Text style={styles.selectedText} numberOfLines={1}>
+              {props?.label}
+            </Text>
+          </View>
+          <Icon name="chevron-down" size={wp(4.5)} color={Colors.whiteMuted85} />
+        </TouchableOpacity>
 
-      <View style={styles.classBadge}>
-        <Icon name="school-outline" size={wp(4)} color={Colors.badgeText} />
-        <Text style={styles.classText} numberOfLines={1} ellipsizeMode="tail">{props?.className}</Text>
-      </View>
-    </View>
+        <View style={styles.classBadge}>
+          <Icon name="school-outline" size={wp(4)} color={Colors.white} />
+          <Text style={styles.classText} numberOfLines={1}>
+            {props?.className}
+          </Text>
+        </View>
+      </LinearGradient>
+
+      <OptionPickerSheetModal
+        visible={open}
+        onClose={() => setOpen(false)}
+        title={Strings.subject}
+        subtitle={props?.label}
+        data={subjects}
+        selectedValue={props?.value}
+        onSelect={item => props?.onChange?.(item)}
+      />
+    </AnimatedCard>
   );
 };
 
 export default SyllabusFilter;
 
 const styles = StyleSheet.create({
+  wrap: {
+    marginBottom: hp(2),
+    borderRadius: CARD_RADIUS,
+  },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.white,
-    borderRadius: wp(4),
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderRadius: CARD_RADIUS,
     padding: wp(3),
-    marginBottom: hp(2),
+    overflow: 'hidden',
   },
   dropdownWrap: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
     marginRight: wp(2),
-    backgroundColor: Colors.cardBg,
     borderRadius: wp(3),
     overflow: 'hidden',
     height: wp(12.13),
-  },
-  dropdown: {
-    backgroundColor: Colors.transparent,
-    borderWidth: 0,
+    backgroundColor: Colors.whiteOverlay18,
     paddingHorizontal: wp(3),
-    height: '100%',
-    width: '100%',
-    paddingTop: hp(0.6),
-    paddingBottom: hp(0.4),
+    gap: wp(2),
   },
-  dropdownMenu: {
-    borderRadius: wp(3),
-    borderWidth: 1,
-    borderColor: Colors.border,
-    marginTop: hp(0.5),
+  dropdownTextCol: {
+    flex: 1,
+    minWidth: 0,
+    justifyContent: 'center',
   },
   subjectLabel: {
-    position: 'absolute',
-    top: hp(1),
-    left: wp(10.7),
-    right: wp(10),
-    color: Colors.grayText,
+    color: Colors.whiteMuted75,
     fontFamily: Fonts.regular,
-    fontSize: wp(2.4),
-    width:wp(20),
-  },
-  bookIcon: {
-    marginRight: wp(2),
-    justifyContent: 'center',
-    marginTop: hp(0.5),
-  },
-  hiddenSelectedText: {
-    opacity: 0,
+    fontSize: Fontsize.xxm,
   },
   selectedText: {
-    position: 'absolute',
-    top: hp(2.6),
-    left: wp(10.7),
-    right: wp(10),
-    color: Colors.black,
-    fontFamily: Fonts.regular,
-    fontSize: wp(2.93),
-  },
-  itemText: {
-    color: Colors.black,
-    fontFamily: Fonts.medium,
-    fontSize: Fontsize.normal,
-  },
-  menuItem: {
-    paddingHorizontal: wp(4),
-    paddingVertical: hp(1.4),
-  },
-  menuItemActive: {
-    backgroundColor: Colors.duesCardBg,
-  },
-  menuItemText: {
-    color: Colors.black,
-    fontFamily: Fonts.medium,
-    fontSize: Fontsize.xs4,
+    color: Colors.white,
+    fontFamily: Fonts.semibold,
+    fontSize: Fontsize.xs0,
+    marginTop: hp(0.15),
   },
   classBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.badgeBg,
-    borderRadius: wp(1.8),
+    backgroundColor: Colors.whiteOverlay22,
+    borderRadius: wp(3),
     paddingHorizontal: wp(2.5),
     paddingVertical: hp(0.7),
+    gap: wp(1.2),
   },
   classText: {
-    color: Colors.badgeText,
+    color: Colors.white,
     fontFamily: Fonts.bold,
-    fontSize: wp(2.85),
-    marginLeft: wp(1.5),
-    width:wp(15),
+    fontSize: Fontsize.xxm,
+    maxWidth: wp(16),
   },
 });

@@ -10,7 +10,7 @@ export const LIBRARY_RESOURCES = [
   {
     id: '1',
     title: 'Quadratic Equations Notes',
-    subtitle: 'Math - Class 10',
+    subtitle: 'Math - Class 7',
     fileType: 'PDF',
     fileSize: '2.4 MB',
     category: 'math',
@@ -23,7 +23,7 @@ export const LIBRARY_RESOURCES = [
   {
     id: '2',
     title: 'English Grammar Workbook',
-    subtitle: 'English - Class 10',
+    subtitle: 'English - Class 7',
     fileType: 'eBook',
     fileSize: '5.1 MB',
     category: 'english',
@@ -36,7 +36,7 @@ export const LIBRARY_RESOURCES = [
   {
     id: '3',
     title: 'Laws of Motion Notes',
-    subtitle: 'Science - Class 10',
+    subtitle: 'Science - Class 7',
     fileType: 'PDF',
     fileSize: '3.8 MB',
     category: 'physics',
@@ -85,4 +85,19 @@ export const getFilteredResources = (list, search, category) => {
     const text = `${book.title} ${book.subtitle} ${book.fileType}`.toLowerCase();
     return text.includes(query);
   });
+};
+
+const gradeFromClassName = className =>
+  Number(String(className || '').match(/\d+/)?.[0] || 7);
+
+export const getLibraryResourcesForClass = className => {
+  const grade = gradeFromClassName(className);
+
+  const matched = LIBRARY_RESOURCES.filter(item => {
+    const match = String(item.subtitle || '').match(/Class\s+(\d+)/i);
+    const itemGrade = match ? Number(match[1]) : grade;
+    return itemGrade === grade;
+  });
+
+  return matched.length > 0 ? matched : LIBRARY_RESOURCES;
 };

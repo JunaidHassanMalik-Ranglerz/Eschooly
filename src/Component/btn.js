@@ -1,6 +1,7 @@
 import React from 'react';
 import {Image, StyleSheet, Text, TouchableOpacity} from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import AnimatedCard from './AnimatedCard';
 import {Colors} from '../Constants/Colors';
 import {Fonts} from '../Constants/Fonts';
 import {Fontsize} from '../Constants/Fontsize';
@@ -30,10 +31,11 @@ const Btn = props => {
     )
   ) : null;
 
-  return (
+  const button = (
     <TouchableOpacity
-      style={[styles.btn, isOutline && styles.outlineBtn, props?.style]}
+      style={[styles.btn, isOutline && styles.outlineBtn, !props?.animationIndex && props?.style]}
       activeOpacity={0.85}
+      delayPressIn={0}
       onPress={props?.onPress}>
       {!iconRight && iconEl}
       <Text
@@ -47,6 +49,16 @@ const Btn = props => {
       {iconRight && iconEl}
     </TouchableOpacity>
   );
+
+  if (props?.animationIndex != null) {
+    return (
+      <AnimatedCard index={props.animationIndex} style={props?.style}>
+        {button}
+      </AnimatedCard>
+    );
+  }
+
+  return button;
 };
 
 export default Btn;

@@ -1,21 +1,27 @@
 import React from 'react';
-import {FlatList, StatusBar, StyleSheet, Text, View} from 'react-native';
+import {StatusBar, StyleSheet, Text, View} from 'react-native';
+import ScrollEnterFlatList from '../../Component/ScrollEnterFlatList';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import MainHeaderComponent from '../../Component/MainHeaderComponent';
 import SelectedChildBanner from '../../Component/SelectedChildBanner';
+import PersonAvatar from '../../Component/Profile/PersonAvatar';
+import ProfileGradientCard from '../../Component/Profile/ProfileGradientCard';
+import {SCREEN_WAVES} from '../../Component/CardWave';
 import {Colors} from '../../Constants/Colors';
 import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
 import {wp, hp} from '../../Constants/Responsive';
 import {useRoleData} from '../../hooks/useRoleData';
+import {ScreenEnterProvider} from '../../hooks/useScreenEnterGate';
 
-const DiaryCard = ({item}) => (
-  <View style={styles.card}>
+const DiaryCard = ({item, animationIndex = 0}) => (
+  <ProfileGradientCard innerStyle={styles.cardInner} animationIndex={animationIndex}>
     <View style={styles.header}>
-      <View style={styles.avatar}>
-        <Text style={styles.initials}>{item.initials}</Text>
-      </View>
+      <PersonAvatar
+        person={{label: item.name, gender: item.gender, name: item.name}}
+        size={wp(10)}
+      />
       <View style={styles.headerText}>
         <Text style={styles.name} numberOfLines={1}>
           {item.name}
@@ -24,26 +30,32 @@ const DiaryCard = ({item}) => (
       </View>
     </View>
     <Text style={styles.message}>{item.message}</Text>
-  </View>
+  </ProfileGradientCard>
 );
 
 const ParentDiary = () => {
   const {activeStudent, diaryEntries} = useRoleData();
 
   return (
+    <ScreenEnterProvider motion="diary">
     <SafeAreaView style={styles.container} edges={['top']}>
-      <StatusBar backgroundColor={Colors.white} barStyle="dark-content" />
-      <MainHeaderComponent title={Strings.diary} />
+      <StatusBar backgroundColor={Colors.parentBg} barStyle="dark-content" />
+      <MainHeaderComponent title={Strings.diary} navyBack />
 
-      <FlatList
+      <ScrollEnterFlatList
         data={diaryEntries}
         keyExtractor={item => item.id}
-        renderItem={({item}) => <DiaryCard item={item} />}
+        renderItem={({item, index}) => (
+          <DiaryCard item={item} animationIndex={index + 1} />
+        )}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.list}
-        ListHeaderComponent={<SelectedChildBanner child={activeStudent} />}
+        ListHeaderComponent={
+          <SelectedChildBanner child={activeStudent} waveVariant={SCREEN_WAVES.diary} />
+        }
       />
     </SafeAreaView>
+    </ScreenEnterProvider>
   );
 };
 
@@ -58,47 +70,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(4),
     paddingBottom: hp(3),
   },
-  card: {
-    backgroundColor: Colors.white,
-    borderRadius: wp(4),
-    padding: wp(4),
-    marginBottom: hp(1.5),
+  cardInner: {
+    paddingVertical: hp(1.5),
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: hp(1),
   },
-  avatar: {
-    width: wp(10),
-    height: wp(10),
-    borderRadius: wp(5),
-    backgroundColor: Colors.avatarBg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: wp(3),
-  },
-  initials: {
-    color: Colors.primary,
-    fontFamily: Fonts.semibold,
-    fontSize: Fontsize.xs1,
-  },
   headerText: {
     flex: 1,
+    marginLeft: wp(3),
   },
   name: {
-    color: Colors.black,
+    color: Colors.white,
     fontFamily: Fonts.semibold,
     fontSize: Fontsize.xs5,
   },
   time: {
-    color: Colors.grayText,
+    color: Colors.whiteMuted75,
     fontFamily: Fonts.regular,
     fontSize: Fontsize.xs0,
     marginTop: hp(0.2),
   },
   message: {
-    color: Colors.grayText,
+    color: Colors.whiteMuted85,
     fontFamily: Fonts.regular,
     fontSize: Fontsize.xs1,
     lineHeight: Fontsize.m,

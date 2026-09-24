@@ -1,7 +1,13 @@
 import React from 'react';
-import {Image, StyleSheet, Text, View} from 'react-native';
+import {StyleSheet, Text, View} from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Btn from './btn';
+import DepthIcon from './DepthIcon';
+import PersonAvatar from './Profile/PersonAvatar';
+import ProfileGradientCard from './Profile/ProfileGradientCard';
+import AnimatedCard from './AnimatedCard';
+import {SCREEN_WAVES} from './CardWave';
+import {getSubjectIconTheme} from './Syllabus/SubjectTheme';
 import {Images} from '../Assets';
 import {Colors} from '../Constants/Colors';
 import {Fonts} from '../Constants/Fonts';
@@ -9,50 +15,81 @@ import {Fontsize} from '../Constants/Fontsize';
 import {Strings} from '../Constants/Strings';
 import {wp, hp} from '../Constants/Responsive';
 
-const ClassTeacherCard = props => {
+const ClassTeacherCard = ({teacher, onMessage, premium = false, animationIndex = 0}) => {
+  const subjectIcon = getSubjectIconTheme(teacher?.subject);
+  const teacherPerson = {
+    label: teacher?.name,
+    name: teacher?.name,
+    gender: teacher?.gender,
+  };
+
+  const content = (
+    <View style={styles.card}>
+      <PersonAvatar person={teacherPerson} size={wp(12)} />
+
+      <View style={styles.info}>
+        <View style={styles.badgeRow}>
+          <Icon
+            name="checkmark-circle"
+            size={wp(3.5)}
+            color={premium ? Colors.iconGreen : Colors.primary}
+          />
+          <Text
+            style={[styles.badgeText, premium && styles.badgeTextPremium]}
+            numberOfLines={1}>
+            {Strings.classTeacher}
+          </Text>
+        </View>
+        <Text style={[styles.name, premium && styles.namePremium]} numberOfLines={1}>
+          {teacher?.name}
+        </Text>
+        <View style={styles.subjectRow}>
+          <DepthIcon
+            name={subjectIcon.icon}
+            size={wp(4.8)}
+            color={subjectIcon.color}
+          />
+          <Text
+            style={[styles.subject, premium && styles.subjectPremium]}
+            numberOfLines={1}>
+            {teacher?.subject}
+          </Text>
+        </View>
+      </View>
+
+      <Btn
+        title={Strings.message}
+        image={Images.messageIcon}
+        iconSize={wp(3.7)}
+        style={styles.messageBtn}
+        textStyle={styles.messageBtnText}
+        onPress={() => onMessage?.(teacher)}
+      />
+    </View>
+  );
+
   return (
     <View style={styles.wrap}>
       <View style={styles.sectionRow}>
         <Icon name="star" size={wp(3.5)} color={Colors.primary} />
-        <Text style={styles.sectionLabel} numberOfLines={1}>{Strings.classTeacher}</Text>
+        <Text style={styles.sectionLabel} numberOfLines={1}>
+          {Strings.classTeacher}
+        </Text>
       </View>
 
-      <View style={styles.card}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText} numberOfLines={1}>
-            {props?.teacher?.initials}
-          </Text>
-        </View>
-
-        <View style={styles.info}>
-          <View style={styles.badgeRow}>
-            <Icon name="checkmark-circle" size={wp(3.5)} color={Colors.primary} />
-            <Text style={styles.badgeText} numberOfLines={1}>{Strings.classTeacher}</Text>
-          </View>
-          <Text style={styles.name} numberOfLines={1}>
-            {props?.teacher?.name}
-          </Text>
-          <View style={styles.subjectRow}>
-            <Image
-              source={Images.lecture}
-              style={styles.lectureIcon}
-              resizeMode="contain"
-            />
-            <Text style={styles.subject} numberOfLines={1}>
-              {props?.teacher?.subject}
-            </Text>
-          </View>
-        </View>
-
-          <Btn
-          title={Strings.message}
-          image={Images.messageIcon}
-          iconSize={wp(3.7)}
-          style={styles.messageBtn}
-          textStyle={styles.messageBtnText}
-          onPress={() => props?.onMessage?.(props?.teacher)}
-        />
-      </View>
+      {premium ? (
+        <ProfileGradientCard
+          innerStyle={styles.premiumInner}
+          animationIndex={animationIndex}
+          colors={[Colors.parentHeader, Colors.parentHeader]}
+          waveVariant={SCREEN_WAVES.teachers}>
+          {content}
+        </ProfileGradientCard>
+      ) : (
+        <AnimatedCard index={animationIndex} style={styles.plainCard}>
+          {content}
+        </AnimatedCard>
+      )}
     </View>
   );
 };
@@ -76,30 +113,22 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     width: wp(45),
   },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  plainCard: {
     backgroundColor: Colors.cardBg,
     borderRadius: wp(4),
     padding: wp(4),
   },
-  avatar: {
-    width: wp(12),
-    height: wp(12),
-    borderRadius: wp(6),
-    backgroundColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: wp(3),
+  premiumInner: {
+    paddingVertical: hp(1.2),
+    paddingHorizontal: wp(4),
   },
-  avatarText: {
-    color: Colors.white,
-    fontFamily: Fonts.semibold,
-    fontSize: Fontsize.sm,
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   info: {
     flex: 1,
-    marginRight: wp(2),
+    marginHorizontal: wp(3),
   },
   badgeRow: {
     flexDirection: 'row',
@@ -113,25 +142,30 @@ const styles = StyleSheet.create({
     fontSize: Fontsize.xs,
     letterSpacing: 0.3,
   },
+  badgeTextPremium: {
+    color: Colors.iconGreen,
+  },
   name: {
     color: Colors.black,
     fontFamily: Fonts.bold,
-    fontSize:wp(3.73),
+    fontSize: wp(3.73),
     marginBottom: hp(0.4),
+  },
+  namePremium: {
+    color: Colors.white,
   },
   subjectRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: wp(1),
-  },
-  lectureIcon: {
-    width: wp(3.5),
-    height: wp(3.5),
+    gap: wp(1.2),
   },
   subject: {
     color: Colors.grayText,
     fontFamily: Fonts.regular,
     fontSize: wp(3.2),
+  },
+  subjectPremium: {
+    color: Colors.whiteMuted75,
   },
   messageBtn: {
     marginTop: 0,

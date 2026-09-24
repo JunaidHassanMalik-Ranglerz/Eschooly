@@ -9,12 +9,14 @@ import {wp, hp} from '../Constants/Responsive';
 
 const TopicItem = props => {
   const status = props?.topic?.status;
+  const premium = props?.premium;
 
   return (
     <View style={styles.row}>
       <View
         style={[
           styles.checkbox,
+          premium && styles.checkboxPremium,
           status === 'completed' && styles.checkboxDone,
           status === 'in_progress' && styles.checkboxProgress,
           status === 'pending' && styles.checkboxPending,
@@ -25,10 +27,22 @@ const TopicItem = props => {
       </View>
 
       <View style={styles.info}>
-        <Text style={styles.title} numberOfLines={1}>{props?.topic?.title}</Text>
+        <Text
+          style={[styles.title, premium && styles.titlePremium]}
+          numberOfLines={1}>
+          {props?.topic?.title}
+        </Text>
         <View style={styles.durationRow}>
-          <Icon name="time-outline" size={wp(3.2)} color={Colors.grayText} />
-          <Text style={styles.duration} numberOfLines={1}>{props?.topic?.duration}</Text>
+          <Icon
+            name="time-outline"
+            size={wp(3.2)}
+            color={premium ? Colors.whiteMuted75 : Colors.grayText}
+          />
+          <Text
+            style={[styles.duration, premium && styles.durationPremium]}
+            numberOfLines={1}>
+            {props?.topic?.duration}
+          </Text>
         </View>
       </View>
 
@@ -72,17 +86,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: wp(3),
   },
+  checkboxPremium: {
+    backgroundColor: Colors.whiteOverlay18,
+    borderColor: Colors.whiteOverlay22,
+  },
   checkboxDone: {
     backgroundColor: Colors.primary,
     borderColor: Colors.primary,
   },
   checkboxProgress: {
-    borderColor: Colors.primary,
-    backgroundColor: Colors.white,
+    borderColor: Colors.iconSky,
+    backgroundColor: Colors.transparent,
   },
   checkboxPending: {
-    borderColor: Colors.border,
-    backgroundColor: Colors.white,
+    borderColor: Colors.whiteMuted75,
+    backgroundColor: Colors.transparent,
   },
   info: {
     flex: 1,
@@ -92,7 +110,10 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.semibold,
     fontSize: Fontsize.normal,
     marginBottom: hp(0.3),
-    width:wp(45),
+    width: wp(45),
+  },
+  titlePremium: {
+    color: Colors.white,
   },
   durationRow: {
     flexDirection: 'row',
@@ -102,39 +123,42 @@ const styles = StyleSheet.create({
     color: Colors.grayText,
     fontFamily: Fonts.regular,
     fontSize: wp(2.67),
-    width:wp(20),
+    width: wp(20),
     marginLeft: wp(1),
   },
+  durationPremium: {
+    color: Colors.whiteMuted75,
+  },
   completedBadge: {
-    backgroundColor: Colors.successBg,
+    backgroundColor: 'rgba(56, 189, 248, 0.18)',
     paddingHorizontal: wp(3),
     paddingVertical: hp(0.4),
     borderRadius: wp(4),
   },
   completedText: {
-    color: Colors.success,
+    color: '#BFDBFE',
     fontFamily: Fonts.regular,
     fontSize: wp(2.24),
   },
   progressBadge: {
-    backgroundColor: Colors.pendingBg,
+    backgroundColor: 'rgba(99, 102, 241, 0.18)',
     paddingHorizontal: wp(3),
     paddingVertical: hp(0.4),
     borderRadius: wp(4),
   },
   progressText: {
-    color: Colors.warning,
+    color: '#C7D2FE',
     fontFamily: Fonts.regular,
     fontSize: wp(2.24),
   },
   pendingBadge: {
-    backgroundColor: Colors.lightGray,
+    backgroundColor: 'rgba(255,255,255,0.12)',
     paddingHorizontal: wp(3),
     paddingVertical: hp(0.4),
     borderRadius: wp(4),
   },
   pendingText: {
-    color: Colors.grayText,
+    color: Colors.whiteMuted75,
     fontFamily: Fonts.regular,
     fontSize: wp(2.24),
   },

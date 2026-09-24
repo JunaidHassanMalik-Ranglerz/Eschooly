@@ -36,7 +36,7 @@ const SplashWaves = () => (
   </View>
 );
 
-const CompactWaves = () => (
+const CompactWaves = ({fill = Colors.white}) => (
   <View style={styles.waveCompact} pointerEvents="none">
     <Svg width={wp(100)} height={hp(8)} viewBox="0 0 390 80" preserveAspectRatio="none">
       <Path
@@ -44,7 +44,7 @@ const CompactWaves = () => (
         d="M0,28 C70,8 130,48 200,28 C270,8 330,18 390,12 L390,80 L0,80 Z"
       />
       <Path
-        fill={Colors.white}
+        fill={fill}
         d="M0,48 C80,32 140,62 210,48 C280,34 340,38 390,44 L390,80 L0,80 Z"
       />
     </Svg>
@@ -57,17 +57,22 @@ const PortalBrand = ({
   showWave = false,
   compact = false,
   topInset = 0,
+  waveFill,
+  gradientColors,
+  gradientLocations,
 }) => {
   const isSplash = !compact;
+  const defaultSplash = [Colors.primary, Colors.primaryLight, Colors.splashEnd];
+  const defaultCompact = [Colors.splashStart, Colors.primaryLight, Colors.splashEnd];
+  const colors =
+    gradientColors || (isSplash ? defaultSplash : defaultCompact);
+  const locations =
+    gradientLocations || (isSplash ? [0, 0.38, 1] : [0, 0.5, 1]);
 
   return (
     <LinearGradient
-      colors={
-        isSplash
-          ? [Colors.primary, Colors.primaryLight, Colors.splashEnd]
-          : [Colors.splashStart, Colors.primaryLight, Colors.splashEnd]
-      }
-      locations={isSplash ? [0, 0.38, 1] : [0, 0.5, 1]}
+      colors={colors}
+      locations={locations}
       start={{x: 0.1, y: 0}}
       end={{x: 0.85, y: 1}}
       style={[
@@ -102,8 +107,15 @@ const PortalBrand = ({
         )}
       </View>
 
-      {compact ? showWave ? <CompactWaves /> : null : <SplashWaves />}
-      {compact ? <View style={styles.seamCover} /> : null}
+      {compact ? showWave ? <CompactWaves fill={waveFill || Colors.white} /> : null : <SplashWaves />}
+      {compact ? (
+        <View
+          style={[
+            styles.seamCover,
+            waveFill ? {backgroundColor: waveFill} : null,
+          ]}
+        />
+      ) : null}
     </LinearGradient>
   );
 };

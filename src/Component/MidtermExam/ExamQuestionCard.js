@@ -1,15 +1,22 @@
 import React from 'react';
 import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {Colors} from '../../Constants/Colors';
+import {CARD_GRADIENTS} from '../../Constants/CardTheme';
 import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
 import {wp, hp} from '../../Constants/Responsive';
+import {GRADIENT_END, GRADIENT_START} from '../Profile/ProfileTheme';
 
 const ExamQuestionCard = ({question, selected, onSelect}) => {
   return (
-    <View style={styles.card}>
+    <LinearGradient
+      colors={CARD_GRADIENTS.royal}
+      start={GRADIENT_START}
+      end={GRADIENT_END}
+      style={styles.card}>
       <View style={styles.header}>
         <View style={styles.badge}>
           <Text style={styles.badgeText}>Q{question.id}</Text>
@@ -34,16 +41,18 @@ const ExamQuestionCard = ({question, selected, onSelect}) => {
                 {option.key}
               </Text>
             </View>
-            <Text style={styles.optionValue}>{option.value}</Text>
+            <Text style={[styles.optionValue, active && styles.optionValueActive]}>
+              {option.value}
+            </Text>
             <Icon
               name={active ? 'radio-button-on' : 'radio-button-off'}
               size={wp(5)}
-              color={active ? Colors.primary : Colors.inputBorder}
+              color={active ? Colors.iconSky : Colors.whiteMuted75}
             />
           </TouchableOpacity>
         );
       })}
-    </View>
+    </LinearGradient>
   );
 };
 
@@ -51,17 +60,12 @@ export default ExamQuestionCard;
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: Colors.white,
     borderRadius: wp(4),
     padding: wp(4),
     marginBottom: hp(2),
     borderWidth: 1,
-    borderColor: Colors.border,
-    shadowColor: Colors.black,
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    borderColor: '#65C4FF',
+    overflow: 'hidden',
   },
   header: {
     flexDirection: 'row',
@@ -70,7 +74,7 @@ const styles = StyleSheet.create({
     marginBottom: hp(1.5),
   },
   badge: {
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.whiteOverlay22,
     borderRadius: wp(2),
     paddingHorizontal: wp(2.5),
     paddingVertical: hp(0.4),
@@ -81,12 +85,12 @@ const styles = StyleSheet.create({
     fontSize: Fontsize.xs2,
   },
   marks: {
-    color: Colors.grayText,
+    color: Colors.whiteMuted75,
     fontFamily: Fonts.regular,
     fontSize: Fontsize.small,
   },
   question: {
-    color: Colors.black,
+    color: Colors.white,
     fontFamily: Fonts.bold,
     fontSize: Fontsize.sm2,
     lineHeight: hp(2.8),
@@ -96,29 +100,31 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.whiteOverlay22,
     borderRadius: wp(3),
     padding: wp(3),
     marginBottom: hp(1),
+    backgroundColor: Colors.whiteOverlay18,
   },
   optionActive: {
-    borderColor: Colors.primary,
+    borderColor: Colors.iconSky,
     borderWidth: 1.5,
+    backgroundColor: 'rgba(56, 189, 248, 0.16)',
   },
   letter: {
     width: wp(7),
     height: wp(7),
     borderRadius: wp(3.5),
-    backgroundColor: Colors.cardBg,
+    backgroundColor: Colors.whiteOverlay18,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: wp(3),
   },
   letterActive: {
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.iconSky,
   },
   letterText: {
-    color: Colors.grayText,
+    color: Colors.whiteMuted85,
     fontFamily: Fonts.semibold,
     fontSize: Fontsize.small,
   },
@@ -127,8 +133,11 @@ const styles = StyleSheet.create({
   },
   optionValue: {
     flex: 1,
-    color: Colors.black,
+    color: Colors.whiteMuted85,
     fontFamily: Fonts.medium,
     fontSize: Fontsize.sm,
+  },
+  optionValueActive: {
+    color: Colors.white,
   },
 });

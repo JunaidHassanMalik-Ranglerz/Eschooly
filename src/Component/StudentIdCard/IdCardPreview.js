@@ -9,18 +9,38 @@ import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
 import {wp, hp} from '../../Constants/Responsive';
 import IdCardDetailRow from './IdCardDetailRow';
+import PersonAvatar from '../Profile/PersonAvatar';
+import {
+  CARD_RADIUS,
+  GRADIENT_END,
+  GRADIENT_START,
+  PROFILE_GRADIENT,
+} from '../Profile/ProfileTheme';
 
 const AVATAR = wp(19);
 const HEADER_H = hp(7.5);
 
-const IdCardPreview = ({data, isBack}) => {
+const IdCardPreview = ({data, isBack, navy = false}) => {
+  const CardShell = ({children}) =>
+    navy ? (
+      <LinearGradient
+        colors={PROFILE_GRADIENT}
+        start={GRADIENT_START}
+        end={GRADIENT_END}
+        style={[styles.card, styles.cardNavy]}>
+        {children}
+      </LinearGradient>
+    ) : (
+      <View style={styles.card}>{children}</View>
+    );
+
   if (isBack) {
     return (
       <View style={styles.wrap}>
         <Text style={styles.label}>{Strings.idCardPreviewBack}</Text>
-        <View style={styles.card}>
+        <CardShell>
           <LinearGradient
-            colors={[Colors.primary, Colors.primaryLight]}
+            colors={navy ? PROFILE_GRADIENT : [Colors.primary, Colors.primaryLight]}
             start={{x: 0, y: 0}}
             end={{x: 1, y: 0}}
             style={styles.backHeader}>
@@ -28,29 +48,45 @@ const IdCardPreview = ({data, isBack}) => {
             <Text style={styles.backYear}>{data.academicYear}</Text>
           </LinearGradient>
           <View style={styles.backBody}>
-            <Text style={styles.backTitle}>{Strings.cardDetails}</Text>
-            <IdCardDetailRow label={Strings.studentName} value={data.name} />
+            <Text style={[styles.backTitle, navy && styles.textMutedNavy]}>
+              {Strings.cardDetails}
+            </Text>
+            <IdCardDetailRow
+              label={Strings.studentName}
+              value={data.name}
+              navy={navy}
+            />
             <IdCardDetailRow
               label={Strings.studentIdLabel}
               value={data.studentId}
+              navy={navy}
             />
             <IdCardDetailRow
               label={Strings.classAndSection}
               value={`${data.class} - ${data.section}`}
+              navy={navy}
             />
-            <IdCardDetailRow label={Strings.rollNumber} value={data.rollNo} />
+            <IdCardDetailRow
+              label={Strings.rollNumber}
+              value={data.rollNo}
+              navy={navy}
+            />
             <IdCardDetailRow
               label={Strings.dateOfIssue}
               value={data.dateOfIssue}
+              navy={navy}
             />
             <IdCardDetailRow
               label={Strings.validUntil}
               value={data.validUntil}
               isLast
+              navy={navy}
             />
-            <Text style={styles.backNote}>{Strings.idCardBackNote}</Text>
+            <Text style={[styles.backNote, navy && styles.textMutedNavy]}>
+              {Strings.idCardBackNote}
+            </Text>
           </View>
-        </View>
+        </CardShell>
       </View>
     );
   }
@@ -59,9 +95,9 @@ const IdCardPreview = ({data, isBack}) => {
     <View style={styles.wrap}>
       <Text style={styles.label}>{Strings.idCardPreviewFront}</Text>
 
-      <View style={styles.card}>
+      <CardShell>
         <LinearGradient
-          colors={[Colors.primary, Colors.primaryLight]}
+          colors={navy ? PROFILE_GRADIENT : [Colors.primary, Colors.primaryLight]}
           start={{x: 0, y: 0}}
           end={{x: 1, y: 0}}
           style={styles.header}>
@@ -83,48 +119,83 @@ const IdCardPreview = ({data, isBack}) => {
 
         <View style={styles.body}>
           <View style={styles.profileRow}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{data.initials}</Text>
-            </View>
+            <PersonAvatar
+              person={{
+                value: data.value,
+                label: data.name,
+                name: data.name,
+                initials: data.initials,
+                gender: data.gender,
+                photo: data.photo,
+                photoUrl: data.photoUrl,
+                className: data.class,
+                classBadge: data.classBadge,
+                classInfo: data.classInfo,
+              }}
+              size={AVATAR}
+              borderColor={navy ? 'rgba(255,255,255,0.45)' : Colors.white}
+              borderWidth={4}
+              style={styles.avatar}
+            />
             <View style={styles.nameCol}>
-              <Text style={styles.studentName}>{data.name}</Text>
-              <Text style={styles.role}>{data.role}</Text>
+              <Text style={[styles.studentName, navy && styles.textOnNavy]}>
+                {data.name}
+              </Text>
+              <Text style={[styles.role, navy && styles.textMutedNavy]}>
+                {data.role}
+              </Text>
             </View>
           </View>
 
           <View style={styles.statsRow}>
-            <StatItem label={Strings.classShort} value={data.class} />
-            <View style={styles.vLine} />
-            <StatItem label={Strings.sectionShort} value={data.section} />
-            <View style={styles.vLine} />
-            <StatItem label={Strings.rollShort} value={data.rollNo} />
+            <StatItem label={Strings.classShort} value={data.class} navy={navy} />
+            <View style={[styles.vLine, navy && styles.vLineNavy]} />
+            <StatItem
+              label={Strings.sectionShort}
+              value={data.section}
+              navy={navy}
+            />
+            <View style={[styles.vLine, navy && styles.vLineNavy]} />
+            <StatItem
+              label={Strings.rollShort}
+              value={data.rollNo}
+              navy={navy}
+            />
           </View>
 
           <View style={styles.detailBlock}>
-            <View style={styles.idBadge}>
-              <Text style={styles.idText}>{data.studentId}</Text>
+            <View style={[styles.idBadge, navy && styles.idBadgeNavy]}>
+              <Text style={[styles.idText, navy && styles.textOnNavy]}>
+                {data.studentId}
+              </Text>
             </View>
-            <Text style={styles.address}>{data.schoolLine}</Text>
-            <Text style={styles.address}>{data.cityLine}</Text>
+            <Text style={[styles.address, navy && styles.textMutedNavy]}>
+              {data.schoolLine}
+            </Text>
+            <Text style={[styles.address, navy && styles.textMutedNavy]}>
+              {data.cityLine}
+            </Text>
           </View>
         </View>
 
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>{Strings.authorizedSignature}</Text>
+        <View style={[styles.footer, navy && styles.footerNavy]}>
+          <Text style={[styles.footerText, navy && styles.textMutedNavy]}>
+            {Strings.authorizedSignature}
+          </Text>
           <View style={styles.verifiedRow}>
             <Icon name="checkmark-circle" size={wp(4)} color={Colors.success} />
             <Text style={styles.verifiedText}>{Strings.verified}</Text>
           </View>
         </View>
-      </View>
+      </CardShell>
     </View>
   );
 };
 
-const StatItem = ({label, value}) => (
+const StatItem = ({label, value, navy}) => (
   <View style={styles.statItem}>
-    <Text style={styles.statLabel}>{label}</Text>
-    <Text style={styles.statValue}>{value}</Text>
+    <Text style={[styles.statLabel, navy && styles.textMutedNavy]}>{label}</Text>
+    <Text style={[styles.statValue, navy && styles.textOnNavy]}>{value}</Text>
   </View>
 );
 
@@ -144,13 +215,16 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: Colors.white,
-    borderRadius: wp(5),
+    borderRadius: CARD_RADIUS,
     overflow: 'hidden',
     shadowColor: Colors.black,
     shadowOffset: {width: 0, height: 4},
     shadowOpacity: 0.08,
     shadowRadius: 12,
     elevation: 4,
+  },
+  cardNavy: {
+    backgroundColor: 'transparent',
   },
   header: {
     height: HEADER_H,
@@ -206,25 +280,12 @@ const styles = StyleSheet.create({
     marginBottom: hp(1.2),
   },
   avatar: {
-    width: AVATAR,
-    height: AVATAR,
-    borderRadius: AVATAR / 2,
-    backgroundColor: Colors.lightGray,
-    borderWidth: 4,
-    borderColor: Colors.white,
-    alignItems: 'center',
-    justifyContent: 'center',
     marginRight: wp(3),
     shadowColor: Colors.black,
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.12,
     shadowRadius: 6,
     elevation: 4,
-  },
-  avatarText: {
-    color: Colors.mutedText,
-    fontFamily: Fonts.bold,
-    fontSize: Fontsize.sm,
   },
   nameCol: {
     flex: 1,
@@ -279,7 +340,7 @@ const styles = StyleSheet.create({
   idBadge: {
     alignSelf: 'flex-start',
     backgroundColor: Colors.lightGray,
-    borderRadius: wp(6),
+    borderRadius: wp(3.2),
     paddingHorizontal: wp(3.5),
     paddingVertical: hp(0.55),
     marginBottom: hp(0.8),
@@ -358,5 +419,21 @@ const styles = StyleSheet.create({
     lineHeight: Fontsize.m,
     marginTop: hp(1.5),
     textAlign: 'center',
+  },
+  textOnNavy: {
+    color: Colors.white,
+  },
+  textMutedNavy: {
+    color: Colors.whiteMuted85,
+  },
+  vLineNavy: {
+    backgroundColor: Colors.whiteOverlay18,
+  },
+  idBadgeNavy: {
+    backgroundColor: Colors.whiteOverlay18,
+  },
+  footerNavy: {
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderTopColor: Colors.whiteOverlay18,
   },
 });

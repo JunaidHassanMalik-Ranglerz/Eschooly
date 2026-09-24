@@ -2,6 +2,9 @@ import React from 'react';
 import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
+import AnimatedCard from '../AnimatedCard';
+import CardWave, {SCREEN_WAVES} from '../CardWave';
+import {CARD_GRADIENTS} from '../../Constants/CardTheme';
 import {Images} from '../../Assets';
 import {Colors} from '../../Constants/Colors';
 import {Fonts} from '../../Constants/Fonts';
@@ -9,14 +12,19 @@ import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
 import {wp, hp} from '../../Constants/Responsive';
 
-const LiveClassCard = props => {
-  return (
+const LiveClassCard = ({item, animationIndex = 1, entering, replayToken = 0}) => (
+  <AnimatedCard
+    index={animationIndex}
+    entering={entering}
+    replayToken={replayToken}
+    style={styles.cardWrap}>
     <View style={styles.card}>
       <LinearGradient
-        colors={[Colors.primary, Colors.primaryLight]}
+        colors={CARD_GRADIENTS.sapphire}
         start={{x: 0, y: 0}}
         end={{x: 1, y: 1}}
         style={styles.topPart}>
+        <CardWave variant={SCREEN_WAVES.onlineClass} />
         <View style={styles.topRow}>
           <View style={styles.zoomRow}>
             <View style={styles.zoomIconBox}>
@@ -39,23 +47,23 @@ const LiveClassCard = props => {
         </View>
 
         <Text style={styles.title} numberOfLines={2}>
-          {props?.item?.title}
+          {item?.title}
         </Text>
         <Text style={styles.classInfo} numberOfLines={1}>
-          {props?.item?.classInfo}
+          {item?.classInfo}
         </Text>
 
         <View style={styles.infoRow}>
           <View style={styles.infoItem}>
             <Icon name="people-outline" size={wp(4)} color={Colors.whiteMuted85} />
             <Text style={styles.infoText} numberOfLines={1}>
-              {props?.item?.joined}
+              {item?.joined}
             </Text>
           </View>
           <View style={styles.infoItem}>
             <Icon name="time-outline" size={wp(4)} color={Colors.whiteMuted85} />
             <Text style={styles.infoText} numberOfLines={1}>
-              {props?.item?.started}
+              {item?.started}
             </Text>
           </View>
         </View>
@@ -81,15 +89,17 @@ const LiveClassCard = props => {
         </TouchableOpacity>
       </View>
     </View>
-  );
-};
+  </AnimatedCard>
+);
 
 export default LiveClassCard;
 
 const styles = StyleSheet.create({
+  cardWrap: {
+    marginBottom: hp(2.2),
+  },
   card: {
     borderRadius: wp(5),
-    marginBottom: hp(2.2),
     backgroundColor: Colors.white,
     overflow: 'hidden',
     elevation: 4,
@@ -103,12 +113,14 @@ const styles = StyleSheet.create({
     paddingBottom: hp(2),
     borderTopLeftRadius: wp(5),
     borderTopRightRadius: wp(5),
+    overflow: 'hidden',
   },
   topRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: hp(1.5),
+    zIndex: 1,
   },
   zoomRow: {
     flexDirection: 'row',
@@ -160,17 +172,20 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.bold,
     fontSize: Fontsize.ml,
     marginBottom: hp(0.4),
+    zIndex: 1,
   },
   classInfo: {
     color: Colors.whiteMuted85,
     fontFamily: Fonts.regular,
     fontSize: Fontsize.xs1,
     marginBottom: hp(1.5),
+    zIndex: 1,
   },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: wp(4),
+    zIndex: 1,
   },
   infoItem: {
     flexDirection: 'row',

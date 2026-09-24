@@ -8,11 +8,19 @@ import {
   View,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import LinearGradient from 'react-native-linear-gradient';
 import {Colors} from '../Constants/Colors';
 import {Fonts} from '../Constants/Fonts';
 import {Fontsize} from '../Constants/Fontsize';
 import {Strings} from '../Constants/Strings';
 import {wp, hp} from '../Constants/Responsive';
+import {
+  GRADIENT_END,
+  GRADIENT_START,
+  PROFILE_GRADIENT,
+} from './Profile/ProfileTheme';
+import {EnterView} from './AnimatedCard';
+import {enterFromBottom} from '../utils/cardAnimation';
 
 const WEEKDAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 const MONTHS = [
@@ -241,16 +249,23 @@ const ExamDateRangeModal = ({visible, startDate, endDate, onClose, onApply}) => 
     <Modal
       visible={visible}
       transparent
-      animationType="fade"
+      animationType="none"
       onRequestClose={onClose}>
       <View style={styles.overlay}>
-        <View style={styles.sheet}>
+          <EnterView
+            motion={visible ? enterFromBottom(0) : null}
+            style={styles.sheetWrap}>
+          <LinearGradient
+            colors={PROFILE_GRADIENT}
+            start={GRADIENT_START}
+            end={GRADIENT_END}
+            style={styles.sheet}>
           <View style={styles.header}>
             <TouchableOpacity
               style={styles.navBtn}
               activeOpacity={0.8}
               onPress={handlePrevMonth}>
-              <Icon name="chevron-back" size={wp(4.2)} color={Colors.black} />
+              <Icon name="chevron-back" size={wp(4.2)} color={Colors.white} />
             </TouchableOpacity>
 
             <View style={styles.headerCenter}>
@@ -264,7 +279,7 @@ const ExamDateRangeModal = ({visible, startDate, endDate, onClose, onApply}) => 
               style={styles.navBtn}
               activeOpacity={0.8}
               onPress={handleNextMonth}>
-              <Icon name="chevron-forward" size={wp(4.2)} color={Colors.black} />
+              <Icon name="chevron-forward" size={wp(4.2)} color={Colors.white} />
             </TouchableOpacity>
           </View>
 
@@ -295,7 +310,7 @@ const ExamDateRangeModal = ({visible, startDate, endDate, onClose, onApply}) => 
             <Icon
               name="arrow-forward"
               size={wp(4)}
-              color={Colors.grayText}
+              color={Colors.whiteMuted85}
               style={styles.rangeArrow}
             />
 
@@ -329,7 +344,8 @@ const ExamDateRangeModal = ({visible, startDate, endDate, onClose, onApply}) => 
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+          </LinearGradient>
+          </EnterView>
       </View>
     </Modal>
   );
@@ -342,7 +358,7 @@ const rangeBarBase = {
   position: 'absolute',
   height: CIRCLE_SIZE,
   top: (wp(10) - CIRCLE_SIZE) / 2,
-  backgroundColor: Colors.lightGray,
+  backgroundColor: Colors.whiteOverlay18,
 };
 
 const styles = StyleSheet.create({
@@ -352,12 +368,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: OVERLAY_H_PAD,
   },
+  sheetWrap: {
+    borderRadius: wp(5),
+    overflow: 'hidden',
+  },
   sheet: {
-    backgroundColor: Colors.white,
     borderRadius: wp(5),
     paddingHorizontal: SHEET_H_PAD,
     paddingTop: hp(2.5),
     paddingBottom: hp(2),
+    overflow: 'hidden',
   },
   header: {
     flexDirection: 'row',
@@ -369,7 +389,7 @@ const styles = StyleSheet.create({
     width: wp(10),
     height: wp(10),
     borderRadius: wp(5),
-    backgroundColor: Colors.cardBg,
+    backgroundColor: Colors.whiteOverlay18,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -379,12 +399,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(2),
   },
   monthTitle: {
-    color: Colors.black,
+    color: Colors.white,
     fontFamily: Fonts.bold,
     fontSize: Fontsize.ml,
   },
   selectLabel: {
-    color: Colors.grayText,
+    color: Colors.whiteMuted75,
     fontFamily: Fonts.regular,
     fontSize: Fontsize.xs,
     marginTop: hp(0.4),
@@ -397,7 +417,7 @@ const styles = StyleSheet.create({
   weekday: {
     width: DAY_WIDTH,
     textAlign: 'center',
-    color: Colors.grayText,
+    color: Colors.whiteMuted75,
     fontFamily: Fonts.regular,
     fontSize: Fontsize.xs,
     letterSpacing: 0.3,
@@ -439,20 +459,20 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   dayCircleSelected: {
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.primaryLight,
   },
   dayCircleToday: {
     borderWidth: 1.5,
-    borderColor: Colors.primary,
-    backgroundColor: Colors.white,
+    borderColor: Colors.whiteMuted85,
+    backgroundColor: 'transparent',
   },
   dayText: {
-    color: Colors.black,
+    color: Colors.white,
     fontFamily: Fonts.medium,
     fontSize: Fontsize.small,
   },
   dayTextMuted: {
-    color: '#D0D0D0',
+    color: 'rgba(255,255,255,0.32)',
   },
   dayTextSelected: {
     color: Colors.white,
@@ -461,7 +481,7 @@ const styles = StyleSheet.create({
   rangeBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.cardBg,
+    backgroundColor: Colors.whiteOverlay18,
     borderRadius: wp(4),
     paddingVertical: hp(1.8),
     paddingHorizontal: wp(4),
@@ -480,14 +500,14 @@ const styles = StyleSheet.create({
     marginHorizontal: wp(2),
   },
   rangeLabel: {
-    color: Colors.grayText,
+    color: Colors.whiteMuted75,
     fontFamily: Fonts.regular,
     fontSize: Fontsize.xs,
     letterSpacing: 0.5,
     marginBottom: hp(0.4),
   },
   rangeValue: {
-    color: Colors.black,
+    color: Colors.white,
     fontFamily: Fonts.bold,
     fontSize: Fontsize.normal,
   },
@@ -497,7 +517,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   clearText: {
-    color: Colors.grayText,
+    color: Colors.whiteMuted85,
     fontFamily: Fonts.medium,
     fontSize: Fontsize.normal,
   },
@@ -511,11 +531,11 @@ const styles = StyleSheet.create({
     paddingVertical: hp(1.3),
     borderRadius: wp(8),
     borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.white,
+    borderColor: Colors.whiteOverlay22,
+    backgroundColor: Colors.whiteOverlay18,
   },
   cancelText: {
-    color: Colors.black,
+    color: Colors.white,
     fontFamily: Fonts.medium,
     fontSize: Fontsize.normal,
   },
@@ -523,7 +543,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(6),
     paddingVertical: hp(1.3),
     borderRadius: wp(8),
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.primaryLight,
   },
   applyBtnDisabled: {
     opacity: 0.45,

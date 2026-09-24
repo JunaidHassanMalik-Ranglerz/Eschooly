@@ -1,52 +1,30 @@
 import React, {useMemo, useState} from 'react';
-import {FlatList, StatusBar, StyleSheet, Text, View} from 'react-native';
+import {Image, StatusBar, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import ScrollEnterScrollView from '../../Component/ScrollEnterScrollView';
+import {useNavigation} from '@react-navigation/native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
-import MainHeaderComponent from '../../Component/MainHeaderComponent';
-import SegmentTabs from '../../Component/SegmentTabs';
+import NotificationCard from '../../Component/NotificationCard';
+import AnimatedCard from '../../Component/AnimatedCard';
+import {Images} from '../../Assets';
 import {Colors} from '../../Constants/Colors';
 import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
 import {wp, hp} from '../../Constants/Responsive';
-import {Images} from '../../Assets';
 import {useRoleData} from '../../hooks/useRoleData';
+import {ScreenEnterProvider} from '../../hooks/useScreenEnterGate';
+import {getHomeScreenEnter} from '../../utils/cardAnimation';
 
 const TABS = [Strings.tabAll, Strings.academic, Strings.general];
+const NAVY = '#071A3D';
+const SCREEN_BG = '#DCEBFD';
+const TAB_IDLE_BG = '#EEF5FD';
+const TAB_IDLE_BORDER = '#C0D5F2';
+const TAB_IDLE_TEXT = '#5A6B82';
 
-const NotificationItem = ({item}) => (
-  <View style={[styles.card, item.unread && styles.cardUnread]}>
-    {item.unread ? <View style={styles.unreadBar} /> : null}
-    <View style={[styles.iconWrap, {backgroundColor: item.iconBg || Colors.blueSoft}]}>
-      <Icon
-        name={item.icon}
-        size={wp(5)}
-        color={item.iconColor || Colors.primary}
-      />
-    </View>
-    <View style={styles.body}>
-      <View style={styles.topRow}>
-        <Text
-          style={[styles.title, item.unread && styles.titleUnread]}
-          numberOfLines={1}>
-          {item.title}
-        </Text>
-        {item.unread ? <View style={styles.unreadDot} /> : null}
-      </View>
-      <Text style={styles.message} numberOfLines={4} ellipsizeMode="tail">
-        {item.message}
-      </Text>
-      <View style={styles.metaRow}>
-        <Icon name="time-outline" size={wp(3.3)} color={Colors.mutedText} />
-        <Text style={styles.metaText} numberOfLines={1}>
-          {item.date ? `${item.date}  ·  ${item.time}` : item.time}
-        </Text>
-      </View>
-    </View>
-  </View>
-);
-
-const Notification = () => {
+const NotificationContent = () => {
+  const navigation = useNavigation();
   const {notifications} = useRoleData();
   const [activeTab, setActiveTab] = useState(Strings.tabAll);
 
@@ -62,127 +40,159 @@ const Notification = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <StatusBar backgroundColor={Colors.white} barStyle="dark-content" />
-      <MainHeaderComponent
-        title={Strings.notifications}
-        rightImage={Images.threeDots}
-        onRightPress={() => {}}
-      />
+      <StatusBar backgroundColor={SCREEN_BG} barStyle="dark-content" />
 
-      <View style={styles.content}>
-        <SegmentTabs
-          tabs={TABS}
-          activeTab={activeTab}
-          onChange={setActiveTab}
-          outlined
-        />
-      </View>
+      <AnimatedCard index={0} entering={getHomeScreenEnter(0)} style={styles.header}>
+        <TouchableOpacity
+          style={styles.backBtn}
+          activeOpacity={0.85}
+          onPress={() => navigation.goBack()}>
+          <Icon name="chevron-back" size={wp(5.5)} color={Colors.white} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>{Strings.notifications}</Text>
+        <TouchableOpacity style={styles.menuBtn} activeOpacity={0.85}>
+          <Image
+            source={Images.threeDots}
+            style={styles.menuIcon}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+      </AnimatedCard>
 
-      <FlatList
-        data={data}
-        keyExtractor={item => item.id}
-        renderItem={({item}) => <NotificationItem item={item} />}
+      <AnimatedCard index={1} entering={getHomeScreenEnter(1)} style={styles.tabsCard}>
+        <View style={styles.tabsRow}>
+          {TABS.map(tab => {
+            const active = tab === activeTab;
+            return (
+              <TouchableOpacity
+                key={tab}
+                activeOpacity={0.85}
+                onPress={() => setActiveTab(tab)}
+                style={[styles.tab, active ? styles.tabActive : styles.tabIdle]}>
+                <Text style={[styles.tabText, active && styles.tabTextActive]}>
+                  {tab}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </AnimatedCard>
+
+      <ScrollEnterScrollView
+        style={styles.scrollArea}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
+        bounces={false}
+        overScrollMode="never"
+        removeClippedSubviews={false}
+        keyboardShouldPersistTaps="handled">
+        {data.length === 0 ? (
           <Text style={styles.empty}>{Strings.noNotifications}</Text>
-        }
-      />
+        ) : (
+          data.map((item, index) => {
+            const slot = index + 2;
+            return (
+              <NotificationCard
+                key={item.id}
+                item={item}
+                animationIndex={slot}
+                entering={getHomeScreenEnter(slot)}
+              />
+            );
+          })
+        )}
+      </ScrollEnterScrollView>
     </SafeAreaView>
   );
 };
+
+const Notification = () => (
+  <ScreenEnterProvider motion="notification">
+    <NotificationContent />
+  </ScreenEnterProvider>
+);
 
 export default Notification;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.parentBg,
+    backgroundColor: SCREEN_BG,
   },
-  content: {
+  scrollArea: {
+    flex: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: wp(4),
+    paddingTop: hp(0.8),
+    paddingBottom: hp(1.2),
+    backgroundColor: SCREEN_BG,
+  },
+  backBtn: {
+    width: wp(9),
+    height: wp(9),
+    borderRadius: wp(4.5),
+    backgroundColor: NAVY,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    flex: 1,
+    textAlign: 'center',
+    color: NAVY,
+    fontFamily: Fonts.semibold,
+    fontSize: Fontsize.sm,
+  },
+  menuBtn: {
+    width: wp(9),
+    height: wp(9),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  menuIcon: {
+    width: wp(5),
+    height: wp(5),
+    tintColor: NAVY,
+  },
+  tabsCard: {
+    marginHorizontal: wp(4),
+    marginBottom: hp(0.4),
+  },
+  tabsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingBottom: hp(0.2),
+    backgroundColor: SCREEN_BG,
+  },
+  tab: {
+    paddingHorizontal: wp(4.2),
+    paddingVertical: hp(0.7),
+    borderRadius: wp(6),
+    marginRight: wp(2),
+  },
+  tabActive: {
+    backgroundColor: NAVY,
+  },
+  tabIdle: {
+    backgroundColor: TAB_IDLE_BG,
+    borderWidth: 1,
+    borderColor: TAB_IDLE_BORDER,
+  },
+  tabText: {
+    color: TAB_IDLE_TEXT,
+    fontFamily: Fonts.medium,
+    fontSize: Fontsize.xs1,
+  },
+  tabTextActive: {
+    color: Colors.white,
   },
   list: {
     paddingHorizontal: wp(4),
-    paddingTop: hp(1),
+    paddingTop: hp(1.4),
     paddingBottom: hp(3),
-  },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: Colors.white,
-    borderRadius: wp(4.5),
-    padding: wp(3.6),
-    marginBottom: hp(1.3),
-    overflow: 'hidden',
-    elevation: 3,
-    shadowColor: Colors.black,
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-  },
-  cardUnread: {
-    backgroundColor: '#F7F9FF',
-  },
-  unreadBar: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: wp(1.1),
-    backgroundColor: Colors.primary,
-  },
-  iconWrap: {
-    width: wp(11),
-    height: wp(11),
-    borderRadius: wp(3.5),
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: wp(3),
-  },
-  body: {
-    flex: 1,
-  },
-  topRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  title: {
-    flex: 1,
-    color: Colors.black,
-    fontFamily: Fonts.semibold,
-    fontSize: Fontsize.xs5,
-    marginRight: wp(2),
-    includeFontPadding: false,
-  },
-  titleUnread: {
-    fontFamily: Fonts.bold,
-  },
-  unreadDot: {
-    width: wp(2),
-    height: wp(2),
-    borderRadius: wp(1),
-    backgroundColor: Colors.primary,
-  },
-  message: {
-    color: Colors.grayText,
-    fontFamily: Fonts.regular,
-    fontSize: Fontsize.xs1,
-    lineHeight: Fontsize.m,
-    marginTop: hp(0.4),
-    minHeight: Fontsize.m * 4,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: hp(0.8),
-  },
-  metaText: {
-    color: Colors.mutedText,
-    fontFamily: Fonts.medium,
-    fontSize: Fontsize.xxm,
-    marginLeft: wp(1.2),
-    includeFontPadding: false,
+    flexGrow: 1,
   },
   empty: {
     textAlign: 'center',

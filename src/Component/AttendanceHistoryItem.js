@@ -1,43 +1,72 @@
 import React from 'react';
 import {StyleSheet, Text, View} from 'react-native';
+import ProfileGradientCard from './Profile/ProfileGradientCard';
+import AnimatedCard from './AnimatedCard';
 import {Colors} from '../Constants/Colors';
 import {Fonts} from '../Constants/Fonts';
 import {Fontsize} from '../Constants/Fontsize';
 import {wp, hp} from '../Constants/Responsive';
 
 const STATUS_STYLES = {
-  Present: {bg: Colors.successBg, text: Colors.success},
-  Absent: {bg: Colors.overdueBg, text: Colors.red},
-  Late: {bg: Colors.pendingBg, text: Colors.warning},
-  Leave: {bg: Colors.lightGray, text: Colors.grayText},
-  Unmarked: {bg: Colors.cardBg, text: Colors.grayText},
+  Present: {text: '#38BDF8'},
+  Absent: {text: '#6366F1'},
+  Late: {text: '#0EA5E9'},
+  Leave: {text: '#60A5FA'},
+  Unmarked: {text: Colors.whiteMuted75},
 };
 
 const AttendanceHistoryItem = props => {
   const statusStyle = STATUS_STYLES[props?.item?.status] || STATUS_STYLES.Unmarked;
+  const premium = props?.premium;
+  const animationIndex = props?.animationIndex ?? 0;
+  const entering = props?.entering;
+  const replayToken = props?.replayToken ?? 0;
 
-  return (
-    <View style={styles.card}>
-      <View style={styles.dateBox}>
-        <Text style={styles.dayNum} numberOfLines={1}>{props?.item?.day}</Text>
-        <Text style={styles.shortDay} numberOfLines={1}>{props?.item?.shortDay}</Text>
+  const content = (
+    <>
+      <View style={[styles.dateBox, premium && styles.dateBoxPremium]}>
+        <Text style={[styles.dayNum, premium && styles.textPremium]} numberOfLines={1}>
+          {props?.item?.day}
+        </Text>
+        <Text style={[styles.shortDay, premium && styles.metaPremium]} numberOfLines={1}>
+          {props?.item?.shortDay}
+        </Text>
       </View>
 
       <View style={styles.info}>
-        <Text style={styles.dateLabel} numberOfLines={1}>
+        <Text style={[styles.dateLabel, premium && styles.textPremium]} numberOfLines={1}>
           {props?.item?.dateLabel}
         </Text>
-        <Text style={styles.fullDay} numberOfLines={1}>
+        <Text style={[styles.fullDay, premium && styles.metaPremium]} numberOfLines={1}>
           {props?.item?.fullDay}
         </Text>
       </View>
 
-      <View style={[styles.badge, {backgroundColor: statusStyle.bg}]}>
-        <Text style={[styles.badgeText, {color: statusStyle.text}]} numberOfLines={1}>
-          {props?.item?.status}
-        </Text>
-      </View>
-    </View>
+      <Text style={[styles.statusText, {color: statusStyle.text}]} numberOfLines={1}>
+        {props?.item?.status}
+      </Text>
+    </>
+  );
+
+  if (premium) {
+    return (
+      <ProfileGradientCard
+        innerStyle={styles.premiumInner}
+        animationIndex={animationIndex}
+        entering={entering}
+        replayToken={replayToken}>
+        <View style={styles.row}>{content}</View>
+      </ProfileGradientCard>
+    );
+  }
+
+  return (
+    <AnimatedCard
+      index={animationIndex}
+      replayToken={replayToken}
+      style={styles.card}>
+      {content}
+    </AnimatedCard>
   );
 };
 
@@ -54,6 +83,14 @@ const styles = StyleSheet.create({
     padding: wp(3.5),
     marginBottom: hp(1.2),
   },
+  premiumInner: {
+    paddingVertical: hp(1.2),
+    paddingHorizontal: wp(3.5),
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   dateBox: {
     width: wp(12),
     height: wp(12),
@@ -62,6 +99,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: wp(3),
+  },
+  dateBoxPremium: {
+    backgroundColor: Colors.whiteOverlay18,
   },
   dayNum: {
     color: Colors.black,
@@ -76,32 +116,29 @@ const styles = StyleSheet.create({
   },
   info: {
     flex: 1,
+    minWidth: 0,
   },
   dateLabel: {
     color: Colors.black,
     fontFamily: Fonts.bold,
     fontSize: Fontsize.normal,
     marginBottom: hp(0.1),
-    width: wp(35),
   },
   fullDay: {
     color: Colors.grayText,
     fontFamily: Fonts.regular,
     fontSize: wp(3.2),
-    width: wp(25),
   },
-  badge: {
-    minWidth: wp(18),
-    paddingHorizontal: wp(3),
-    paddingVertical: hp(0.5),
-    borderRadius: wp(4),
+  textPremium: {
+    color: Colors.white,
+  },
+  metaPremium: {
+    color: Colors.whiteMuted75,
+  },
+  statusText: {
+    fontFamily: Fonts.bold,
+    fontSize: Fontsize.xs0,
     marginLeft: wp(2),
-    backgroundColor: Colors.cardBg,
-    alignItems: 'center',
-  },
-  badgeText: {
-    fontFamily: Fonts.semibold,
-    fontSize: wp(3.1),
-    color: Colors.grayText,
+    flexShrink: 0,
   },
 });

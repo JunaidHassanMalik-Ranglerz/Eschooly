@@ -1,5 +1,6 @@
 import React from 'react';
 import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import PersonAvatar from './Profile/PersonAvatar';
 import {Colors} from '../Constants/Colors';
 import {Fonts} from '../Constants/Fonts';
 import {Fontsize} from '../Constants/Fontsize';
@@ -8,11 +9,10 @@ import {wp, hp} from '../Constants/Responsive';
 const ChatListItem = props => {
   return (
     <TouchableOpacity style={styles.row} activeOpacity={0.8}>
-      <View style={styles.avatar}>
-        <Text style={styles.avatarText} numberOfLines={1}>
-          {props?.item?.initials}
-        </Text>
-      </View>
+      <PersonAvatar
+        person={{label: props?.item?.name, name: props?.item?.name, gender: props?.item?.gender}}
+        size={wp(12)}
+      />
 
       <View style={styles.info}>
         <View style={styles.topRow}>
@@ -54,20 +54,7 @@ const styles = StyleSheet.create({
     paddingVertical: hp(1.5),
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
-  },
-  avatar: {
-    width: wp(12),
-    height: wp(12),
-    borderRadius: wp(6),
-    backgroundColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: wp(3),
-  },
-  avatarText: {
-    color: Colors.white,
-    fontFamily: Fonts.semibold,
-    fontSize: Fontsize.sm,
+    gap: wp(3),
   },
   info: {
     flex: 1,

@@ -6,16 +6,18 @@ import {Colors} from '../Constants/Colors';
 import {Fonts} from '../Constants/Fonts';
 import {Fontsize} from '../Constants/Fontsize';
 import {wp, hp} from '../Constants/Responsive';
+import {EnterView} from './AnimatedCard';
+import {enterFromTop} from '../utils/cardAnimation';
 
 const ScreenHeader = props => {
   return (
-    <View style={styles.container}>
+    <EnterView motion={enterFromTop(0)} style={styles.container}>
       {props?.showBack ? (
         <TouchableOpacity
           style={styles.backBtn}
           activeOpacity={0.8}
           onPress={props?.onBackPress}>
-          <Icon name="chevron-back" size={wp(5.5)} color={Colors.black} />
+          <Icon name="chevron-back" size={wp(5.5)} color={Colors.white} />
         </TouchableOpacity>
       ) : (
         <View style={styles.backPlaceholder} />
@@ -24,7 +26,7 @@ const ScreenHeader = props => {
       <Text style={styles.title}>{props?.title}</Text>
 
       <NotificationBell count={props?.notificationCount ?? 1} />
-    </View>
+    </EnterView>
   );
 };
 
@@ -42,7 +44,7 @@ const styles = StyleSheet.create({
     width: wp(9),
     height: wp(9),
     borderRadius: wp(4.5),
-    backgroundColor: Colors.cardBg,
+    backgroundColor: Colors.parentHeader,
     alignItems: 'center',
     justifyContent: 'center',
   },

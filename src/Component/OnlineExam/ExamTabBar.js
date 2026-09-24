@@ -1,29 +1,30 @@
 import React from 'react';
 import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import AnimatedCard from '../AnimatedCard';
 import {Colors} from '../../Constants/Colors';
+import {NAVY} from '../../Constants/CardTheme';
 import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
 import {wp, hp} from '../../Constants/Responsive';
 
-const ExamTabBar = ({tabs, selected, onSelect}) => {
+const ExamTabBar = ({tabs, selected, onSelect, animationIndex = 0}) => {
   return (
-    <View style={styles.wrap}>
+    <AnimatedCard index={animationIndex} style={styles.wrap}>
       {tabs.map(tab => {
         const active = selected === tab.id;
         return (
           <TouchableOpacity
             key={tab.id}
-            style={styles.tab}
-            activeOpacity={0.8}
+            style={[styles.tab, active && styles.tabActive]}
+            activeOpacity={0.85}
             onPress={() => onSelect(tab.id)}>
             <Text style={[styles.tabText, active && styles.tabTextActive]}>
               {tab.label}
             </Text>
-            {active ? <View style={styles.line} /> : null}
           </TouchableOpacity>
         );
       })}
-    </View>
+    </AnimatedCard>
   );
 };
 
@@ -32,30 +33,31 @@ export default ExamTabBar;
 const styles = StyleSheet.create({
   wrap: {
     flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    alignItems: 'center',
+    backgroundColor: '#DCEBFD',
+    borderRadius: wp(8),
+    padding: wp(1.2),
     marginBottom: hp(2),
+    borderWidth: 1,
+    borderColor: '#C0D5F2',
   },
   tab: {
     flex: 1,
     alignItems: 'center',
-    paddingBottom: hp(1.2),
+    paddingVertical: hp(1),
+    borderRadius: wp(6.5),
+  },
+  tabActive: {
+    backgroundColor: NAVY,
   },
   tabText: {
-    color: Colors.grayText,
+    color: '#5A6B82',
     fontFamily: Fonts.medium,
-    fontSize: Fontsize.small,
+    fontSize: Fontsize.xs1,
+    textAlign: 'center',
   },
   tabTextActive: {
-    color: Colors.primary,
+    color: Colors.white,
     fontFamily: Fonts.semibold,
-  },
-  line: {
-    position: 'absolute',
-    bottom: 0,
-    width: '70%',
-    height: 2,
-    backgroundColor: Colors.primary,
-    borderRadius: 2,
   },
 });

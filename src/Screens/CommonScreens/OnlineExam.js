@@ -1,5 +1,6 @@
 import React, {useState} from 'react';
-import {ScrollView, StyleSheet, Text, View} from 'react-native';
+import {StatusBar, StyleSheet, Text, View} from 'react-native';
+import ScrollEnterScrollView from '../../Component/ScrollEnterScrollView';
 import {useNavigation} from '@react-navigation/native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import MainHeaderComponent from '../../Component/MainHeaderComponent';
@@ -17,14 +18,15 @@ import {Colors} from '../../Constants/Colors';
 import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
-import {MyStyling} from '../../Constants/MyStyling';
 import {wp, hp} from '../../Constants/Responsive';
+import AnimatedCard from '../../Component/AnimatedCard';
+import {ScreenEnterProvider} from '../../hooks/useScreenEnterGate';
 
-const ExamSectionHeader = ({title, count}) => (
-  <View style={sectionStyles.row}>
+const ExamSectionHeader = ({title, count, animationIndex = 0}) => (
+  <AnimatedCard index={animationIndex} style={sectionStyles.row}>
     <Text style={sectionStyles.title}>{title}</Text>
     <Text style={sectionStyles.count}>{count}</Text>
-  </View>
+  </AnimatedCard>
 );
 
 const OnlineExam = () => {
@@ -36,21 +38,25 @@ const OnlineExam = () => {
   const showCompleted = tab === 'active' || tab === 'completed';
 
   return (
-    <SafeAreaView style={MyStyling.container2} edges={['top']}>
+    <ScreenEnterProvider motion="onlineExam">
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <StatusBar backgroundColor={Colors.parentBg} barStyle="dark-content" />
       <MainHeaderComponent
         title={Strings.onlineExams}
         notificationCount={1}
+        navyBack
       />
 
-      <ScrollView
+      <ScrollEnterScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}>
-        <ExamTabBar tabs={EXAM_TABS} selected={tab} onSelect={setTab} />
+        <ExamTabBar tabs={EXAM_TABS} selected={tab} onSelect={setTab} animationIndex={0} />
 
         {showActive ? (
           <ActiveExamCard
             exam={ACTIVE_EXAM}
+            animationIndex={0}
             onStart={timeLeft =>
               navigation.navigate('MidtermMathematics', {timeLeft})
             }
@@ -62,11 +68,13 @@ const OnlineExam = () => {
             <ExamSectionHeader
               title={Strings.upcomingExams}
               count={`${UPCOMING_EXAMS.length} ${Strings.scheduled}`}
+              animationIndex={2}
             />
-            {UPCOMING_EXAMS.map(item => (
+            {UPCOMING_EXAMS.map((item, index) => (
               <UpcomingExamCard
                 key={item.id}
                 item={item}
+                animationIndex={index + 1}
                 onPress={() => {}}
               />
             ))}
@@ -78,24 +86,31 @@ const OnlineExam = () => {
             <ExamSectionHeader
               title={Strings.completedExams}
               count={`${COMPLETED_EXAMS.length} ${Strings.results}`}
+              animationIndex={15}
             />
-            {COMPLETED_EXAMS.map(item => (
+            {COMPLETED_EXAMS.map((item, index) => (
               <CompletedExamCard
                 key={item.id}
                 item={item}
+                animationIndex={index + 20}
                 onPress={() => {}}
               />
             ))}
           </>
         ) : null}
-      </ScrollView>
+      </ScrollEnterScrollView>
     </SafeAreaView>
+    </ScreenEnterProvider>
   );
 };
 
 export default OnlineExam;
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.parentBg,
+  },
   scroll: {
     flex: 1,
   },
@@ -114,14 +129,14 @@ const sectionStyles = StyleSheet.create({
     marginTop: hp(0.5),
   },
   title: {
-    color: Colors.grayText,
-    fontFamily: Fonts.medium,
+    color: Colors.primary,
+    fontFamily: Fonts.semibold,
     fontSize: Fontsize.xs2,
     letterSpacing: 0.8,
     textTransform: 'uppercase',
   },
   count: {
-    color: Colors.grayText,
+    color: Colors.primaryLight,
     fontFamily: Fonts.regular,
     fontSize: Fontsize.xs2,
   },

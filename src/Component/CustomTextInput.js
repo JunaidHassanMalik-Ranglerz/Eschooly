@@ -18,12 +18,16 @@ const CustomTextInput = props => {
           <View
             style={[
               styles.iconWrap,
-              props?.iconBg ? {backgroundColor: props.iconBg} : null,
+              props?.iconBg === null
+                ? styles.iconWrapPlain
+                : props?.iconBg
+                  ? {backgroundColor: props.iconBg}
+                  : null,
             ]}>
             <Icon
               name={props.vectorIcon}
               size={wp(5)}
-              color={Colors.primary}
+              color={props?.iconColor || Colors.primary}
             />
           </View>
         ) : props?.icon ? (
@@ -32,7 +36,15 @@ const CustomTextInput = props => {
               styles.iconWrap,
               props?.iconBg ? {backgroundColor: props.iconBg} : null,
             ]}>
-            <Image source={props?.icon} style={styles.icon} resizeMode="contain" />
+            <Image
+              source={props?.icon}
+              style={[
+                styles.icon,
+                props?.iconTintColor ? {tintColor: props.iconTintColor} : null,
+                props?.iconStyle,
+              ]}
+              resizeMode="contain"
+            />
           </View>
         ) : null}
 
@@ -47,6 +59,8 @@ const CustomTextInput = props => {
           keyboardType={props?.keyboardType}
           secureTextEntry={!!props?.secureTextEntry}
           autoCapitalize={props?.autoCapitalize}
+          onFocus={props?.onFocus}
+          onBlur={props?.onBlur}
         />
 
         {props?.rightIcon || props?.rightVectorIcon ? (
@@ -58,7 +72,7 @@ const CustomTextInput = props => {
               <Icon
                 name={props.rightVectorIcon}
                 size={wp(5)}
-                color={Colors.grayText}
+                color={props?.rightIconColor || Colors.grayText}
               />
             ) : (
               <Image
@@ -110,6 +124,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: wp(2.5),
+  },
+  iconWrapPlain: {
+    backgroundColor: Colors.transparent,
+    width: wp(6),
+    marginRight: wp(2),
   },
   icon: {
     width: wp(5),

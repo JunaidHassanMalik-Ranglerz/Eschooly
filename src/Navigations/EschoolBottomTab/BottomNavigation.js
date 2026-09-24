@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -49,6 +49,7 @@ const TabBarItem = ({ name, isFocused, onPress }) => {
   return (
     <Pressable
       onPress={onPress}
+      unstable_pressDelay={0}
       android_ripple={{color: 'transparent', foreground: false}}
       style={styles.tabItem}>
       <View
@@ -79,15 +80,37 @@ const TabBarItem = ({ name, isFocused, onPress }) => {
 const EschoolTabBar = ({ state, navigation }) => {
   const insets = useSafeAreaInsets();
   const bottomPad = insets.bottom > hp(0.3) ? insets.bottom : hp(0.3);
-  const activeName = state.routes[state.index]?.name;
+  const routeName = state.routes[state.index]?.name;
+  const [optimistic, setOptimistic] = useState(null);
+  const pendingRef = useRef(null);
+  const activeName = optimistic || routeName;
 
-  const handlePress = routeName => {
-    const isFocused = activeName === routeName;
-    const route = state.routes.find(item => item.name === routeName);
+  useEffect(() => {
+    pendingRef.current = null;
+    setOptimistic(null);
+  }, [routeName]);
 
+  const handlePress = nextName => {
+    const route = state.routes.find(item => item.name === nextName);
     if (!route) {
       return;
     }
+
+    if (activeName === nextName) {
+      navigation.emit({
+        type: 'tabPress',
+        target: route.key,
+        canPreventDefault: true,
+      });
+      return;
+    }
+
+    if (pendingRef.current === nextName) {
+      return;
+    }
+
+    pendingRef.current = nextName;
+    setOptimistic(nextName);
 
     const event = navigation.emit({
       type: 'tabPress',
@@ -95,9 +118,15 @@ const EschoolTabBar = ({ state, navigation }) => {
       canPreventDefault: true,
     });
 
-    if (!isFocused && !event.defaultPrevented) {
-      navigation.navigate(routeName);
+    if (!event.defaultPrevented) {
+      navigation.navigate(nextName);
     }
+
+    setTimeout(() => {
+      if (pendingRef.current === nextName) {
+        pendingRef.current = null;
+      }
+    }, 450);
   };
 
   return (
@@ -202,15 +231,25 @@ const BottomNavigation = () => (
     initialRouteName="Home"
     tabBar={props => <EschoolTabBar {...props} />}
     sceneContainerStyle={styles.scene}
-    screenOptions={{headerShown: false}}
+    detachInactiveScreens={false}
+    screenOptions={{
+      headerShown: false,
+      lazy: true,
+      animation: 'none',
+      freezeOnBlur: false,
+    }}
     backBehavior="history"
   >
-    <BOTTOM_STACK.Screen name="Home" component={AFN} />
-    <BOTTOM_STACK.Screen name="Attends" component={Attendance} />
+    <BOTTOM_STACK.Screen name="Home" component={AFN} options={{lazy: false}} />
+    <BOTTOM_STACK.Screen
+      name="Attends"
+      component={Attendance}
+      options={{lazy: false}}
+    />
     <BOTTOM_STACK.Screen name="Exam" component={Exam} />
     <BOTTOM_STACK.Screen name="Teachers" component={Teacher} />
     <BOTTOM_STACK.Screen name="Profile" component={Profile} />
-    <BOTTOM_STACK.Screen name="Menu" component={Menu} />
+    <BOTTOM_STACK.Screen name="Menu" component={Menu} options={{lazy: false}} />
     <BOTTOM_STACK.Screen name="Chat" component={Chat} />
   </BOTTOM_STACK.Navigator>
 );

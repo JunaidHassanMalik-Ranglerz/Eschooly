@@ -57,7 +57,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
   },
   tabInactive: {
-    backgroundColor: Colors.cardBg,
+    backgroundColor: '#DCEBFD',
   },
   dot: {
     width: wp(1.8),

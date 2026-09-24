@@ -3,6 +3,7 @@ import {AppState} from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { applyStatusBarForRoute, getActiveRouteName } from '../Constants/MyStyling';
+import {RouteEnterProvider} from '../hooks/useScreenEnterGate';
 import {Colors} from '../Constants/Colors';
 import SplashScreen from '../Screens/StartScreens/SplashScreen';
 import Role from '../Screens/StartScreens/Role';
@@ -35,6 +36,7 @@ import StudentResults from '../Screens/CommonScreens/StudentResults';
 import UpdatePassword from '../Screens/CommonScreens/UpdatePassword';
 
 const MAIN_STACK = createNativeStackNavigator();
+const ROUTE_ENTER = {motion: 'generic', session: 1, active: true};
 
 const MainNavigation = () => {
   const navigationRef = useRef(null);
@@ -86,13 +88,23 @@ const MainNavigation = () => {
   }, []);
 
   return (
+    <RouteEnterProvider value={ROUTE_ENTER}>
     <NavigationContainer
       ref={navigationRef}
-      onReady={() => syncStatusBar()}
-      onStateChange={() => syncStatusBar()}>
+      onReady={() => {
+        syncStatusBar();
+      }}
+      onStateChange={() => {
+        syncStatusBar();
+      }}>
       <MAIN_STACK.Navigator
         initialRouteName="SplashScreen"
-        screenOptions={{headerShown: false, headerShadowVisible: false}}
+        screenOptions={{
+          headerShown: false,
+          headerShadowVisible: false,
+          animation: 'none',
+          contentStyle: {backgroundColor: Colors.parentBg},
+        }}
       >
         <MAIN_STACK.Screen name="SplashScreen" component={SplashScreen} />
         <MAIN_STACK.Screen
@@ -111,7 +123,7 @@ const MainNavigation = () => {
           component={BottomNavigation}
           options={{
             statusBarTranslucent: false,
-            animation: 'fade',
+            animation: 'none',
           }}
         />
         <MAIN_STACK.Screen name="Syllabus" component={Syllabus} />
@@ -144,6 +156,7 @@ const MainNavigation = () => {
         <MAIN_STACK.Screen name="UpdatePassword" component={UpdatePassword} />
       </MAIN_STACK.Navigator>
     </NavigationContainer>
+    </RouteEnterProvider>
   );
 };
 

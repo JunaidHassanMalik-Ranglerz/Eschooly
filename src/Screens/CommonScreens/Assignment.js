@@ -1,5 +1,6 @@
 import React, {useState} from 'react';
-import {FlatList, StyleSheet} from 'react-native';
+import {StatusBar, StyleSheet} from 'react-native';
+import ScrollEnterFlatList from '../../Component/ScrollEnterFlatList';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import MainHeaderComponent from '../../Component/MainHeaderComponent';
 import AssignmentOverviewCard from '../../Component/Assignment/AssignmentOverviewCard';
@@ -7,55 +8,75 @@ import AssignmentSubjectCard from '../../Component/Assignment/AssignmentSubjectC
 import SelectedChildBanner from '../../Component/SelectedChildBanner';
 import {Colors} from '../../Constants/Colors';
 import {Strings} from '../../Constants/Strings';
-import {
-  ASSIGNMENT_OVERVIEW,
-  ASSIGNMENT_SUBJECTS,
-} from '../../Constants/dummydata';
 import {wp, hp} from '../../Constants/Responsive';
 import {useRoleData} from '../../hooks/useRoleData';
+import {withScreenEnter} from '../../hooks/useScreenEnterGate';
 
 const Assignment = () => {
-  const {isParent, activeStudent} = useRoleData();
+  const {
+    isParent,
+    activeStudent,
+    assignmentSubjects,
+    assignmentOverview,
+    canSwitchChild,
+  } = useRoleData();
   const [openSubjectId, setOpenSubjectId] = useState(null);
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+      <SafeAreaView style={styles.container} edges={['top']}>
+      <StatusBar backgroundColor={Colors.parentBg} barStyle="dark-content" />
       <MainHeaderComponent
-        title={isParent ? Strings.homeworkAssignments : Strings.assignment}
+        title={Strings.assignment}
         notificationCount={1}
+        navyBack
       />
 
-      <FlatList
-        data={ASSIGNMENT_SUBJECTS}
+      <ScrollEnterFlatList
+        data={assignmentSubjects}
         keyExtractor={item => item.id}
         showsVerticalScrollIndicator={false}
+        bounces={false}
+        overScrollMode="never"
+        removeClippedSubviews={false}
         contentContainerStyle={styles.content}
         ListHeaderComponent={
           <>
-            {isParent ? <SelectedChildBanner child={activeStudent} /> : null}
-            <AssignmentOverviewCard overview={ASSIGNMENT_OVERVIEW} />
+            {isParent ? (
+              <SelectedChildBanner
+                child={activeStudent}
+                canSwitch={canSwitchChild}
+                animationIndex={1}
+              />
+            ) : null}
+            <AssignmentOverviewCard
+              overview={assignmentOverview}
+              premium
+              animationIndex={isParent ? 2 : 1}
+            />
           </>
         }
-        renderItem={({item}) => (
+        renderItem={({item, index}) => (
           <AssignmentSubjectCard
             subject={item}
             open={openSubjectId === item.id}
+            premium
+            animationIndex={index + (isParent ? 3 : 2)}
             onToggle={() =>
               setOpenSubjectId(openSubjectId === item.id ? null : item.id)
             }
           />
         )}
       />
-    </SafeAreaView>
+      </SafeAreaView>
   );
 };
 
-export default Assignment;
+export default withScreenEnter(Assignment, 'assignment');
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.parentBg,
   },
   content: {
     paddingHorizontal: wp(4),

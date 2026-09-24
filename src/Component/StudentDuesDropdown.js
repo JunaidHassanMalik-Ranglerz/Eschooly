@@ -1,13 +1,19 @@
 import React, {useState} from 'react';
 import {FlatList, Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
+import ParentSheetModal from './Parent/ParentSheetModal';
+import PersonAvatar from './Profile/PersonAvatar';
 import {Images} from '../Assets';
 import {Colors} from '../Constants/Colors';
+import {CARD_GRADIENTS} from '../Constants/CardTheme';
 import {Fonts} from '../Constants/Fonts';
 import {Fontsize} from '../Constants/Fontsize';
 import {Strings} from '../Constants/Strings';
 import {STUDENT_DUES_FEES} from '../Constants/dummydata';
 import {wp, hp} from '../Constants/Responsive';
+import AnimatedCard from './AnimatedCard';
+import {GRADIENT_END, GRADIENT_START, IDENTITY_CARD_SHADOW} from './Profile/ProfileTheme';
 
 const StudentDuesDropdown = props => {
   const [open, setOpen] = useState(false);
@@ -18,7 +24,7 @@ const StudentDuesDropdown = props => {
       <View style={styles.feeItem}>
         <View style={styles.feeIconBox}>
           {typeof item?.icon === 'string' ? (
-            <Icon name={item?.icon} size={wp(5)} color={Colors.primary} />
+            <Icon name={item?.icon} size={wp(5)} color={Colors.iconSky} />
           ) : (
             <Image source={item?.icon} style={styles.feeIcon} resizeMode="contain" />
           )}
@@ -47,16 +53,17 @@ const StudentDuesDropdown = props => {
   };
 
   return (
-    <View style={styles.card}>
+    <AnimatedCard index={props?.animationIndex ?? 1} style={[styles.cardWrap, IDENTITY_CARD_SHADOW]}>
+    <LinearGradient
+      colors={CARD_GRADIENTS.royal}
+      start={GRADIENT_START}
+      end={GRADIENT_END}
+      style={styles.card}>
       <TouchableOpacity
         style={styles.header}
         activeOpacity={0.8}
-        onPress={() => setOpen(!open)}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText} numberOfLines={1}>
-            {props?.student?.initials}
-          </Text>
-        </View>
+        onPress={() => setOpen(true)}>
+        <PersonAvatar person={props?.student} size={wp(12)} />
 
         <View style={styles.headerCenter}>
           <Text style={styles.studentName} numberOfLines={1}>
@@ -73,48 +80,44 @@ const StudentDuesDropdown = props => {
           <Text style={styles.totalAmount} numberOfLines={1}>
             {props?.student?.totalAmount}
           </Text>
-          <Icon
-            name={open ? 'chevron-up' : 'chevron-down'}
-            size={wp(4.5)}
-            color={Colors.grayText}
-          />
+          <Icon name="chevron-down" size={wp(4.5)} color={Colors.whiteMuted85} />
         </View>
       </TouchableOpacity>
+    </LinearGradient>
 
-      {open ? (
-        <View style={styles.body}>
-          <View style={styles.divider} />
-
-          <View style={styles.breakdownHeader}>
-            <Text style={styles.breakdownTitle} numberOfLines={1}>
-              {Strings.feeBreakdown}
-            </Text>
-            <Text style={styles.breakdownCount} numberOfLines={1}>
-              {STUDENT_DUES_FEES?.length} {Strings.items}
-            </Text>
-          </View>
-
-          <FlatList
-            data={STUDENT_DUES_FEES}
-            keyExtractor={item => item?.id}
-            renderItem={renderFeeItem}
-            showsVerticalScrollIndicator={false}
-            scrollEnabled={false}
-          />
-        </View>
-      ) : null}
-    </View>
+    <ParentSheetModal
+      visible={open}
+      onClose={() => setOpen(false)}
+      title={Strings.feeBreakdown}
+      subtitle={`${STUDENT_DUES_FEES?.length} ${Strings.items}`}
+      dismissOnBackdropPress={false}
+      tall>
+      <FlatList
+        data={STUDENT_DUES_FEES}
+        keyExtractor={item => item?.id}
+        renderItem={renderFeeItem}
+        style={styles.feeList}
+        contentContainerStyle={styles.feeListContent}
+        nestedScrollEnabled
+        showsVerticalScrollIndicator={STUDENT_DUES_FEES.length > 4}
+        keyboardShouldPersistTaps="handled"
+      />
+    </ParentSheetModal>
+    </AnimatedCard>
   );
 };
 
 export default StudentDuesDropdown;
 
 const styles = StyleSheet.create({
+  cardWrap: {
+    borderRadius: wp(4),
+    overflow: 'hidden',
+  },
   card: {
-    backgroundColor: Colors.white,
     borderRadius: wp(4),
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: '#65C4FF',
     overflow: 'hidden',
   },
   header: {
@@ -122,27 +125,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: wp(4),
     paddingVertical: hp(2),
-  },
-  avatar: {
-    width: wp(11),
-    height: wp(11),
-    borderRadius: wp(5.5),
-    backgroundColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: wp(3),
-  },
-  avatarText: {
-    color: Colors.white,
-    fontFamily: Fonts.semibold,
-    fontSize: Fontsize.xx1,
+    gap: wp(3),
   },
   headerCenter: {
     flex: 1,
     alignItems: 'flex-start',
   },
   studentName: {
-    color: Colors.black,
+    color: Colors.white,
     fontFamily: Fonts.bold,
     fontSize: Fontsize.normal,
     marginBottom: hp(0.1),
@@ -157,70 +147,50 @@ const styles = StyleSheet.create({
   },
   studentMeta: {
     fontSize: wp(3.2),
-    color: Colors.mutedText,
+    color: Colors.whiteMuted75,
     textAlign: 'left',
   },
   headerRight: {
     alignItems: 'flex-end',
   },
   totalAmount: {
-    color: Colors.primary,
+    color: Colors.iconSky,
     fontFamily: Fonts.bold,
     fontSize: Fontsize.normal,
     marginBottom: hp(0.4),
     width: wp(14.5),
   },
-  body: {
-    paddingHorizontal: wp(4),
-    paddingBottom: hp(2),
+  feeList: {
+    flexGrow: 1,
   },
-  divider: {
-    height: 1,
-    backgroundColor: Colors.border,
-    marginBottom: hp(1.5),
-  },
-  breakdownHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: hp(1.2),
-  },
-  breakdownTitle: {
-    color: Colors.grayText,
-    fontFamily: Fonts.medium,
-    fontSize: Fontsize.xs1,
-    letterSpacing: 0.6,
-  },
-  breakdownCount: {
-    color: Colors.grayText,
-    fontFamily: Fonts.regular,
-    fontSize: Fontsize.xs1,
+  feeListContent: {
+    paddingHorizontal: wp(1),
+    paddingTop: hp(0.4),
+    paddingBottom: hp(2.5),
+    flexGrow: 1,
   },
   feeItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.cardBg,
+    backgroundColor: Colors.whiteOverlay18,
     borderRadius: wp(3),
     padding: wp(3),
     marginBottom: hp(1.2),
   },
   feeIconBox: {
-    width: wp(10),
-    height: wp(10),
-    borderRadius: wp(2.5),
-    backgroundColor: Colors.duesCardBg,
+    width: wp(6),
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: wp(3),
+    marginRight: wp(2.5),
   },
   feeIcon: {
     width: wp(5),
     height: wp(5),
-    tintColor: Colors.primary,
+    tintColor: Colors.iconSky,
   },
   feeInfo: {flex: 1},
   feeTitle: {
-    color: Colors.black,
+    color: Colors.white,
     fontFamily: Fonts.regular,
     fontSize: wp(3.73),
     marginBottom: hp(0.2),
@@ -232,11 +202,11 @@ const styles = StyleSheet.create({
   feeCalendarIcon: {
     width: wp(3.2),
     height: wp(3.2),
-    tintColor: Colors.grayText,
+    tintColor: Colors.whiteMuted85,
     resizeMode: 'contain',
   },
   feeDate: {
-    color: Colors.grayText,
+    color: Colors.whiteMuted75,
     fontFamily: Fonts.regular,
     fontSize: wp(3.2),
     marginLeft: wp(0.7),
@@ -248,7 +218,7 @@ const styles = StyleSheet.create({
     marginLeft: 'auto',
   },
   feeAmount: {
-    color: Colors.black,
+    color: Colors.white,
     fontFamily: Fonts.bold,
     fontSize: Fontsize.normal,
     marginBottom: hp(0.5),

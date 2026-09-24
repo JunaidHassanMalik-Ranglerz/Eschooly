@@ -2,15 +2,34 @@ import React from 'react';
 import {StyleSheet, Text, View} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
+import PersonAvatar from '../Profile/PersonAvatar';
+import AnimatedCard from '../AnimatedCard';
+import CardWave, {SCREEN_WAVES} from '../CardWave';
+import {
+  CARD_RADIUS,
+  GRADIENT_END,
+  GRADIENT_START,
+  IDENTITY_CARD_SHADOW,
+  PROFILE_GRADIENT,
+} from '../Profile/ProfileTheme';
 import {Colors} from '../../Constants/Colors';
 import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
 import {wp, hp} from '../../Constants/Responsive';
 
-const ParentIdentityCard = ({person}) => {
+const ParentIdentityCard = ({
+  person,
+  animationIndex = 0,
+  entering,
+  replayToken = 0,
+}) => {
   return (
-    <View style={styles.wrap}>
+    <AnimatedCard
+      index={animationIndex}
+      entering={entering}
+      replayToken={replayToken}
+      style={styles.wrap}>
       <View style={styles.titleRow}>
         <Text style={styles.sectionTitle}>{Strings.identityCard}</Text>
         <View style={styles.liveBadge}>
@@ -19,12 +38,13 @@ const ParentIdentityCard = ({person}) => {
         </View>
       </View>
 
-      <View style={styles.card}>
+      <View style={[styles.card, IDENTITY_CARD_SHADOW]}>
         <LinearGradient
-          colors={['#12325A', Colors.primary, Colors.primaryLight]}
-          start={{x: 0, y: 0}}
-          end={{x: 1, y: 1}}
-          style={styles.header}>
+          colors={PROFILE_GRADIENT}
+          start={GRADIENT_START}
+          end={GRADIENT_END}
+          style={styles.cardFace}>
+          <CardWave variant={SCREEN_WAVES.parentProfile} />
           <View style={styles.watermark} />
           <View style={styles.watermarkSmall} />
 
@@ -44,9 +64,14 @@ const ParentIdentityCard = ({person}) => {
           </View>
 
           <View style={styles.profileRow}>
-            <View style={styles.photoFrame}>
-              <Text style={styles.avatarText}>{person?.initials}</Text>
-            </View>
+            <PersonAvatar
+              person={person}
+              size={wp(18)}
+              variant="identity"
+              borderColor="rgba(245, 215, 110, 0.7)"
+              borderWidth={2}
+              style={styles.photoFrame}
+            />
             <View style={styles.nameCol}>
               <Text style={styles.name}>{person?.label}</Text>
               <Text style={styles.role}>{Strings.guardianRole}</Text>
@@ -60,32 +85,40 @@ const ParentIdentityCard = ({person}) => {
               </View>
             </View>
           </View>
-        </LinearGradient>
 
-        <View style={styles.body}>
-          <Text style={styles.cnicLabel}>{Strings.identityNumber}</Text>
-          <Text style={styles.cnicValue}>{person?.cnic}</Text>
+          <View style={styles.sectionDivider} />
+
+          <View style={styles.cnicPanel}>
+            <Text style={styles.metaKey}>{Strings.identityNumber}</Text>
+            <Text style={styles.cnicNumber}>{person?.cnic}</Text>
+          </View>
+
           <View style={styles.datesRow}>
-            <View style={styles.dateItem}>
-              <Text style={styles.dateLabel}>{Strings.dateOfIssue}</Text>
-              <Text style={styles.dateValue}>{person?.dateOfIssue}</Text>
+            <View style={styles.dateBox}>
+              <Text style={styles.metaKey}>{Strings.dateOfIssue}</Text>
+              <Text style={styles.metaVal}>{person?.dateOfIssue}</Text>
             </View>
-            <View style={styles.dateItem}>
-              <Text style={styles.dateLabel}>{Strings.validUntil}</Text>
-              <Text style={styles.dateValue}>{person?.validUntil}</Text>
+            <View style={styles.dateBox}>
+              <Text style={styles.metaKey}>{Strings.validUntil}</Text>
+              <Text style={styles.metaVal}>{person?.validUntil}</Text>
             </View>
           </View>
-        </View>
 
-        <View style={styles.footer}>
-          <Text style={styles.footerNote}>{person?.address}</Text>
-          <View style={styles.verifiedRow}>
-            <Icon name="checkmark-circle" size={wp(4)} color={Colors.success} />
-            <Text style={styles.verifiedText}>{Strings.verified}</Text>
+          <View style={styles.footer}>
+            <Icon
+              name="location-outline"
+              size={wp(3.8)}
+              color={Colors.whiteMuted85}
+            />
+            <Text style={styles.footerNote}>{person?.address}</Text>
+            <View style={styles.verifiedRow}>
+              <Icon name="checkmark-circle" size={wp(4)} color={Colors.iconGreen} />
+              <Text style={styles.verifiedText}>{Strings.verified}</Text>
+            </View>
           </View>
-        </View>
+        </LinearGradient>
       </View>
-    </View>
+    </AnimatedCard>
   );
 };
 
@@ -121,19 +154,13 @@ const styles = StyleSheet.create({
     marginLeft: wp(1.2),
   },
   card: {
-    borderRadius: wp(5.5),
+    borderRadius: CARD_RADIUS,
     overflow: 'hidden',
-    backgroundColor: Colors.white,
-    elevation: 8,
-    shadowColor: '#12325A',
-    shadowOffset: {width: 0, height: 8},
-    shadowOpacity: 0.18,
-    shadowRadius: 16,
   },
-  header: {
+  cardFace: {
     paddingHorizontal: wp(4.5),
     paddingTop: hp(1.8),
-    paddingBottom: hp(2.1),
+    paddingBottom: hp(1.6),
     overflow: 'hidden',
   },
   watermark: {
@@ -153,7 +180,7 @@ const styles = StyleSheet.create({
     borderRadius: wp(9),
     backgroundColor: 'rgba(255,255,255,0.06)',
     left: wp(28),
-    bottom: -wp(6),
+    bottom: hp(8),
   },
   headerTop: {
     flexDirection: 'row',
@@ -201,20 +228,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   photoFrame: {
-    width: wp(18),
-    height: wp(22),
-    borderRadius: wp(3),
-    backgroundColor: Colors.white,
-    alignItems: 'center',
-    justifyContent: 'center',
     marginRight: wp(3.2),
-    borderWidth: 2,
-    borderColor: 'rgba(245, 215, 110, 0.7)',
-  },
-  avatarText: {
-    color: Colors.primary,
-    fontFamily: Fonts.bold,
-    fontSize: Fontsize.md,
   },
   nameCol: {
     flex: 1,
@@ -246,65 +260,58 @@ const styles = StyleSheet.create({
     fontSize: Fontsize.xs1,
     marginTop: hp(0.08),
   },
-  body: {
-    paddingHorizontal: wp(4.5),
-    paddingTop: hp(1.7),
-    paddingBottom: hp(1.4),
-    backgroundColor: Colors.white,
+  sectionDivider: {
+    height: 1,
+    backgroundColor: Colors.whiteOverlay18,
+    marginTop: hp(1.8),
+    marginBottom: hp(1.4),
   },
-  cnicLabel: {
-    color: Colors.grayText,
-    fontFamily: Fonts.medium,
-    fontSize: Fontsize.xxm,
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-    marginBottom: hp(0.35),
+  cnicPanel: {
+    backgroundColor: Colors.whiteOverlay18,
+    borderRadius: wp(4),
+    paddingHorizontal: wp(3.5),
+    paddingVertical: hp(1.3),
+    marginBottom: hp(1.2),
   },
-  cnicValue: {
-    color: Colors.primary,
+  cnicNumber: {
+    color: Colors.white,
     fontFamily: Fonts.bold,
     fontSize: Fontsize.sm,
     letterSpacing: 0.6,
-    marginBottom: hp(1.3),
+    marginTop: hp(0.35),
   },
   datesRow: {
     flexDirection: 'row',
+    gap: wp(2.5),
+    marginBottom: hp(1.2),
   },
-  dateItem: {
+  dateBox: {
     flex: 1,
-  },
-  dateLabel: {
-    color: Colors.grayText,
-    fontFamily: Fonts.medium,
-    fontSize: Fontsize.xxm,
-    marginBottom: hp(0.2),
-  },
-  dateValue: {
-    color: Colors.black,
-    fontFamily: Fonts.semibold,
-    fontSize: Fontsize.xs1,
+    backgroundColor: 'rgba(255,255,255,0.10)',
+    borderRadius: wp(3.5),
+    paddingHorizontal: wp(3),
+    paddingVertical: hp(1),
   },
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: wp(4.5),
-    paddingBottom: hp(1.5),
-    paddingTop: hp(0.2),
+    borderTopWidth: 1,
+    borderTopColor: Colors.whiteOverlay18,
+    paddingTop: hp(1.2),
   },
   footerNote: {
     flex: 1,
-    color: Colors.mutedText,
+    color: Colors.whiteMuted85,
     fontFamily: Fonts.regular,
     fontSize: Fontsize.xxm,
-    paddingRight: wp(2),
+    marginHorizontal: wp(2),
   },
   verifiedRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   verifiedText: {
-    color: Colors.success,
+    color: Colors.iconGreen,
     fontFamily: Fonts.semibold,
     fontSize: Fontsize.xs0,
     marginLeft: wp(1),

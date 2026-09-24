@@ -90,17 +90,12 @@ export default QuestionNavigator;
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: Colors.white,
+    backgroundColor: '#12325A',
     borderRadius: wp(4),
     padding: wp(4),
     marginBottom: hp(2),
     borderWidth: 1,
-    borderColor: Colors.border,
-    shadowColor: Colors.black,
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    borderColor: '#65C4FF',
   },
   header: {
     flexDirection: 'row',
@@ -109,14 +104,14 @@ const styles = StyleSheet.create({
     marginBottom: hp(1.5),
   },
   title: {
-    color: Colors.grayText,
+    color: Colors.whiteMuted75,
     fontFamily: Fonts.semibold,
     fontSize: Fontsize.xs2,
     letterSpacing: 0.6,
     textTransform: 'uppercase',
   },
   hint: {
-    color: Colors.grayText,
+    color: Colors.whiteMuted75,
     fontFamily: Fonts.regular,
     fontSize: Fontsize.xs2,
   },
@@ -137,12 +132,12 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
   },
   boxCurrent: {
-    backgroundColor: '#EAF1FF',
+    backgroundColor: Colors.whiteOverlay22,
     borderWidth: 1.5,
-    borderColor: Colors.linkBlue,
+    borderColor: Colors.iconSky,
   },
   boxUnanswered: {
-    backgroundColor: '#F3F4F6',
+    backgroundColor: Colors.whiteOverlay18,
   },
   boxText: {
     fontFamily: Fonts.semibold,
@@ -152,10 +147,10 @@ const styles = StyleSheet.create({
     color: Colors.white,
   },
   boxTextCurrent: {
-    color: Colors.primary,
+    color: Colors.iconSky,
   },
   boxTextUnanswered: {
-    color: Colors.mutedText,
+    color: Colors.whiteMuted75,
   },
   flagDot: {
     position: 'absolute',
@@ -170,7 +165,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: Colors.border,
+    backgroundColor: Colors.whiteOverlay20,
     marginVertical: hp(1.5),
   },
   legend: {
@@ -196,13 +191,13 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
   },
   legendCurrent: {
-    backgroundColor: '#EAF1FF',
+    backgroundColor: Colors.whiteOverlay22,
   },
   legendUnanswered: {
-    backgroundColor: '#F3F4F6',
+    backgroundColor: Colors.whiteOverlay18,
   },
   legendText: {
-    color: Colors.grayText,
+    color: Colors.whiteMuted75,
     fontFamily: Fonts.regular,
     fontSize: Fontsize.xxs0,
   },

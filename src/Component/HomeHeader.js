@@ -1,6 +1,7 @@
 import React from 'react';
 import {StyleSheet, Text, View} from 'react-native';
 import NotificationBell from './NotificationBell';
+import PersonAvatar from './Profile/PersonAvatar';
 import {Colors} from '../Constants/Colors';
 import {Fonts} from '../Constants/Fonts';
 import {Fontsize} from '../Constants/Fontsize';
@@ -14,10 +15,8 @@ const HomeHeader = () => {
   return (
     <View style={styles.container}>
       <View style={styles.left}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{profilePerson.initials}</Text>
-        </View>
-        <View>
+        <PersonAvatar person={profilePerson} size={wp(12)} />
+        <View style={styles.nameWrap}>
           <Text style={styles.welcome} numberOfLines={1}>
             {Strings.welcome}
           </Text>
@@ -46,20 +45,10 @@ const styles = StyleSheet.create({
   left: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: wp(3),
   },
-  avatar: {
-    width: wp(11),
-    height: wp(11),
-    borderRadius: wp(5.5),
-    backgroundColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: wp(3),
-  },
-  avatarText: {
-    color: Colors.white,
-    fontFamily: Fonts.semibold,
-    fontSize: Fontsize.xx1,
+  nameWrap: {
+    flexShrink: 1,
   },
   welcome: {
     color: Colors.grayText,
