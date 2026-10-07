@@ -63,6 +63,8 @@ import {
 
   PARENT_TRANSPORT,
 
+  PARENT_CHILD_TRIPS,
+
   getChildRecords,
 } from '../Constants/parentData';
 
@@ -271,6 +273,12 @@ export const useRoleData = () => {
       transportDetails: isParent
 
         ? PARENT_TRANSPORT[activeStudent?.value] || PARENT_TRANSPORT['1']
+
+        : null,
+
+      childTrip: isParent
+
+        ? PARENT_CHILD_TRIPS[activeStudent?.value] || PARENT_CHILD_TRIPS['1']
 
         : null,
 

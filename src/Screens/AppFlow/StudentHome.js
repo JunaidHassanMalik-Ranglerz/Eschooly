@@ -38,6 +38,7 @@ const HUB_ITEMS = [
   {key: 'library', label: Strings.digitalLibrary, screen: 'DigitalLibrary'},
   {key: 'announcements', label: Strings.announcements, screen: 'Announcements'},
   {key: 'results', label: Strings.results, screen: 'StudentResults'},
+  {key: 'syllabus', label: Strings.syllabus, screen: 'Syllabus'},
 ];
 
 const StudentHome = () => {

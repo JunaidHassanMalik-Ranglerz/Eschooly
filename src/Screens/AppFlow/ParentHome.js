@@ -202,6 +202,48 @@ const ParentHome = () => {
                 waveVariant="scheduleLesson"
               />
             ) : null}
+
+            <ScheduleItem
+              item={{
+                subject: Strings.syllabus,
+                time: Strings.syllabusUnits,
+                icon: 'book-outline',
+                iconColor: Colors.iconTeal,
+              }}
+              gradientColors={CARD_GRADIENTS.deep}
+              entering={getAcademicsMenuEntering(null, 9)}
+              animationIndex={9}
+              waveVariant="scheduleTimetable"
+              onPress={() => navigation.navigate('Syllabus')}
+            />
+
+            <ScheduleItem
+              item={{
+                subject: Strings.results,
+                time: Strings.resultCardHint,
+                icon: 'trophy-outline',
+                iconColor: Colors.iconTeal,
+              }}
+              gradientColors={CARD_GRADIENTS.royal}
+              entering={getAcademicsMenuEntering(null, 10)}
+              animationIndex={10}
+              waveVariant="scheduleTimetable"
+              onPress={() => navigation.navigate('StudentResults')}
+            />
+
+            <ScheduleItem
+              item={{
+                subject: Strings.trackChild,
+                time: Strings.trackChildHint,
+                icon: 'bus',
+                iconColor: Colors.iconAmber,
+              }}
+              gradientColors={CARD_GRADIENTS.sapphire}
+              entering={getAcademicsMenuEntering(null, 11)}
+              animationIndex={11}
+              waveVariant="scheduleTimetable"
+              onPress={() => navigation.navigate('ChildTrack')}
+            />
           </View>
         </ScrollEnterScrollView>
 

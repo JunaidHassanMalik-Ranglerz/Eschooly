@@ -196,7 +196,7 @@ export const STUDENT_LIST = [
 export const MENU_LIST = [
   {
     value: 'subjects',
-    label: Strings.subjects,
+    label: Strings.syllabus,
     icon: Images.reportSurvey,
     screen: 'Syllabus',
   },
@@ -247,13 +247,19 @@ export const MENU_LIST = [
     label: Strings.result,
     icon: Images.reportCard,
     screen: 'StudentResults',
-    parentScreen: 'ParentResults',
   },
   {
     value: 'fee',
     label: Strings.fee,
     icon: Images.tuitionFee,
     screen: 'Fee',
+  },
+  {
+    value: 'transportTrack',
+    label: Strings.trackChild,
+    icon: Images.transport,
+    parentScreen: 'ChildTrack',
+    parentOnly: true,
   },
 ];
 
@@ -1321,10 +1327,10 @@ export const STUDENT_UPCOMING_CLASS = {
   subject: 'Mathematics',
 };
 
-export const STUDENT_RESULT_TERMS = [Strings.term1, Strings.term2, Strings.term3];
+export const STUDENT_RESULT_TERMS = [Strings.monthly, Strings.year];
 
 export const STUDENT_RESULTS = {
-  [Strings.term1]: {
+  [Strings.monthly]: {
     overall: 'A',
     hint: 'Great Progress!',
     subjects: [
@@ -1335,18 +1341,7 @@ export const STUDENT_RESULTS = {
       {id: '5', name: 'Islamic Studies', grade: 'A', score: 88, color: '#EA580C'},
     ],
   },
-  [Strings.term2]: {
-    overall: 'A-',
-    hint: 'Keep it up!',
-    subjects: [
-      {id: '1', name: 'Mathematics', grade: 'A', score: 91, color: '#16A34A'},
-      {id: '2', name: 'Science', grade: 'A-', score: 87, color: '#2563EB'},
-      {id: '3', name: 'English', grade: 'A-', score: 86, color: '#7C3AED'},
-      {id: '4', name: 'Computer', grade: 'B+', score: 81, color: '#0D9488'},
-      {id: '5', name: 'Islamic Studies', grade: 'B+', score: 80, color: '#EA580C'},
-    ],
-  },
-  [Strings.term3]: {
+  [Strings.year]: {
     overall: 'A+',
     hint: 'Excellent work!',
     subjects: [
@@ -1615,7 +1610,7 @@ const ASSIGNMENT_OVERVIEW_BY_GRADE = {
 };
 
 const STUDENT_RESULTS_CLASS_2 = {
-  [Strings.term1]: {
+  [Strings.monthly]: {
     overall: 'A',
     hint: 'Great start!',
     subjects: [
@@ -1625,10 +1620,20 @@ const STUDENT_RESULTS_CLASS_2 = {
       {id: '4', name: 'Art', grade: 'A+', score: 94, color: '#EA580C'},
     ],
   },
+  [Strings.year]: {
+    overall: 'A',
+    hint: 'Strong year!',
+    subjects: [
+      {id: '1', name: 'English', grade: 'A+', score: 93, color: '#2563EB'},
+      {id: '2', name: 'Mathematics', grade: 'A', score: 90, color: '#16A34A'},
+      {id: '3', name: 'Science', grade: 'A-', score: 86, color: '#0D9488'},
+      {id: '4', name: 'Art', grade: 'A+', score: 96, color: '#EA580C'},
+    ],
+  },
 };
 
 const STUDENT_RESULTS_CLASS_4 = {
-  [Strings.term1]: {
+  [Strings.monthly]: {
     overall: 'A-',
     hint: 'Keep it up!',
     subjects: [
@@ -1637,6 +1642,17 @@ const STUDENT_RESULTS_CLASS_4 = {
       {id: '3', name: 'Science', grade: 'B+', score: 80, color: '#0D9488'},
       {id: '4', name: 'Urdu', grade: 'A', score: 87, color: '#7C3AED'},
       {id: '5', name: 'Art', grade: 'A+', score: 92, color: '#EA580C'},
+    ],
+  },
+  [Strings.year]: {
+    overall: 'A',
+    hint: 'Great year!',
+    subjects: [
+      {id: '1', name: 'English', grade: 'A', score: 91, color: '#2563EB'},
+      {id: '2', name: 'Mathematics', grade: 'A', score: 89, color: '#16A34A'},
+      {id: '3', name: 'Science', grade: 'A-', score: 86, color: '#0D9488'},
+      {id: '4', name: 'Urdu', grade: 'A+', score: 92, color: '#7C3AED'},
+      {id: '5', name: 'Art', grade: 'A+', score: 95, color: '#EA580C'},
     ],
   },
 };
@@ -1668,15 +1684,15 @@ export const getAssignmentOverviewForClass = className => {
 
 export const getStudentResultsForClass = (className, term) => {
   const grade = getClassGrade(className);
-  const key = term || Strings.term1;
+  const key = term || Strings.monthly;
 
   if (grade <= 2) {
-    return STUDENT_RESULTS_CLASS_2[key] || STUDENT_RESULTS_CLASS_2[Strings.term1];
+    return STUDENT_RESULTS_CLASS_2[key] || STUDENT_RESULTS_CLASS_2[Strings.monthly];
   }
   if (grade <= 4) {
-    return STUDENT_RESULTS_CLASS_4[key] || STUDENT_RESULTS_CLASS_4[Strings.term1];
+    return STUDENT_RESULTS_CLASS_4[key] || STUDENT_RESULTS_CLASS_4[Strings.monthly];
   }
-  return STUDENT_RESULTS[key] || STUDENT_RESULTS[Strings.term1];
+  return STUDENT_RESULTS[key] || STUDENT_RESULTS[Strings.monthly];
 };
 
 const TEACHER_PROFILE_KEYS = ['1', '2', '3'];

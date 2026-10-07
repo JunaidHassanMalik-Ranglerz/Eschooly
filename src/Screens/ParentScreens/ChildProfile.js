@@ -67,7 +67,7 @@ const MENU_ITEMS = [
     title: Strings.results,
     icon: 'trophy-outline',
     iconColor: Colors.iconTeal,
-    screen: 'ParentResults',
+    screen: 'StudentResults',
   },
   {
     key: 'teachers',

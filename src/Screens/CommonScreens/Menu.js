@@ -109,7 +109,9 @@ const Menu = () => {
           overScrollMode="never"
           removeClippedSubviews={false}
           keyboardShouldPersistTaps="handled">
-          {MENU_LIST.filter(item => isParent || item.value !== 'fee').map((item, index) => {
+          {MENU_LIST.filter(
+            item => isParent || (item.value !== 'fee' && !item.parentOnly),
+          ).map((item, index) => {
             const meta = FEATURE_ICON_META[item.value] || FEATURE_ICON_META.subjects;
             const disabled = !item.screen && !item.parentScreen;
             return (

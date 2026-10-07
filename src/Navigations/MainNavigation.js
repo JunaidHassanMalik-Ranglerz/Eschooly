@@ -31,6 +31,7 @@ import Exam from '../Screens/CommonScreens/Exam';
 import Teacher from '../Screens/CommonScreens/Teacher';
 import Fee from '../Screens/ParentScreens/Fee';
 import Transport from '../Screens/ParentScreens/Transport';
+import ChildTrack from '../Screens/ParentScreens/ChildTrack';
 import Holidays from '../Screens/CommonScreens/Holidays';
 import StudentResults from '../Screens/CommonScreens/StudentResults';
 import UpdatePassword from '../Screens/CommonScreens/UpdatePassword';
@@ -152,6 +153,7 @@ const MainNavigation = () => {
         <MAIN_STACK.Screen name="ParentTeachers" component={Teacher} />
         <MAIN_STACK.Screen name="Fee" component={Fee} />
         <MAIN_STACK.Screen name="Transport" component={Transport} />
+        <MAIN_STACK.Screen name="ChildTrack" component={ChildTrack} />
         <MAIN_STACK.Screen name="Holidays" component={Holidays} />
         <MAIN_STACK.Screen name="UpdatePassword" component={UpdatePassword} />
       </MAIN_STACK.Navigator>

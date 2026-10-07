@@ -23,6 +23,7 @@ export const FEATURE_ICON_META = {
   announcements: {icon: 'megaphone', color: Colors.iconPink},
   notification: {icon: 'notifications', color: Colors.iconPurple},
   transport: {icon: 'bus', color: Colors.iconAmber},
+  transportTrack: {icon: 'bus', color: Colors.iconAmber},
   diary: {icon: 'journal', color: Colors.iconTeal},
   profile: {icon: 'person', color: Colors.iconCyan},
   password: {icon: 'lock-closed', color: Colors.iconPurple},
@@ -41,6 +42,7 @@ export const HUB_ICON_META = [
   FEATURE_ICON_META.digitalLibrary,
   FEATURE_ICON_META.announcements,
   FEATURE_ICON_META.results,
+  FEATURE_ICON_META.syllabus,
 ];
 
 export const getFeatureIcon = key =>

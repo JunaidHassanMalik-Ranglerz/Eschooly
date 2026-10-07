@@ -713,5 +713,41 @@ export const PARENT_CHAT_USER = {
   initials: 'SA',
 };
 
+export const PARENT_CHILD_TRIPS = {
+  '1': {
+    status: 'On the way home',
+    morning: [
+      {id: 'pickup', title: 'Picked up from home', time: '07:15 AM', done: true},
+      {id: 'school', title: 'Reached school', time: '07:48 AM', done: true},
+    ],
+    evening: [
+      {id: 'leave', title: 'Left school', time: '02:10 PM', done: true},
+      {id: 'drop', title: 'Dropped at home', time: '', done: false},
+    ],
+  },
+  '2': {
+    status: 'On the way to school',
+    morning: [
+      {id: 'pickup', title: 'Picked up from home', time: '07:30 AM', done: true},
+      {id: 'school', title: 'Reached school', time: '', done: false},
+    ],
+    evening: [
+      {id: 'leave', title: 'Left school', time: '', done: false},
+      {id: 'drop', title: 'Dropped at home', time: '', done: false},
+    ],
+  },
+  '3': {
+    status: 'Dropped at home',
+    morning: [
+      {id: 'pickup', title: 'Picked up from home', time: '07:40 AM', done: true},
+      {id: 'school', title: 'Reached school', time: '08:05 AM', done: true},
+    ],
+    evening: [
+      {id: 'leave', title: 'Left school', time: '02:00 PM', done: true},
+      {id: 'drop', title: 'Dropped at home', time: '02:35 PM', done: true},
+    ],
+  },
+};
+
 export const getChildRecords = (map, childId) =>
   map?.[childId] || map?.['1'] || [];
