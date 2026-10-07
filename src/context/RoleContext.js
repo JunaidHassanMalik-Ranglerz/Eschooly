@@ -1,4 +1,5 @@
 import React, {createContext, useContext, useMemo, useState} from 'react';
+import {LOGGED_IN_STUDENT} from '../Constants/dummydata';
 
 export const ROLES = {
   PARENT: 'parent',
@@ -10,6 +11,9 @@ const RoleContext = createContext(null);
 export const RoleProvider = ({children}) => {
   const [role, setRole] = useState(null);
   const [selectedChildId, setSelectedChildId] = useState('1');
+  const [loggedInStudentId, setLoggedInStudentId] = useState(
+    LOGGED_IN_STUDENT.value,
+  );
 
   const value = useMemo(
     () => ({
@@ -17,14 +21,17 @@ export const RoleProvider = ({children}) => {
       setRole,
       selectedChildId,
       setSelectedChildId,
+      loggedInStudentId,
+      setLoggedInStudentId,
       clearRole: () => {
         setRole(null);
         setSelectedChildId('1');
+        setLoggedInStudentId(LOGGED_IN_STUDENT.value);
       },
       isParent: role === ROLES.PARENT,
       isStudent: role === ROLES.STUDENT,
     }),
-    [role, selectedChildId],
+    [role, selectedChildId, loggedInStudentId],
   );
 
   return (

@@ -1,4 +1,4 @@
-import React, {useCallback, useLayoutEffect, useState} from 'react';
+import React, {useCallback, useLayoutEffect} from 'react';
 import {StatusBar, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import ScrollEnterScrollView from '../../Component/ScrollEnterScrollView';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
@@ -7,13 +7,11 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import LinearGradient from 'react-native-linear-gradient';
 import NotificationBell from '../../Component/NotificationBell';
 import AttendanceStudentDropdown from '../../Component/AttendanceStudentDropdown';
-import ChildSwitchModal from '../../Component/Parent/ChildSwitchModal';
 import AnimatedCard from '../../Component/AnimatedCard';
 import CardWave, {SCREEN_WAVES} from '../../Component/CardWave';
 import DepthIcon from '../../Component/DepthIcon';
 import StudentHubCard from '../../Component/Student/StudentHubCard';
 import {CARD_GRADIENTS} from '../../Constants/CardTheme';
-import {ATTENDANCE_STUDENTS} from '../../Constants/dummydata';
 import {Colors} from '../../Constants/Colors';
 import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
@@ -46,30 +44,15 @@ const StudentHome = () => {
   const navigation = useNavigation();
   const {
     activeStudent,
-    attendanceStudents,
-    selectedChildId,
-    setSelectedChildId,
     unreadNotificationCount,
     studentUpcomingClass,
     studentLabel,
   } = useRoleData();
-  const attendanceMeta =
-    ATTENDANCE_STUDENTS.find(item => item.value === selectedChildId) ||
-    ATTENDANCE_STUDENTS[0];
   const dropdownStudent = {
     ...activeStudent,
-    ...attendanceMeta,
-    gender: activeStudent?.gender || attendanceMeta?.gender || 'Male',
-    classInfo: activeStudent?.classLabel || attendanceMeta?.classInfo,
+    gender: activeStudent?.gender || 'Male',
+    classInfo: activeStudent?.classLabel || activeStudent?.classInfo,
   };
-  const canSwitchStudent = attendanceStudents.length > 1;
-  const [switchVisible, setSwitchVisible] = useState(false);
-  const [modalReplay, setModalReplay] = useState(0);
-
-  const openStudentSwitch = useCallback(() => {
-    setSwitchVisible(true);
-    setModalReplay(value => value + 1);
-  }, []);
 
   useLayoutEffect(() => {
     setDarkStatusBar();
@@ -122,16 +105,11 @@ const StudentHome = () => {
               style={styles.dropdownAnchor}>
               <AttendanceStudentDropdown
                 student={dropdownStudent}
-                students={attendanceStudents}
-                selectedId={selectedChildId}
                 premium
                 waveVariant={SCREEN_WAVES.parentHome}
-                onSelect={item => setSelectedChildId(item.value)}
-                readOnly={!canSwitchStudent}
+                readOnly
                 label={studentLabel}
                 embedded
-                externalPicker={canSwitchStudent}
-                onPickerPress={openStudentSwitch}
               />
             </AnimatedCard>
 
@@ -203,16 +181,6 @@ const StudentHome = () => {
             </AnimatedCard>
           </View>
         </ScrollEnterScrollView>
-        {canSwitchStudent ? (
-          <ChildSwitchModal
-            visible={switchVisible}
-            childrenList={attendanceStudents}
-            selectedId={selectedChildId}
-            onSelect={setSelectedChildId}
-            onClose={() => setSwitchVisible(false)}
-            replayToken={modalReplay}
-          />
-        ) : null}
       </SafeAreaView>
     </ScreenEnterProvider>
   );

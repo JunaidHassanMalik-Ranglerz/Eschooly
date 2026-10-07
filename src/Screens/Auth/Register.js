@@ -21,6 +21,7 @@ import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
 import {wp, hp} from '../../Constants/Responsive';
+import {LOGGED_IN_STUDENT, STUDENT_LIST} from '../../Constants/dummydata';
 import {useRole} from '../../context/RoleContext';
 import {withScreenEnter} from '../../hooks/useScreenEnterGate';
 import {EnterView} from '../../Component/AnimatedCard';
@@ -47,13 +48,24 @@ const RegisterEnter = ({entering, style, children}) => (
 const RegisterContent = () => {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
-  const {clearRole, isParent} = useRole();
+  const {clearRole, isParent, setLoggedInStudentId} = useRole();
   const [cnic, setCnic] = useState('');
   const [studentId, setStudentId] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
   const goToHome = () => {
+    if (!isParent) {
+      const query = studentId.trim().toLowerCase();
+      const match = query
+        ? STUDENT_LIST.find(
+            item =>
+              item.studentId.toLowerCase() === query ||
+              item.label.toLowerCase() === query,
+          )
+        : null;
+      setLoggedInStudentId(match?.value || LOGGED_IN_STUDENT.value);
+    }
     navigation.getParent()?.reset({
       index: 0,
       routes: [{name: 'BottomTab'}],

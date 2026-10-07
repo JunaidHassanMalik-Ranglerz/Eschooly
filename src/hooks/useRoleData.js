@@ -102,9 +102,14 @@ import {
 
 export const useRoleData = () => {
 
-  const {role, isParent, isStudent, selectedChildId, setSelectedChildId} =
-
-    useRole();
+  const {
+    role,
+    isParent,
+    isStudent,
+    selectedChildId,
+    setSelectedChildId,
+    loggedInStudentId,
+  } = useRole();
 
 
 
@@ -129,11 +134,15 @@ export const useRoleData = () => {
     return LOGGED_IN_STUDENT;
   };
 
-  const selectedStudent = isParent ? activeChild : resolveStudentRecord(selectedChildId);
+  const loggedInStudent = resolveStudentRecord(
+    loggedInStudentId || LOGGED_IN_STUDENT.value,
+  );
+
+  const selectedStudent = isParent ? activeChild : loggedInStudent;
 
   const activeStudent = buildActiveStudent(selectedStudent);
 
-  const canSwitchStudent = !isParent && ATTENDANCE_STUDENTS.length > 1;
+  const canSwitchStudent = false;
 
 
 
@@ -165,7 +174,9 @@ export const useRoleData = () => {
 
       profilePerson: isParent ? PARENT_DATA : activeStudent,
 
-      attendanceStudents: isParent ? childList : ATTENDANCE_STUDENTS,
+      attendanceStudents: isParent
+        ? childList
+        : ATTENDANCE_STUDENTS.filter(item => item.value === activeStudent?.value),
 
       profileMenuList: isParent ? PARENT_PROFILE_MENU_LIST : PROFILE_MENU_LIST,
 
@@ -242,7 +253,7 @@ export const useRoleData = () => {
 
         : PARENT_ANNOUNCEMENTS.filter(item =>
 
-            item.childIds.includes(LOGGED_IN_STUDENT.value),
+            item.childIds.includes(activeStudent?.value),
 
           ),
 
@@ -282,6 +293,8 @@ export const useRoleData = () => {
       selectedChildId,
 
       setSelectedChildId,
+
+      loggedInStudentId,
 
     ],
 

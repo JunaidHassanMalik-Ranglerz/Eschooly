@@ -94,7 +94,7 @@ const Menu = () => {
                 selectedId={selectedChildId}
                 premium
                 onSelect={item => setSelectedChildId(item.value)}
-                readOnly={false}
+                readOnly={studentOptions.length <= 1}
                 label={studentLabel}
               />
             </AnimatedCard>
