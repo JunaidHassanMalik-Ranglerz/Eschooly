@@ -1,4 +1,4 @@
-import React, {useMemo, useState} from 'react';
+import React from 'react';
 import {Image, StatusBar, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import ScrollEnterScrollView from '../../Component/ScrollEnterScrollView';
 import {useNavigation} from '@react-navigation/native';
@@ -16,27 +16,12 @@ import {useRoleData} from '../../hooks/useRoleData';
 import {ScreenEnterProvider} from '../../hooks/useScreenEnterGate';
 import {getHomeScreenEnter} from '../../utils/cardAnimation';
 
-const TABS = [Strings.tabAll, Strings.academic, Strings.general];
 const NAVY = '#071A3D';
 const SCREEN_BG = '#DCEBFD';
-const TAB_IDLE_BG = '#EEF5FD';
-const TAB_IDLE_BORDER = '#C0D5F2';
-const TAB_IDLE_TEXT = '#5A6B82';
 
 const NotificationContent = () => {
   const navigation = useNavigation();
   const {notifications} = useRoleData();
-  const [activeTab, setActiveTab] = useState(Strings.tabAll);
-
-  const data = useMemo(() => {
-    if (activeTab === Strings.academic) {
-      return notifications.filter(item => item.type === 'academic');
-    }
-    if (activeTab === Strings.general) {
-      return notifications.filter(item => item.type === 'general');
-    }
-    return notifications;
-  }, [activeTab, notifications]);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -61,20 +46,9 @@ const NotificationContent = () => {
 
       <AnimatedCard index={1} entering={getHomeScreenEnter(1)} style={styles.tabsCard}>
         <View style={styles.tabsRow}>
-          {TABS.map(tab => {
-            const active = tab === activeTab;
-            return (
-              <TouchableOpacity
-                key={tab}
-                activeOpacity={0.85}
-                onPress={() => setActiveTab(tab)}
-                style={[styles.tab, active ? styles.tabActive : styles.tabIdle]}>
-                <Text style={[styles.tabText, active && styles.tabTextActive]}>
-                  {tab}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
+          <View style={[styles.tab, styles.tabActive]}>
+            <Text style={styles.tabText}>{Strings.tabAll}</Text>
+          </View>
         </View>
       </AnimatedCard>
 
@@ -86,10 +60,10 @@ const NotificationContent = () => {
         overScrollMode="never"
         removeClippedSubviews={false}
         keyboardShouldPersistTaps="handled">
-        {data.length === 0 ? (
+        {notifications.length === 0 ? (
           <Text style={styles.empty}>{Strings.noNotifications}</Text>
         ) : (
-          data.map((item, index) => {
+          notifications.map((item, index) => {
             const slot = index + 2;
             return (
               <NotificationCard
@@ -175,18 +149,10 @@ const styles = StyleSheet.create({
   tabActive: {
     backgroundColor: NAVY,
   },
-  tabIdle: {
-    backgroundColor: TAB_IDLE_BG,
-    borderWidth: 1,
-    borderColor: TAB_IDLE_BORDER,
-  },
   tabText: {
-    color: TAB_IDLE_TEXT,
+    color: Colors.white,
     fontFamily: Fonts.medium,
     fontSize: Fontsize.xs1,
-  },
-  tabTextActive: {
-    color: Colors.white,
   },
   list: {
     paddingHorizontal: wp(4),

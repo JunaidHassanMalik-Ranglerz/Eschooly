@@ -14,6 +14,9 @@ export const LOGGED_IN_STUDENT = {
   dob: '12 March 2014',
   classInfo: 'Class 7 · Section B',
   gender: 'Male',
+  phone: '+92 300 4567890',
+  address: 'House 12, Street 5, Islamabad',
+  validUntil: 'Mar 31, 2026',
 };
 
 export const PARENT_DATA = {
@@ -41,6 +44,8 @@ const buildStudent = ({
   guardian,
   dob,
   rollNo,
+  phone,
+  address,
 }) => ({
   value,
   label,
@@ -54,6 +59,9 @@ const buildStudent = ({
   guardian,
   dob,
   rollNo,
+  phone,
+  address,
+  validUntil: 'Mar 31, 2026',
 });
 
 export const STUDENT_LIST = [
@@ -68,6 +76,8 @@ export const STUDENT_LIST = [
     guardian: 'Tariq Malik',
     dob: '18 May 2019',
     rollNo: '05',
+    phone: '+92 300 1122334',
+    address: 'House 21, F-8, Islamabad',
   }),
   buildStudent({
     value: '2',
@@ -80,6 +90,8 @@ export const STUDENT_LIST = [
     guardian: 'Imran Khaliq',
     dob: '5 June 2018',
     rollNo: '08',
+    phone: '+92 300 4567891',
+    address: 'House 12, Street 5, Islamabad',
   }),
   buildStudent({
     value: '4',
@@ -92,6 +104,8 @@ export const STUDENT_LIST = [
     guardian: 'Asif Siddiqui',
     dob: '22 August 2017',
     rollNo: '11',
+    phone: '+92 321 5550141',
+    address: 'House 8, Block C, Rawalpindi',
   }),
   buildStudent({
     value: '7',
@@ -104,6 +118,8 @@ export const STUDENT_LIST = [
     guardian: 'Nadeem Iqbal',
     dob: '3 February 2016',
     rollNo: '09',
+    phone: '+92 345 7788990',
+    address: 'Lane 3, Bahria Town, Rawalpindi',
   }),
   buildStudent({
     value: '8',
@@ -116,6 +132,8 @@ export const STUDENT_LIST = [
     guardian: 'Shahid Noor',
     dob: '14 November 2015',
     rollNo: '07',
+    phone: '+92 312 4455667',
+    address: 'House 5, Sector I-8, Islamabad',
   }),
   buildStudent({
     value: '1',
@@ -128,6 +146,8 @@ export const STUDENT_LIST = [
     guardian: 'Imran Khaliq',
     dob: '12 March 2014',
     rollNo: '12',
+    phone: '+92 300 4567890',
+    address: 'House 12, Street 5, Islamabad',
   }),
   buildStudent({
     value: '3',
@@ -140,6 +160,8 @@ export const STUDENT_LIST = [
     guardian: 'Imran Khaliq',
     dob: '10 January 2013',
     rollNo: '21',
+    phone: '+92 300 4567892',
+    address: 'House 12, Street 5, Islamabad',
   }),
   buildStudent({
     value: '9',
@@ -152,6 +174,8 @@ export const STUDENT_LIST = [
     guardian: 'Kamran Sheikh',
     dob: '9 September 2011',
     rollNo: '16',
+    phone: '+92 301 9988776',
+    address: 'Street 9, DHA Phase 2, Islamabad',
   }),
   buildStudent({
     value: '5',
@@ -164,6 +188,8 @@ export const STUDENT_LIST = [
     guardian: 'Imtiaz Ahmed',
     dob: '27 April 2010',
     rollNo: '04',
+    phone: '+92 333 6100204',
+    address: 'Street 4, G-10, Islamabad',
   }),
 ];
 

@@ -175,6 +175,24 @@ const IdCardPreview = ({data, isBack, navy = false}) => {
             <Text style={[styles.address, navy && styles.textMutedNavy]}>
               {data.cityLine}
             </Text>
+            <PreviewField
+              icon="call-outline"
+              label={Strings.phone}
+              value={data.phone}
+              navy={navy}
+            />
+            <PreviewField
+              icon="location-outline"
+              label={Strings.address}
+              value={data.address}
+              navy={navy}
+            />
+            <PreviewField
+              icon="calendar-outline"
+              label={Strings.validUntil}
+              value={data.validUntil}
+              navy={navy}
+            />
           </View>
         </View>
 
@@ -191,6 +209,20 @@ const IdCardPreview = ({data, isBack, navy = false}) => {
     </View>
   );
 };
+
+const PreviewField = ({icon, label, value, navy}) => (
+  <View style={styles.fieldRow}>
+    <Icon
+      name={icon}
+      size={wp(3.8)}
+      color={navy ? Colors.whiteMuted85 : Colors.grayText}
+    />
+    <View style={styles.fieldText}>
+      <Text style={[styles.fieldLabel, navy && styles.textMutedNavy]}>{label}</Text>
+      <Text style={[styles.fieldValue, navy && styles.textOnNavy]}>{value}</Text>
+    </View>
+  </View>
+);
 
 const StatItem = ({label, value, navy}) => (
   <View style={styles.statItem}>
@@ -355,6 +387,26 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.regular,
     fontSize: Fontsize.xs1,
     lineHeight: Fontsize.m,
+  },
+  fieldRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: hp(0.9),
+  },
+  fieldText: {
+    flex: 1,
+    marginLeft: wp(2),
+  },
+  fieldLabel: {
+    color: Colors.grayText,
+    fontFamily: Fonts.medium,
+    fontSize: Fontsize.xs0,
+  },
+  fieldValue: {
+    color: Colors.black,
+    fontFamily: Fonts.semibold,
+    fontSize: Fontsize.xs1,
+    marginTop: hp(0.1),
   },
   footer: {
     flexDirection: 'row',
