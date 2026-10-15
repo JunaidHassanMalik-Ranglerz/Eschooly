@@ -10,6 +10,7 @@ import {
 } from '../../services/authService';
 import {getApiErrorMessage} from '../../utils/apiError';
 import {storage, storageKeys} from '../../utils/storage';
+import {resetParentHome} from './parentHomeSlice';
 
 const initialState = {
   loading: false,
@@ -111,42 +112,57 @@ export const fetchParentProfile = createAsyncThunk(
   },
 );
 
+const logoutMessage = rawMessage => {
+  const message = typeof rawMessage === 'string' ? rawMessage.trim() : '';
+  if (!message || message === 'parent.api.logged_out') {
+    return 'Logged out successfully.';
+  }
+  return message;
+};
+
+const clearLocalSession = async dispatch => {
+  try {
+    await storage.clearSession();
+  } catch (storageError) {
+    // Navigation still returns the parent to the login screen.
+  }
+  setAuthToken(null);
+  dispatch(resetParentHome());
+};
+
 export const logoutParent = createAsyncThunk(
   'auth/logoutParent',
-  async (_, {getState, rejectWithValue}) => {
+  async (_, {dispatch, getState, rejectWithValue}) => {
     let message = 'Logged out successfully.';
     try {
       const token = await readToken(getState);
       if (token) {
         const response = await parentLogout();
-        const rawMessage = response?.data?.message;
-        if (typeof rawMessage === 'string' && rawMessage.trim()) {
-          message = rawMessage.trim();
+        const body = response?.data;
+        if (body && body.success === false) {
+          await clearLocalSession(dispatch);
+          return rejectWithValue({
+            message:
+              typeof body.message === 'string' && body.message.trim()
+                ? body.message.trim()
+                : 'Unable to log out.',
+            status: response?.status ?? null,
+          });
         }
+        message = logoutMessage(body?.message);
       }
     } catch (error) {
-      message = '';
-      try {
-        await storage.clearSession();
-      } catch (storageError) {
-        // Local session still needs to be cleared by the caller path below.
-      }
-      setAuthToken(null);
+      await clearLocalSession(dispatch);
       return rejectWithValue(rejectMessage(error));
     }
 
-    try {
-      await storage.clearSession();
-    } catch (storageError) {
-      // Navigation still returns the parent to the login screen.
-    }
-    setAuthToken(null);
+    await clearLocalSession(dispatch);
     return {message};
   },
 );
 export const updateParentPassword = createAsyncThunk(
   'auth/updateParentPassword',
-  async (fields, {getState, rejectWithValue}) => {
+  async (fields, {dispatch, getState, rejectWithValue}) => {
     try {
       const token = await readToken(getState);
       if (!token) {
@@ -168,6 +184,7 @@ export const updateParentPassword = createAsyncThunk(
         // Session clear must still continue so the parent logs in again.
       }
       setAuthToken(null);
+      dispatch(resetParentHome());
       return {message};
     } catch (error) {
       return rejectWithValue(rejectMessage(error));

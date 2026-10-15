@@ -55,9 +55,9 @@ const RegisterContent = () => {
   const signingIn = useSelector(state => state.auth.loading);
   const submitLock = useRef(false);
   const {clearRole, isParent, setLoggedInStudentId, setRole} = useRole();
-  const [familyId, setFamilyId] = useState('FAM-0049');
+  const [familyId, setFamilyId] = useState('FAM-049');
   const [studentId, setStudentId] = useState('');
-  const [password, setPassword] = useState('12345678@Zz');
+  const [password, setPassword] = useState('12345678');
   const [showPassword, setShowPassword] = useState(false);
 
   const signInParent = async () => {

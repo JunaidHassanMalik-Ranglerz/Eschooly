@@ -1,7 +1,8 @@
-import React, {useCallback, useLayoutEffect, useState} from 'react';
-import {StatusBar, StyleSheet, Text, View} from 'react-native';
+import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
+import {ActivityIndicator, StatusBar, StyleSheet, Text, View} from 'react-native';
 import ScrollEnterScrollView from '../../Component/ScrollEnterScrollView';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import {useDispatch, useSelector} from 'react-redux';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import NotificationBell from '../../Component/NotificationBell';
 import SelectedChildBanner from '../../Component/SelectedChildBanner';
@@ -14,9 +15,7 @@ import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
 import {wp, hp} from '../../Constants/Responsive';
-import {useRoleData} from '../../hooks/useRoleData';
 import {getGreeting} from '../../utils/getGreeting';
-import {LIBRARY_CLASS_CATEGORIES} from '../../Constants/DigitalLibraryData';
 import {CARD_GRADIENTS} from '../../Constants/CardTheme';
 import {SCREEN_WAVES} from '../../Component/CardWave';
 import {
@@ -29,21 +28,26 @@ import {
   ACADEMICS_PROFILE_ENTERING,
   getAcademicsMenuEntering,
 } from '../../utils/cardAnimation';
+import {showToast} from '../../utils/toast';
+import {
+  fetchChildDashboard,
+  fetchParentHome,
+} from '../../store/slices/parentHomeSlice';
 
 const ParentHome = () => {
   const navigation = useNavigation();
-  const {
-    profilePerson,
-    activeStudent,
-    schedule,
-    unreadNotificationCount,
-    childList,
-    selectedChildId,
-    setSelectedChildId,
-    canSwitchChild,
-  } = useRoleData();
+  const dispatch = useDispatch();
+  const {parent, children, selectedChildId, dashboard, dashboardLoading} =
+    useSelector(state => state.parentHome);
+  const [homeLoading, setHomeLoading] = useState(true);
   const [switchVisible, setSwitchVisible] = useState(false);
   const [modalReplay, setModalReplay] = useState(0);
+  const activeStudent =
+    children.find(item => item.value === selectedChildId) || children[0] || null;
+  const canSwitchChild = children.length > 1;
+  const schedule = dashboard?.schedule || [];
+  const todayLesson = schedule[0];
+  const parentName = parent?.name || parent?.full_name || '';
 
   const openChildSwitch = useCallback(() => {
     setSwitchVisible(true);
@@ -52,16 +56,49 @@ const ParentHome = () => {
 
   const handleSelectChild = useCallback(
     nextId => {
-      if (nextId === selectedChildId) {
+      if (String(nextId) === String(selectedChildId)) {
         return;
       }
-      setSelectedChildId(nextId);
+      dispatch(fetchChildDashboard(nextId))
+        .unwrap()
+        .catch(error => {
+          if (error?.stale) {
+            return;
+          }
+          showToast({
+            type: 'error',
+            text1: error?.message || 'Unable to load dashboard.',
+          });
+        });
     },
-    [selectedChildId, setSelectedChildId],
+    [dispatch, selectedChildId],
   );
 
-  const todayLesson =
-    schedule.find(item => item.subject === 'English') || schedule[0];
+  useEffect(() => {
+    let active = true;
+    setHomeLoading(true);
+
+    dispatch(fetchParentHome())
+      .unwrap()
+      .catch(error => {
+        if (!active) {
+          return;
+        }
+        showToast({
+          type: 'error',
+          text1: error?.message || 'Unable to load home.',
+        });
+      })
+      .finally(() => {
+        if (active) {
+          setHomeLoading(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [dispatch]);
 
   useLayoutEffect(() => {
     setDarkStatusBar();
@@ -100,17 +137,28 @@ const ParentHome = () => {
                   {getGreeting()}
                 </Text>
                 <Text style={styles.parentName} numberOfLines={1}>
-                  {profilePerson.label}
+                  {parentName}
                 </Text>
                 <Text style={styles.subtitle} numberOfLines={1}>
                   {Strings.whatsHappening}
                 </Text>
               </View>
-              <NotificationBell count={unreadNotificationCount} onDark />
+              <NotificationBell
+                count={Number(dashboard?.unreadNotifications) || 0}
+                onDark
+              />
             </View>
           </AnimatedCard>
 
           <View style={styles.body}>
+            {homeLoading ? (
+              <ActivityIndicator
+                style={styles.loader}
+                size="large"
+                color={Colors.primary}
+              />
+            ) : null}
+            {!homeLoading && activeStudent ? (
             <AnimatedCard
               index={1}
               entering={ACADEMICS_PROFILE_ENTERING}
@@ -125,13 +173,25 @@ const ParentHome = () => {
                 onSwitchPress={canSwitchChild ? openChildSwitch : undefined}
               />
             </AnimatedCard>
+            ) : null}
+            {!homeLoading && !activeStudent ? (
+              <Text style={styles.emptyChildren}>No linked children</Text>
+            ) : null}
 
+            {!homeLoading && activeStudent ? (
             <View style={styles.statsGrid}>
+              {dashboardLoading ? (
+                <ActivityIndicator
+                  style={styles.dashboardLoader}
+                  size="small"
+                  color={Colors.primary}
+                />
+              ) : null}
               <ParentStatCard
                 icon="calendar-outline"
                 iconColor={Colors.iconGreen}
                 label={Strings.attendance}
-                value={activeStudent?.rateText}
+                value={dashboard?.attendance || '—'}
                 hint={Strings.thisMonthShort}
                 entering={getAcademicsMenuEntering(null, 2)}
                 animationIndex={2}
@@ -141,10 +201,7 @@ const ParentHome = () => {
                 icon="library-outline"
                 iconColor={Colors.iconOrange}
                 label={Strings.digitalLibrary}
-                value={String(
-                  LIBRARY_CLASS_CATEGORIES.find(item => item.isCurrent)
-                    ?.resourceCount || 0,
-                )}
+                value={dashboard?.libraryCount || '—'}
                 hint={Strings.libraryBooksHint}
                 entering={getAcademicsMenuEntering(null, 3)}
                 animationIndex={3}
@@ -154,7 +211,7 @@ const ParentHome = () => {
                 icon="clipboard-outline"
                 iconColor={Colors.iconPurple}
                 label={Strings.exams}
-                value={activeStudent?.examsUpcoming}
+                value={dashboard?.exams || '—'}
                 hint={Strings.upcoming}
                 entering={getAcademicsMenuEntering(null, 4)}
                 animationIndex={4}
@@ -164,14 +221,17 @@ const ParentHome = () => {
                 icon="megaphone"
                 iconColor={Colors.iconPink}
                 label={Strings.announcements}
-                value={activeStudent?.announcementsNew}
+                value={dashboard?.announcements || '—'}
                 hint={Strings.newLabel}
                 entering={getAcademicsMenuEntering(null, 5)}
                 animationIndex={5}
                 onPress={() => navigation.navigate('Announcements')}
               />
             </View>
+            ) : null}
 
+            {!homeLoading ? (
+            <>
             <AnimatedCard
               index={6}
               entering={getAcademicsMenuEntering(null, 6)}
@@ -244,13 +304,15 @@ const ParentHome = () => {
               waveVariant="scheduleTimetable"
               onPress={() => navigation.navigate('ChildTrack')}
             />
+            </>
+            ) : null}
           </View>
         </ScrollEnterScrollView>
 
         {canSwitchChild ? (
           <ChildSwitchModal
             visible={switchVisible}
-            childrenList={childList}
+            childrenList={children}
             selectedId={selectedChildId}
             onSelect={handleSelectChild}
             onClose={() => setSwitchVisible(false)}
@@ -343,5 +405,20 @@ const styles = StyleSheet.create({
     color: Colors.black,
     fontFamily: Fonts.bold,
     fontSize: Fontsize.sm,
+  },
+  loader: {
+    marginTop: hp(10),
+    alignSelf: 'center',
+  },
+  dashboardLoader: {
+    width: '100%',
+    marginBottom: hp(1),
+  },
+  emptyChildren: {
+    color: Colors.black,
+    fontFamily: Fonts.medium,
+    fontSize: Fontsize.xs1,
+    marginTop: hp(1),
+    marginBottom: hp(1),
   },
 });

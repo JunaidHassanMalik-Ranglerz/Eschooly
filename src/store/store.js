@@ -11,6 +11,7 @@ import {
   persistStore,
 } from 'redux-persist';
 import authReducer from './slices/authSlice';
+import parentHomeReducer from './slices/parentHomeSlice';
 
 const authPersistConfig = {
   key: 'auth',
@@ -21,6 +22,7 @@ const authPersistConfig = {
 export const store = configureStore({
   reducer: {
     auth: persistReducer(authPersistConfig, authReducer),
+    parentHome: parentHomeReducer,
   },
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware({

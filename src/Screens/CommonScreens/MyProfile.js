@@ -9,6 +9,7 @@ import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {useDispatch, useSelector} from 'react-redux';
 import {setAuthToken} from '../../api/axiosInstance';
 import {clearCredentials, fetchParentProfile, logoutParent} from '../../store/slices/authSlice';
+import {resetParentHome} from '../../store/slices/parentHomeSlice';
 import {storage} from '../../utils/storage';
 import {showToast} from '../../utils/toast';
 
@@ -170,6 +171,7 @@ const MyProfile = ({isTab = false}) => {
       storage.clearSession();
       setAuthToken(null);
       dispatch(clearCredentials());
+      dispatch(resetParentHome());
       resetToLogin();
       return;
     }
