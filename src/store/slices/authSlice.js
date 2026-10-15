@@ -3,7 +3,10 @@ import {setAuthToken} from '../../api/axiosInstance';
 import {
   changeParentPassword,
   mapParentLogin,
+  mapParentProfile,
   parentLogin,
+  parentLogout,
+  parentProfile,
 } from '../../services/authService';
 import {getApiErrorMessage} from '../../utils/apiError';
 import {storage, storageKeys} from '../../utils/storage';
@@ -15,6 +18,9 @@ const initialState = {
   role: null,
   isAuthenticated: false,
   error: null,
+  profile: null,
+  profileLoading: false,
+  logoutLoading: false,
 };
 
 const rejectMessage = error => ({
@@ -41,15 +47,15 @@ export const loginParent = createAsyncThunk(
       const session = mapParentLogin(body);
       if (session.token) {
         setAuthToken(session.token, session.tokenType);
-      }
-      try {
-        await storage.saveSession({
-          token: session.token,
-          role: session.role,
-          user: session.user,
-        });
-      } catch (storageError) {
-        // A failed save must not turn a successful login into a network error.
+        try {
+          await storage.setItem(storageKeys.token, String(session.token));
+          await storage.setItem(storageKeys.role, 'parent');
+          if (session.user) {
+            await storage.setItem(storageKeys.user, JSON.stringify(session.user));
+          }
+        } catch (storageError) {
+          // Keep the in-memory token even if the device save fails.
+        }
       }
       return session;
     } catch (error) {
@@ -58,20 +64,27 @@ export const loginParent = createAsyncThunk(
   },
 );
 
-export const updateParentPassword = createAsyncThunk(
-  'auth/updateParentPassword',
-  async (fields, {getState, rejectWithValue}) => {
+const readToken = async getState => {
+  let token = getState().auth.token;
+  if (!token) {
     try {
-      let token = getState().auth.token;
-      if (!token) {
-        try {
-          const session = await storage.getSession();
-          token = session?.[storageKeys.token] || null;
-        } catch (storageError) {
-          token = null;
-        }
-      }
+      const session = await storage.getSession();
+      token = session?.[storageKeys.token] || null;
+    } catch (storageError) {
+      token = null;
+    }
+  }
+  if (token) {
+    setAuthToken(token, 'Bearer');
+  }
+  return token;
+};
 
+export const fetchParentProfile = createAsyncThunk(
+  'auth/fetchParentProfile',
+  async (_, {getState, rejectWithValue}) => {
+    try {
+      const token = await readToken(getState);
       if (!token) {
         return rejectWithValue({
           message: 'Please sign in again.',
@@ -79,8 +92,71 @@ export const updateParentPassword = createAsyncThunk(
         });
       }
 
-      setAuthToken(token, 'Bearer');
-      const response = await changeParentPassword(fields, token);
+      const response = await parentProfile();
+      const body = response?.data;
+      if (body && body.success === false) {
+        return rejectWithValue({
+          message:
+            typeof body.message === 'string' && body.message
+              ? body.message
+              : 'Unable to load profile.',
+          status: response?.status ?? null,
+        });
+      }
+
+      return mapParentProfile(body);
+    } catch (error) {
+      return rejectWithValue(rejectMessage(error));
+    }
+  },
+);
+
+export const logoutParent = createAsyncThunk(
+  'auth/logoutParent',
+  async (_, {getState, rejectWithValue}) => {
+    let message = 'Logged out successfully.';
+    try {
+      const token = await readToken(getState);
+      if (token) {
+        const response = await parentLogout();
+        const rawMessage = response?.data?.message;
+        if (typeof rawMessage === 'string' && rawMessage.trim()) {
+          message = rawMessage.trim();
+        }
+      }
+    } catch (error) {
+      message = '';
+      try {
+        await storage.clearSession();
+      } catch (storageError) {
+        // Local session still needs to be cleared by the caller path below.
+      }
+      setAuthToken(null);
+      return rejectWithValue(rejectMessage(error));
+    }
+
+    try {
+      await storage.clearSession();
+    } catch (storageError) {
+      // Navigation still returns the parent to the login screen.
+    }
+    setAuthToken(null);
+    return {message};
+  },
+);
+export const updateParentPassword = createAsyncThunk(
+  'auth/updateParentPassword',
+  async (fields, {getState, rejectWithValue}) => {
+    try {
+      const token = await readToken(getState);
+      if (!token) {
+        return rejectWithValue({
+          message: 'Please sign in again.',
+          status: 401,
+        });
+      }
+
+      const response = await changeParentPassword(fields);
       const rawMessage = response?.data?.message;
       const message =
         typeof rawMessage === 'string' && rawMessage.trim()
@@ -112,6 +188,15 @@ const authSlice = createSlice({
       state.error = null;
     },
     clearCredentials: () => initialState,
+    setStudentSession: (state, action) => {
+      state.loading = false;
+      state.token = null;
+      state.role = 'student';
+      state.user = action.payload ?? null;
+      state.profile = null;
+      state.isAuthenticated = true;
+      state.error = null;
+    },
   },
   extraReducers: builder => {
     builder
@@ -143,9 +228,26 @@ const authSlice = createSlice({
       .addCase(updateParentPassword.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload?.message || 'Unable to update password.';
-      });
+      })
+      .addCase(fetchParentProfile.pending, state => {
+        state.profileLoading = true;
+      })
+      .addCase(fetchParentProfile.fulfilled, (state, action) => {
+        state.profileLoading = false;
+        state.profile = action.payload;
+        state.error = null;
+      })
+      .addCase(fetchParentProfile.rejected, (state, action) => {
+        state.profileLoading = false;
+        state.error = action.payload?.message || 'Unable to load profile.';
+      })
+      .addCase(logoutParent.pending, state => {
+        state.logoutLoading = true;
+      })
+      .addCase(logoutParent.fulfilled, () => initialState)
+      .addCase(logoutParent.rejected, state => initialState);
   },
 });
 
-export const {setCredentials, clearCredentials} = authSlice.actions;
+export const {setCredentials, clearCredentials, setStudentSession} = authSlice.actions;
 export default authSlice.reducer;

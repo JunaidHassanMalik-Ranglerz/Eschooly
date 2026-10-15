@@ -1,5 +1,5 @@
 import React from 'react';
-import {Pressable, StyleSheet, Text, View} from 'react-native';
+import {ActivityIndicator, Pressable, StyleSheet, Text, View} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
 import AnimatedCard from '../AnimatedCard';
@@ -25,6 +25,7 @@ const ProfileActionCard = ({
   animationIndex = 0,
   entering,
   replayToken = 0,
+  loading = false,
 }) => (
   <AnimatedCard
     index={animationIndex}
@@ -32,7 +33,8 @@ const ProfileActionCard = ({
     replayToken={replayToken}
     style={[styles.wrap, IDENTITY_CARD_SHADOW, style]}>
     <Pressable
-      onPress={onPress}
+      onPress={loading ? undefined : onPress}
+      disabled={loading}
       android_ripple={{color: Colors.whiteOverlay18}}
       style={styles.press}>
       <LinearGradient
@@ -44,7 +46,11 @@ const ProfileActionCard = ({
           <Icon name={icon} size={wp(5)} color={iconColor} />
         </View>
         <Text style={styles.title}>{title}</Text>
-        <Icon name={arrowIcon} size={wp(5)} color={Colors.whiteMuted85} />
+        {loading ? (
+          <ActivityIndicator size="small" color={Colors.white} />
+        ) : (
+          <Icon name={arrowIcon} size={wp(5)} color={Colors.whiteMuted85} />
+        )}
       </LinearGradient>
     </Pressable>
   </AnimatedCard>

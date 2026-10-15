@@ -24,7 +24,7 @@ import {Strings} from '../../Constants/Strings';
 import {wp, hp} from '../../Constants/Responsive';
 import {LOGGED_IN_STUDENT, STUDENT_LIST} from '../../Constants/dummydata';
 import {ROLES, useRole} from '../../context/RoleContext';
-import {loginParent} from '../../store/slices/authSlice';
+import {loginParent, setStudentSession} from '../../store/slices/authSlice';
 import {showToast} from '../../utils/toast';
 import {withScreenEnter} from '../../hooks/useScreenEnterGate';
 import {EnterView} from '../../Component/AnimatedCard';
@@ -112,7 +112,16 @@ const RegisterContent = () => {
             item.label.toLowerCase() === query,
         )
       : null;
-    setLoggedInStudentId(match?.value || LOGGED_IN_STUDENT.value);
+    const matchedStudent = match || LOGGED_IN_STUDENT;
+    setLoggedInStudentId(matchedStudent.value);
+    dispatch(
+      setStudentSession({
+        id: matchedStudent.value,
+        studentId: matchedStudent.studentId,
+        name: matchedStudent.label,
+      }),
+    );
+    setRole(ROLES.STUDENT);
     navigation.getParent()?.reset({
       index: 0,
       routes: [{name: 'BottomTab'}],

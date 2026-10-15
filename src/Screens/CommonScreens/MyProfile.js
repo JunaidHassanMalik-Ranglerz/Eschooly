@@ -1,15 +1,16 @@
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useMemo, useRef, useState} from 'react';
 
 import {StatusBar, StyleSheet, Text, View} from 'react-native';
 import ScrollEnterScrollView from '../../Component/ScrollEnterScrollView';
 
 import {SafeAreaView} from 'react-native-safe-area-context';
 
-import {useNavigation} from '@react-navigation/native';
-import {useDispatch} from 'react-redux';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import {useDispatch, useSelector} from 'react-redux';
 import {setAuthToken} from '../../api/axiosInstance';
-import {clearCredentials} from '../../store/slices/authSlice';
+import {clearCredentials, fetchParentProfile, logoutParent} from '../../store/slices/authSlice';
 import {storage} from '../../utils/storage';
+import {showToast} from '../../utils/toast';
 
 import LinearGradient from 'react-native-linear-gradient';
 
@@ -91,10 +92,30 @@ const MyProfile = ({isTab = false}) => {
 
   const navigation = useNavigation();
   const dispatch = useDispatch();
+  const apiProfile = useSelector(state => state.auth.profile);
+  const loggingOut = useSelector(state => state.auth.logoutLoading);
+  const logoutLock = useRef(false);
 
   const {profilePerson, profileDetails, isParent} = useProfileStudent();
   const [moreInfoVisible, setMoreInfoVisible] = useState(false);
   const [modalReplay, setModalReplay] = useState(0);
+
+  const parentPerson = useMemo(() => {
+    if (!isParent || !apiProfile) {
+      return profilePerson;
+    }
+    return {...profilePerson, ...apiProfile};
+  }, [apiProfile, isParent, profilePerson]);
+
+  const parentDetails = useMemo(() => {
+    if (!isParent || !apiProfile) {
+      return profileDetails;
+    }
+    return profileDetails.map(item => {
+      const value = apiProfile[item.key];
+      return value ? {...item, value} : item;
+    });
+  }, [apiProfile, isParent, profileDetails]);
 
   const title = isParent ? Strings.parentAccount : Strings.myProfile;
 
@@ -110,57 +131,64 @@ const MyProfile = ({isTab = false}) => {
     setMoreInfoVisible(false);
   }, []);
 
-
+  useFocusEffect(
+    useCallback(() => {
+      if (!isParent) {
+        return undefined;
+      }
+      dispatch(fetchParentProfile())
+        .unwrap()
+        .catch(error => {
+          if (error?.message) {
+            showToast({type: 'error', text1: error.message});
+          }
+        });
+      return undefined;
+    }, [dispatch, isParent]),
+  );
 
   const openUpdatePassword = () => {
-
     const parentNav = navigation.getParent();
-
     if (parentNav) {
-
       parentNav.navigate('UpdatePassword');
-
       return;
-
     }
-
     navigation.navigate('UpdatePassword');
-
   };
 
-
-
-  const handleLogout = () => {
-    storage.clearSession();
-    setAuthToken(null);
-    dispatch(clearCredentials());
-
+  const resetToLogin = () => {
     const parentNav = navigation.getParent();
+    const nav = parentNav || navigation;
+    nav.reset({
+      index: 0,
+      routes: [{name: 'AuthNavigation'}],
+    });
+  };
 
-    if (parentNav) {
-
-      parentNav.reset({
-
-        index: 0,
-
-        routes: [{name: 'AuthNavigation'}],
-
-      });
-
+  const handleLogout = async () => {
+    if (!isParent) {
+      storage.clearSession();
+      setAuthToken(null);
+      dispatch(clearCredentials());
+      resetToLogin();
       return;
-
+    }
+    if (loggingOut || logoutLock.current) {
+      return;
     }
 
-
-
-    navigation.reset({
-
-      index: 0,
-
-      routes: [{name: 'AuthNavigation'}],
-
-    });
-
+    logoutLock.current = true;
+    try {
+      const result = await dispatch(logoutParent()).unwrap();
+      if (result?.message) {
+        showToast({type: 'success', text1: result.message});
+      }
+    } catch (error) {
+      // Local session is already cleared. Return to login either way.
+    } finally {
+      resetToLogin();
+      logoutLock.current = false;
+    }
   };
 
 
@@ -199,7 +227,7 @@ const MyProfile = ({isTab = false}) => {
 
         {isParent ? (
           <ParentIdentityCard
-            person={profilePerson}
+            person={isParent ? parentPerson : profilePerson}
             animationIndex={1}
             entering={getHomeScreenEnter(1)}
           />
@@ -235,7 +263,7 @@ const MyProfile = ({isTab = false}) => {
               end={GRADIENT_END}
               style={styles.detailsCard}>
             <CardWave variant={SCREEN_WAVES.contactDetails} />
-            {profileDetails.map((item, index) => {
+            {(isParent ? parentDetails : profileDetails).map((item, index) => {
               const iconColor = DETAIL_ICON_COLOR[item.key] || Colors.iconSky;
 
               return (
@@ -243,7 +271,7 @@ const MyProfile = ({isTab = false}) => {
                   key={item.key}
                   style={[
                     styles.detailRow,
-                    index === profileDetails.length - 1 && styles.detailRowLast,
+                    index === (isParent ? parentDetails : profileDetails).length - 1 && styles.detailRowLast,
                   ]}>
                   <View style={styles.iconWrap}>
                     <Icon
@@ -297,6 +325,7 @@ const MyProfile = ({isTab = false}) => {
           iconColor={ACTION_ICON_COLOR.logout}
           title={Strings.logout}
           onPress={handleLogout}
+          loading={isParent && loggingOut}
           animationIndex={isParent ? 6 : 5}
           entering={getHomeScreenEnter(isParent ? 6 : 5)}
         />
@@ -308,7 +337,7 @@ const MyProfile = ({isTab = false}) => {
       {isParent && moreInfoVisible ? (
         <ParentMoreInfoModal
           visible
-          person={profilePerson}
+          person={isParent ? parentPerson : profilePerson}
           replayToken={modalReplay}
           onClose={closeMoreInfo}
         />

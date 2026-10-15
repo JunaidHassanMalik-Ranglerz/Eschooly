@@ -19,7 +19,6 @@ const firstValidationError = errors => {
 
 export const getApiErrorMessage = error => {
   const data = error?.response?.data;
-  console.log('data', data);
   const validationMessage = firstValidationError(data?.errors);
   if (validationMessage) {
     return validationMessage;

@@ -14,34 +14,38 @@ const axiosInstance = axios.create({
 let authToken = null;
 let authScheme = 'Bearer';
 
-const applyAuthHeader = config => {
-  if (!authToken) {
+const headerValue = () => (authToken ? `${authScheme || 'Bearer'} ${authToken}` : '');
+
+const writeAuthorization = config => {
+  const value = headerValue();
+  if (!value || !config.headers) {
     return;
   }
 
-  const value = `${authScheme} ${authToken}`;
-  if (config.headers?.set) {
-    config.headers.set('Authorization', value);
-    return;
+  if (typeof config.headers.set === 'function') {
+    config.headers.set('Authorization', value, true);
   }
-
-  config.headers = config.headers || {};
   config.headers.Authorization = value;
 };
 
-let onUnauthorized = null;
-
 export const setAuthToken = (token, tokenType = 'Bearer') => {
-  authToken = token || null;
+  authToken = token ? String(token) : null;
   authScheme = tokenType || 'Bearer';
 
   if (authToken) {
-    axiosInstance.defaults.headers.Authorization = `${authScheme} ${authToken}`;
+    const value = headerValue();
+    axiosInstance.defaults.headers.Authorization = value;
+    axiosInstance.defaults.headers.common.Authorization = value;
     return;
   }
 
   delete axiosInstance.defaults.headers.Authorization;
+  delete axiosInstance.defaults.headers.common.Authorization;
 };
+
+export const getAuthToken = () => authToken;
+
+let onUnauthorized = null;
 
 export const setUnauthorizedHandler = handler => {
   onUnauthorized = handler;
@@ -52,35 +56,28 @@ axiosInstance.interceptors.request.use(async config => {
     try {
       const savedToken = await storage.getItem(storageKeys.token);
       if (savedToken) {
-        authToken = savedToken;
+        authToken = String(savedToken);
         authScheme = 'Bearer';
       }
     } catch (error) {
-      // The request still goes out; the API will reject it if auth is required.
+      // A missing saved token leaves the request unauthenticated.
     }
   }
 
   const isFormData =
     typeof FormData !== 'undefined' && config.data instanceof FormData;
 
-  if (isFormData) {
-    if (config.headers?.delete) {
+  if (isFormData && config.headers) {
+    if (typeof config.headers.delete === 'function') {
       config.headers.delete('Content-Type');
       config.headers.delete('content-type');
-    } else if (config.headers) {
+    } else {
       delete config.headers['Content-Type'];
       delete config.headers['content-type'];
     }
-  } else if (config.data && !config.headers?.['Content-Type']) {
-    if (config.headers?.set) {
-      config.headers.set('Content-Type', 'application/json');
-    } else {
-      config.headers = config.headers || {};
-      config.headers['Content-Type'] = 'application/json';
-    }
   }
 
-  applyAuthHeader(config);
+  writeAuthorization(config);
   return config;
 });
 

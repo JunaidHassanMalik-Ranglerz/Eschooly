@@ -12,15 +12,27 @@ import {PARENT_DATA} from '../../Constants/dummydata';
 import {wp, hp} from '../../Constants/Responsive';
 import {getHomeScreenEnter} from '../../utils/cardAnimation';
 
-const MORE_INFO_ROWS = [
-  {key: 'father', icon: 'person-outline', color: Colors.iconSky, label: Strings.fatherName, value: PARENT_DATA.fatherName},
-  {key: 'gender', icon: 'male-female-outline', color: Colors.iconPurple, label: Strings.gender, value: PARENT_DATA.gender},
-  {key: 'occupation', icon: 'briefcase-outline', color: Colors.iconOrange, label: 'Occupation', value: 'Business Consultant'},
-  {key: 'emergency', icon: 'call-outline', color: Colors.iconGreen, label: 'Emergency Contact', value: '+92 321 9876543'},
-  {key: 'children', icon: 'people-outline', color: Colors.iconTeal, label: 'Linked Children', value: '3 students'},
-  {key: 'since', icon: 'calendar-outline', color: Colors.iconPink, label: 'Account Since', value: 'Jan 2022'},
-  {key: 'nationality', icon: 'earth-outline', color: Colors.iconCyan, label: 'Nationality', value: 'Pakistani'},
-];
+const DETAIL_ICONS = {
+  cnic: {icon: 'card-outline', color: Colors.iconSky},
+  email: {icon: 'mail-outline', color: Colors.iconPurple},
+  phone: {icon: 'call-outline', color: Colors.iconGreen},
+  mobile: {icon: 'call-outline', color: Colors.iconGreen},
+  address: {icon: 'location-outline', color: Colors.iconOrange},
+  father_name: {icon: 'person-outline', color: Colors.iconSky},
+  gender: {icon: 'male-female-outline', color: Colors.iconPurple},
+  occupation: {icon: 'briefcase-outline', color: Colors.iconOrange},
+  emergency_contact: {icon: 'call-outline', color: Colors.iconGreen},
+  emergency_phone: {icon: 'call-outline', color: Colors.iconGreen},
+  children: {icon: 'people-outline', color: Colors.iconTeal},
+  created_at: {icon: 'calendar-outline', color: Colors.iconPink},
+  last_login_at: {icon: 'time-outline', color: Colors.iconPink},
+  nationality: {icon: 'earth-outline', color: Colors.iconCyan},
+  family_id: {icon: 'id-card-outline', color: Colors.iconSky},
+  status: {icon: 'checkmark-circle-outline', color: Colors.iconGreen},
+  school: {icon: 'school-outline', color: Colors.iconTeal},
+  date_of_issue: {icon: 'calendar-outline', color: Colors.iconPink},
+  valid_until: {icon: 'calendar-outline', color: Colors.iconCyan},
+};
 
 const ParentMoreInfoModal = ({
   visible,
@@ -31,6 +43,10 @@ const ParentMoreInfoModal = ({
   if (!visible) {
     return null;
   }
+
+  const rows = (person?.details || []).filter(
+    item => item?.value && item.key !== 'name' && item.key !== 'full_name',
+  );
 
   return (
     <ParentSheetModal
@@ -57,13 +73,19 @@ const ParentMoreInfoModal = ({
             <PersonAvatar person={person} size={wp(14)} />
             <View style={styles.profileText}>
               <Text style={styles.profileName}>{person?.label}</Text>
-              <Text style={styles.profileRole}>{person?.classBadge}</Text>
+              <Text style={styles.profileRole}>
+                {person?.status || person?.classBadge}
+              </Text>
             </View>
           </View>
         </AnimatedCard>
 
-        {MORE_INFO_ROWS.map((row, index) => {
+        {rows.map((row, index) => {
           const slot = index + 2;
+          const icon = DETAIL_ICONS[row.key] || {
+            icon: 'information-circle-outline',
+            color: Colors.iconSky,
+          };
           return (
             <AnimatedCard
               key={row.key}
@@ -72,7 +94,7 @@ const ParentMoreInfoModal = ({
               replayToken={replayToken}
               style={styles.rowEnter}>
               <View style={styles.row}>
-                <Icon name={row.icon} size={wp(5)} color={row.color} />
+                <Icon name={icon.icon} size={wp(5)} color={icon.color} />
                 <View style={styles.rowText}>
                   <Text style={styles.rowLabel}>{row.label}</Text>
                   <Text style={styles.rowValue}>{row.value}</Text>
