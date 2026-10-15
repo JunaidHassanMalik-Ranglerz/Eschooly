@@ -1,5 +1,5 @@
 import React from 'react';
-import {Image, StyleSheet, Text, TouchableOpacity} from 'react-native';
+import {ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity} from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import AnimatedCard from './AnimatedCard';
 import {Colors} from '../Constants/Colors';
@@ -14,8 +14,10 @@ const Btn = props => {
   const iconRight = props?.iconRight === true;
   const size = props?.iconSize || wp(5);
   const iconColor = isOutline ? Colors.red : Colors.white;
+  const loading = !!props?.loading;
+  const blocked = loading || !!props?.disabled;
 
-  const iconEl = showIcon ? (
+  const iconEl = showIcon && !loading ? (
     props?.image ? (
       <Image
         source={props?.image}
@@ -33,10 +35,22 @@ const Btn = props => {
 
   const button = (
     <TouchableOpacity
-      style={[styles.btn, isOutline && styles.outlineBtn, !props?.animationIndex && props?.style]}
+      style={[
+        styles.btn,
+        isOutline && styles.outlineBtn,
+        !props?.animationIndex && props?.style,
+        blocked && styles.disabled,
+      ]}
       activeOpacity={0.85}
       delayPressIn={0}
-      onPress={props?.onPress}>
+      disabled={blocked}
+      onPress={blocked ? undefined : props?.onPress}>
+      {loading ? (
+        <ActivityIndicator
+          size="small"
+          color={isOutline ? Colors.red : Colors.white}
+        />
+      ) : null}
       {!iconRight && iconEl}
       <Text
         style={[
@@ -91,5 +105,8 @@ const styles = StyleSheet.create({
   },
   outlineText: {
     color: Colors.red,
+  },
+  disabled: {
+    opacity: 0.7,
   },
 });

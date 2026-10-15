@@ -1,4 +1,5 @@
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useRef, useState} from 'react';
+import {useDispatch, useSelector} from 'react-redux';
 import {BackHandler, KeyboardAvoidingView, Platform, StatusBar, StyleSheet, Text, View} from 'react-native';
 import ScrollEnterScrollView from '../../Component/ScrollEnterScrollView';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
@@ -22,7 +23,9 @@ import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
 import {wp, hp} from '../../Constants/Responsive';
 import {LOGGED_IN_STUDENT, STUDENT_LIST} from '../../Constants/dummydata';
-import {useRole} from '../../context/RoleContext';
+import {ROLES, useRole} from '../../context/RoleContext';
+import {loginParent} from '../../store/slices/authSlice';
+import {showToast} from '../../utils/toast';
 import {withScreenEnter} from '../../hooks/useScreenEnterGate';
 import {EnterView} from '../../Component/AnimatedCard';
 import {
@@ -48,24 +51,68 @@ const RegisterEnter = ({entering, style, children}) => (
 const RegisterContent = () => {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
-  const {clearRole, isParent, setLoggedInStudentId} = useRole();
-  const [cnic, setCnic] = useState('');
+  const dispatch = useDispatch();
+  const signingIn = useSelector(state => state.auth.loading);
+  const submitLock = useRef(false);
+  const {clearRole, isParent, setLoggedInStudentId, setRole} = useRole();
+  const [familyId, setFamilyId] = useState('FAM-0049');
   const [studentId, setStudentId] = useState('');
-  const [password, setPassword] = useState('');
+  const [password, setPassword] = useState('12345678@Zz');
   const [showPassword, setShowPassword] = useState(false);
 
-  const goToHome = () => {
-    if (!isParent) {
-      const query = studentId.trim().toLowerCase();
-      const match = query
-        ? STUDENT_LIST.find(
-            item =>
-              item.studentId.toLowerCase() === query ||
-              item.label.toLowerCase() === query,
-          )
-        : null;
-      setLoggedInStudentId(match?.value || LOGGED_IN_STUDENT.value);
+  const signInParent = async () => {
+    if (signingIn || submitLock.current) {
+      return;
     }
+
+    const trimmedFamilyId = familyId.trim();
+    if (!trimmedFamilyId) {
+      showToast({type: 'error', text1: 'Family ID is required.'});
+      return;
+    }
+    if (!password.trim()) {
+      showToast({type: 'error', text1: 'Password is required.'});
+      return;
+    }
+
+    submitLock.current = true;
+    try {
+      const result = await dispatch(
+        loginParent({familyId: trimmedFamilyId, password}),
+      ).unwrap();
+      setRole(ROLES.PARENT);
+      if (result?.message) {
+        showToast({type: 'success', text1: result.message});
+      }
+      navigation.getParent()?.reset({
+        index: 0,
+        routes: [{name: 'BottomTab'}],
+      });
+    } catch (error) {
+      showToast({
+        type: 'error',
+        text1: error?.message || 'Unable to sign in.',
+      });
+    } finally {
+      submitLock.current = false;
+    }
+  };
+
+  const goToHome = () => {
+    if (isParent) {
+      signInParent();
+      return;
+    }
+
+    const query = studentId.trim().toLowerCase();
+    const match = query
+      ? STUDENT_LIST.find(
+          item =>
+            item.studentId.toLowerCase() === query ||
+            item.label.toLowerCase() === query,
+        )
+      : null;
+    setLoggedInStudentId(match?.value || LOGGED_IN_STUDENT.value);
     navigation.getParent()?.reset({
       index: 0,
       routes: [{name: 'BottomTab'}],
@@ -153,25 +200,47 @@ const RegisterContent = () => {
             </RegisterEnter>
 
             {isParent ? (
-              <RegisterEnter entering={REGISTER_INPUT_1_ENTERING} animKey="signin-input-1">
-                <CustomTextInput
-                  label={Strings.cnic}
-                  labelStyle={styles.cnicLabel}
-                  icon={Images.idCard}
-                  iconBg={Colors.whiteOverlay22}
-                  iconTintColor={SYLLABUS_THEME.iconColor}
-                  rightIcon={Images.tick}
-                  placeholder={Strings.cnicPlaceholder}
-                  placeholderStyle={styles.cnicPlaceholder}
-                  inputStyle={styles.cnicInput}
-                  inputBoxStyle={styles.inputBox}
-                  value={cnic}
-                  onChangeText={setCnic}
-                  keyboardType="number-pad"
-                  helper={Strings.cnicHelper}
-                  helperStyle={styles.cnicHelper}
-                />
-              </RegisterEnter>
+              <View>
+                <RegisterEnter entering={REGISTER_INPUT_1_ENTERING} animKey="signin-input-1">
+                  <CustomTextInput
+                    label={Strings.familyId}
+                    labelStyle={styles.cnicLabel}
+                    icon={Images.idCard}
+                    iconBg={Colors.whiteOverlay22}
+                    iconTintColor={SYLLABUS_THEME.iconColor}
+                    rightIcon={Images.tick}
+                    placeholder={Strings.familyIdPlaceholder}
+                    placeholderStyle={styles.cnicPlaceholder}
+                    inputStyle={styles.cnicInput}
+                    inputBoxStyle={styles.inputBox}
+                    value={familyId}
+                    onChangeText={setFamilyId}
+                    autoCapitalize="none"
+                    helper={Strings.familyIdHelper}
+                    helperStyle={styles.cnicHelper}
+                  />
+                </RegisterEnter>
+                <RegisterEnter entering={REGISTER_INPUT_2_ENTERING} animKey="signin-input-2">
+                  <CustomTextInput
+                    vectorIcon="lock-closed-outline"
+                    iconBg={Colors.whiteOverlay22}
+                    iconColor={SYLLABUS_THEME.iconColor}
+                    placeholder={Strings.passwordPlaceholder}
+                    placeholderStyle={styles.cnicPlaceholder}
+                    inputStyle={styles.cnicInput}
+                    inputBoxStyle={styles.inputBox}
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={!showPassword}
+                    autoCapitalize="none"
+                    rightVectorIcon={
+                      showPassword ? 'eye-off-outline' : 'eye-outline'
+                    }
+                    rightIconColor={Colors.whiteMuted85}
+                    onRightPress={() => setShowPassword(prev => !prev)}
+                  />
+                </RegisterEnter>
+              </View>
             ) : (
               <View>
                 <RegisterEnter entering={REGISTER_INPUT_1_ENTERING} animKey="signin-input-1">
@@ -219,6 +288,7 @@ const RegisterContent = () => {
                 iconSize={wp(4.5)}
                 style={styles.signInBtn}
                 textStyle={styles.signInBtnText}
+                loading={isParent && signingIn}
                 onPress={goToHome}
               />
             </RegisterEnter>

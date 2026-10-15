@@ -1,5 +1,6 @@
-import React, {useState} from 'react';
-import {KeyboardAvoidingView, Platform, Pressable, StatusBar, StyleSheet, Text, TextInput, View} from 'react-native';
+import React, {useRef, useState} from 'react';
+import {ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, StatusBar, StyleSheet, Text, TextInput, View} from 'react-native';
+import {useDispatch, useSelector} from 'react-redux';
 import ScrollEnterScrollView from '../../Component/ScrollEnterScrollView';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
@@ -23,6 +24,9 @@ import {CARD_GRADIENTS} from '../../Constants/CardTheme';
 import {wp, hp} from '../../Constants/Responsive';
 import {withScreenEnter} from '../../hooks/useScreenEnterGate';
 import {getHomeScreenEnter} from '../../utils/cardAnimation';
+import {useRole} from '../../context/RoleContext';
+import {updateParentPassword} from '../../store/slices/authSlice';
+import {showToast} from '../../utils/toast';
 
 const REQUIREMENTS = [
   {key: 'length', label: 'At least 8 characters', test: value => value.length >= 8},
@@ -77,6 +81,10 @@ const PasswordField = ({
 
 const UpdatePassword = () => {
   const navigation = useNavigation();
+  const dispatch = useDispatch();
+  const saving = useSelector(state => state.auth.loading);
+  const submitLock = useRef(false);
+  const {isParent} = useRole();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -84,6 +92,70 @@ const UpdatePassword = () => {
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [focusedField, setFocusedField] = useState('');
+
+  const validateParentPassword = () => {
+    if (!currentPassword.trim()) {
+      return 'Current password is required.';
+    }
+    if (newPassword.length < 8) {
+      return 'New password must be at least 8 characters.';
+    }
+    if (!/[A-Z]/.test(newPassword)) {
+      return 'New password must contain at least one uppercase letter.';
+    }
+    if (!/\d/.test(newPassword)) {
+      return 'New password must contain at least one digit.';
+    }
+    if (newPassword !== confirmPassword) {
+      return 'Password confirmation does not match.';
+    }
+    return '';
+  };
+
+  const resetToLogin = () => {
+    const parentNav = navigation.getParent();
+    const nav = parentNav || navigation;
+    nav.reset({
+      index: 0,
+      routes: [{name: 'AuthNavigation'}],
+    });
+  };
+
+  const handleSave = async () => {
+    if (!isParent) {
+      navigation.goBack();
+      return;
+    }
+    if (saving || submitLock.current) {
+      return;
+    }
+
+    const validationMessage = validateParentPassword();
+    if (validationMessage) {
+      showToast({type: 'error', text1: validationMessage});
+      return;
+    }
+
+    submitLock.current = true;
+    try {
+      const result = await dispatch(
+        updateParentPassword({
+          parent_current_password: currentPassword,
+          parent_password: newPassword,
+          parent_password_confirmation: confirmPassword,
+        }),
+      ).unwrap();
+      showToast({type: 'success', text1: result.message});
+      resetToLogin();
+    } catch (error) {
+      showToast({
+        type: 'error',
+        text1: error?.message || 'Unable to update password.',
+      });
+    } finally {
+      submitLock.current = false;
+    }
+  };
 
   return (
       <SafeAreaView style={styles.container} edges={['top']}>
@@ -189,12 +261,16 @@ const UpdatePassword = () => {
               style={styles.saveBtnWrap}>
             <Pressable
               style={[styles.saveBtnWrap, IDENTITY_CARD_SHADOW]}
-              onPress={() => navigation.goBack()}>
+              disabled={isParent && saving}
+              onPress={handleSave}>
               <LinearGradient
                 colors={PROFILE_GRADIENT}
                 start={GRADIENT_START}
                 end={GRADIENT_END}
                 style={styles.saveBtn}>
+                {isParent && saving ? (
+                  <ActivityIndicator size="small" color={Colors.white} />
+                ) : null}
                 <Text style={styles.saveBtnText}>{Strings.updatePassword}</Text>
               </LinearGradient>
             </Pressable>
@@ -298,10 +374,12 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   saveBtn: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: hp(1.9),
     borderRadius: CARD_RADIUS,
+    gap: wp(2),
   },
   saveBtnText: {
     color: Colors.white,

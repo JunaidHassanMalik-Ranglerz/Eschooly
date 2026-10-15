@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 import { StatusBar, StyleSheet, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -7,18 +8,55 @@ import { EnterView } from '../../Component/AnimatedCard';
 import { ScreenEnterProvider } from '../../hooks/useScreenEnterGate';
 import { enterScaleUp } from '../../utils/cardAnimation';
 import { Colors } from '../../Constants/Colors';
+import { setAuthToken } from '../../api/axiosInstance';
+import { ROLES, useRole } from '../../context/RoleContext';
+import { setCredentials } from '../../store/slices/authSlice';
+import { storage, storageKeys } from '../../utils/storage';
 
 const SplashScreen = () => {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
+  const dispatch = useDispatch();
+  const {setRole} = useRole();
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      navigation.replace('Role');
+    let active = true;
+
+    const timer = setTimeout(async () => {
+      try {
+        const session = await storage.getSession();
+        const token = session?.[storageKeys.token];
+        const role = session?.[storageKeys.role];
+        let user = null;
+        if (session?.[storageKeys.user]) {
+          try {
+            user = JSON.parse(session[storageKeys.user]);
+          } catch (error) {
+            user = null;
+          }
+        }
+
+        if (active && token && role === ROLES.PARENT) {
+          dispatch(setCredentials({token, role: ROLES.PARENT, user}));
+          setAuthToken(token);
+          setRole(ROLES.PARENT);
+          navigation.replace('BottomTab');
+          return;
+        }
+      } catch (error) {
+        // A saved session that cannot be read falls through to role selection.
+      }
+
+      if (active) {
+        navigation.replace('Role');
+      }
     }, 5000);
 
-    return () => clearTimeout(timer);
-  }, [navigation]);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [dispatch, navigation, setRole]);
 
   return (
     <ScreenEnterProvider motion="generic">

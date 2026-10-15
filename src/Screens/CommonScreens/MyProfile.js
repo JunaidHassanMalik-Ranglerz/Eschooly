@@ -6,6 +6,10 @@ import ScrollEnterScrollView from '../../Component/ScrollEnterScrollView';
 import {SafeAreaView} from 'react-native-safe-area-context';
 
 import {useNavigation} from '@react-navigation/native';
+import {useDispatch} from 'react-redux';
+import {setAuthToken} from '../../api/axiosInstance';
+import {clearCredentials} from '../../store/slices/authSlice';
+import {storage} from '../../utils/storage';
 
 import LinearGradient from 'react-native-linear-gradient';
 
@@ -86,6 +90,7 @@ const DETAIL_ICONS = {
 const MyProfile = ({isTab = false}) => {
 
   const navigation = useNavigation();
+  const dispatch = useDispatch();
 
   const {profilePerson, profileDetails, isParent} = useProfileStudent();
   const [moreInfoVisible, setMoreInfoVisible] = useState(false);
@@ -126,6 +131,9 @@ const MyProfile = ({isTab = false}) => {
 
 
   const handleLogout = () => {
+    storage.clearSession();
+    setAuthToken(null);
+    dispatch(clearCredentials());
 
     const parentNav = navigation.getParent();
 
