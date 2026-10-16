@@ -98,7 +98,78 @@ export const mapParentHome = body => {
   };
 };
 
+const named = value => {
+  const record = asObject(value);
+  if (record) {
+    return text(record.name);
+  }
+  return text(value);
+};
+
+const clockLabel = value => {
+  const raw = text(value);
+  const match = raw.match(/^(\d{1,2}):(\d{2})/);
+  if (!match) {
+    return raw;
+  }
+  let hours = Number(match[1]);
+  const minutes = match[2];
+  const suffix = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12 || 12;
+  return `${hours}:${minutes} ${suffix}`;
+};
+
+const slotTime = record => {
+  const time = text(record.time);
+  if (time) {
+    return time;
+  }
+  const start = clockLabel(record.starts_at || record.start_time);
+  const end = clockLabel(record.ends_at || record.end_time);
+  if (start && end) {
+    return `${start} - ${end}`;
+  }
+  return start || end;
+};
+
+const slotClassLabel = record => {
+  const className = named(record.class) || text(record.class_name);
+  const section = named(record.section);
+  return [className, section].filter(Boolean).join(' · ');
+};
+
+export const mapChildTimetable = body => {
+  const root = asObject(body) || {};
+  const data = root.data === undefined ? root : root.data;
+  const record = asObject(data);
+  const list = Array.isArray(data)
+    ? data
+    : Array.isArray(record?.entries)
+      ? record.entries
+      : [];
+
+  return list
+    .map((item, index) => {
+      const slot = asObject(item) || {};
+      return {
+        id: text(slot.id) || String(index),
+        period: text(slot.period_number || slot.period),
+        subject: named(slot.subject) || text(slot.subject_name),
+        time: slotTime(slot),
+        classLabel: slotClassLabel(slot),
+        teacher: named(slot.teacher),
+        room: text(slot.room),
+      };
+    })
+    .filter(item => item.subject);
+};
+
 export const getParentHome = () => axiosInstance.get('/parent/home');
 
 export const getChildDashboard = childId =>
   axiosInstance.get(`/parent/children/${childId}/dashboard`);
+
+export const getChildTimetable = (childId, day) =>
+  axiosInstance.get(`/parent/children/${childId}/timetable`, {
+    params: {day},
+  });

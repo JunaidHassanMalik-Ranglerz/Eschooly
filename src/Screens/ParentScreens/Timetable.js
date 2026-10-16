@@ -1,6 +1,6 @@
-import React, {useMemo, useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 
-import {StatusBar, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {ActivityIndicator, StatusBar, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import ScrollEnterScrollView from '../../Component/ScrollEnterScrollView';
 
 import {SafeAreaView} from 'react-native-safe-area-context';
@@ -30,6 +30,11 @@ import {wp, hp} from '../../Constants/Responsive';
 import {useRoleData} from '../../hooks/useRoleData';
 
 import {withScreenEnter} from '../../hooks/useScreenEnterGate';
+import {useDispatch, useSelector} from 'react-redux';
+import {showToast} from '../../utils/toast';
+import {fetchChildTimetable, fetchParentHome} from '../../store/slices/parentHomeSlice';
+
+const DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 
 
 
@@ -81,17 +86,68 @@ const buildWeek = date => {
 
 const Timetable = () => {
 
-  const {timetable, classLabel} = useRoleData();
+  const dispatch = useDispatch();
+  const {timetable: studentTimetable, classLabel: studentClassLabel, isParent} = useRoleData();
+  const {selectedChildId, children} = useSelector(state => state.parentHome);
+  const [parentSlots, setParentSlots] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const [viewMode, setViewMode] = useState(Strings.day);
 
-  const [currentDate, setCurrentDate] = useState(new Date(2024, 7, 12));
+  const [currentDate, setCurrentDate] = useState(() => new Date());
 
   const week = useMemo(() => buildWeek(currentDate), [currentDate]);
+  const dayName = DAY_NAMES[currentDate.getDay()];
+  const parentChild = children.find(item => item.value === String(selectedChildId));
+  const classLabel = isParent ? parentChild?.className || '' : studentClassLabel;
+  const timetable = isParent ? parentSlots : studentTimetable;
 
   const visibleItems = timetable.filter(item => item.subject !== 'Break');
 
   const list = viewMode === Strings.week ? visibleItems.slice(0, 3) : visibleItems;
+
+  useEffect(() => {
+    if (!isParent || selectedChildId) {
+      return undefined;
+    }
+    dispatch(fetchParentHome());
+  }, [dispatch, isParent, selectedChildId]);
+
+  useEffect(() => {
+    if (!isParent || !selectedChildId) {
+      return undefined;
+    }
+
+    let active = true;
+    setLoading(true);
+
+    dispatch(fetchChildTimetable({childId: selectedChildId, day: dayName}))
+      .unwrap()
+      .then(slots => {
+        if (active) {
+          setParentSlots(slots);
+        }
+      })
+      .catch(error => {
+        if (!active) {
+          return;
+        }
+        setParentSlots([]);
+        showToast({
+          type: 'error',
+          text1: error?.message || 'Unable to load timetable.',
+        });
+      })
+      .finally(() => {
+        if (active) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [dayName, dispatch, isParent, selectedChildId]);
 
 
 
@@ -119,7 +175,8 @@ const Timetable = () => {
 
       colors={CARD_GRADIENTS.notification}
 
-      waveVariant={index === 0 ? 'timetable' : null}>
+      waveVariant={index === 0 ? 'timetable' : null}
+      disableAnimation={isParent}>
 
       <View style={styles.slotRow}>
 
@@ -129,7 +186,16 @@ const Timetable = () => {
 
           <Text style={styles.subjectPremium}>{item.subject}</Text>
 
-          <Text style={styles.classPremium}>{classLabel}</Text>
+          <Text style={styles.classPremium}>
+            {[
+              item.period ? `Period ${item.period}` : '',
+              item.time,
+              item.classLabel ? `Class ${item.classLabel}` : classLabel,
+              item.teacher,
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+          </Text>
 
         </View>
 
@@ -259,7 +325,15 @@ const Timetable = () => {
 
 
 
-          {list.map(renderSlot)}
+          {isParent && (loading || !selectedChildId) ? (
+            <ActivityIndicator style={styles.loader} size="large" color={Colors.primary} />
+          ) : (
+            list.map(renderSlot)
+          )}
+
+          {!(isParent && (loading || !selectedChildId)) && list.length === 0 ? (
+            <Text style={styles.emptyText}>{Strings.noTimetable}</Text>
+          ) : null}
 
         </ScrollEnterScrollView>
 
@@ -451,6 +525,18 @@ const styles = StyleSheet.create({
 
     marginTop: hp(0.5),
 
+  },
+
+  loader: {
+    marginTop: hp(4),
+  },
+
+  emptyText: {
+    color: Colors.grayText,
+    fontFamily: Fonts.medium,
+    fontSize: Fontsize.xs1,
+    textAlign: 'center',
+    marginTop: hp(2),
   },
 
   slotInner: {

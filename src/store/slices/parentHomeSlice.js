@@ -2,7 +2,9 @@ import {createAsyncThunk, createSlice} from '@reduxjs/toolkit';
 import {getApiErrorMessage} from '../../utils/apiError';
 import {
   getChildDashboard,
+  getChildTimetable,
   getParentHome,
+  mapChildTimetable,
   mapDashboard,
   mapParentHome,
 } from '../../services/parentService';
@@ -87,6 +89,28 @@ export const fetchChildDashboard = createAsyncThunk(
         ...rejectMessage(error),
         childId: requestedId,
       });
+    }
+  },
+);
+
+export const fetchChildTimetable = createAsyncThunk(
+  'parentHome/fetchChildTimetable',
+  async ({childId, day}, {rejectWithValue}) => {
+    try {
+      const response = await getChildTimetable(childId, day);
+      const body = response?.data;
+      if (isFailedBody(body)) {
+        return rejectWithValue({
+          message:
+            typeof body.message === 'string' && body.message
+              ? body.message
+              : 'Unable to load timetable.',
+          status: response?.status ?? null,
+        });
+      }
+      return mapChildTimetable(body);
+    } catch (error) {
+      return rejectWithValue(rejectMessage(error));
     }
   },
 );
