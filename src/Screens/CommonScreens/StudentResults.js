@@ -1,6 +1,7 @@
-import React, {useCallback, useState} from 'react';
-import {StatusBar, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import React, {useCallback, useEffect, useState} from 'react';
+import {ActivityIndicator, StatusBar, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import ScrollEnterScrollView from '../../Component/ScrollEnterScrollView';
+import {useNavigation} from '@react-navigation/native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -22,6 +23,12 @@ import {wp, hp} from '../../Constants/Responsive';
 import {useRoleData} from '../../hooks/useRoleData';
 import {withScreenEnter} from '../../hooks/useScreenEnterGate';
 import {getHomeScreenEnter} from '../../utils/cardAnimation';
+import {useDispatch, useSelector} from 'react-redux';
+import {showToast} from '../../utils/toast';
+import {fetchChildResultCard, fetchParentHome} from '../../store/slices/parentHomeSlice';
+import {downloadChildResultCard} from '../../services/parentService';
+
+const EMPTY_CARD = {overall: '—', hint: '', subjects: []};
 
 const NAVY = '#071A3D';
 const SCREEN_BG = '#DCEBFD';
@@ -50,24 +57,82 @@ const gradeTone = grade => {
 };
 
 const StudentResults = () => {
+  const navigation = useNavigation();
+  const dispatch = useDispatch();
   const {
     activeStudent,
     getResultsForTerm,
     isParent,
-    childList,
-    selectedChildId,
-    setSelectedChildId,
-    canSwitchChild,
   } = useRoleData();
+  const {selectedChildId: homeChildId, children} = useSelector(state => state.parentHome);
+  const [pickedChildId, setPickedChildId] = useState(null);
+  const [resultCard, setResultCard] = useState(null);
+  const [loading, setLoading] = useState(isParent);
   const [activeTerm, setActiveTerm] = useState(Strings.monthly);
   const [termReplay, setTermReplay] = useState(0);
   const [downloaded, setDownloaded] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [switchVisible, setSwitchVisible] = useState(false);
   const [modalReplay, setModalReplay] = useState(0);
-  const result = getResultsForTerm(activeTerm);
-  const classLine = [activeStudent?.classLabel, activeStudent?.rollNo ? `Roll ${activeStudent.rollNo}` : '']
+  const activeChildId = pickedChildId || homeChildId || children[0]?.value || null;
+  const parentChild =
+    children.find(item => item.value === String(activeChildId)) || null;
+  const bannerChild = isParent
+    ? resultCard?.child?.label
+      ? resultCard.child
+      : parentChild
+    : activeStudent;
+  const parentResult =
+    activeTerm === Strings.year ? resultCard?.year : resultCard?.monthly;
+  const result = isParent ? parentResult || EMPTY_CARD : getResultsForTerm(activeTerm);
+  const shownChild = isParent ? bannerChild : activeStudent;
+  const classLine = [shownChild?.classLabel, shownChild?.rollNo ? `Roll ${shownChild.rollNo}` : '']
     .filter(Boolean)
     .join(' · ');
+  const parentCanSwitch = children.length > 1;
+
+  useEffect(() => {
+    if (!isParent || homeChildId || children.length) {
+      return undefined;
+    }
+    dispatch(fetchParentHome());
+  }, [children.length, dispatch, homeChildId, isParent]);
+
+  useEffect(() => {
+    if (!isParent || !activeChildId) {
+      return undefined;
+    }
+
+    let active = true;
+    setLoading(true);
+
+    dispatch(fetchChildResultCard(activeChildId))
+      .unwrap()
+      .then(card => {
+        if (active) {
+          setResultCard(card);
+        }
+      })
+      .catch(error => {
+        if (!active) {
+          return;
+        }
+        setResultCard(null);
+        showToast({
+          type: 'error',
+          text1: error?.message || 'Unable to load results.',
+        });
+      })
+      .finally(() => {
+        if (active) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [activeChildId, dispatch, isParent]);
 
   const selectTerm = useCallback(term => {
     if (term === activeTerm) {
@@ -82,6 +147,33 @@ const StudentResults = () => {
     setSwitchVisible(true);
     setModalReplay(value => value + 1);
   }, []);
+
+  const handleDownload = useCallback(async () => {
+    if (!isParent) {
+      setDownloaded(true);
+      return;
+    }
+    if (!activeChildId || downloading) {
+      return;
+    }
+
+    setDownloading(true);
+    try {
+      const pdfUrl = await downloadChildResultCard(activeChildId);
+      setDownloaded(true);
+      navigation.navigate('PdfViewer', {
+        pdfUrl,
+        title: Strings.resultCard,
+      });
+    } catch (error) {
+      showToast({
+        type: 'error',
+        text1: error?.message || 'Unable to download result card.',
+      });
+    } finally {
+      setDownloading(false);
+    }
+  }, [activeChildId, downloading, isParent, navigation]);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -99,13 +191,13 @@ const StudentResults = () => {
         {isParent ? (
           <AnimatedCard index={1} entering={getHomeScreenEnter(1)} style={styles.childWrap}>
             <SelectedChildBanner
-              child={activeStudent}
+              child={bannerChild}
               variant="large"
               waveVariant={SCREEN_WAVES.parentHome}
               disableEnterAnimation
               compactMargin
-              canSwitch={canSwitchChild}
-              onSwitchPress={canSwitchChild ? openSwitch : undefined}
+              canSwitch={parentCanSwitch}
+              onSwitchPress={parentCanSwitch ? openSwitch : undefined}
             />
           </AnimatedCard>
         ) : null}
@@ -125,7 +217,7 @@ const StudentResults = () => {
             <View style={styles.cardTop}>
               <View style={styles.cardIdentity}>
                 <Text style={styles.cardName} numberOfLines={1}>
-                  {activeStudent?.label}
+                  {shownChild?.label}
                 </Text>
                 <Text style={styles.cardMeta} numberOfLines={1}>
                   {classLine}
@@ -134,18 +226,26 @@ const StudentResults = () => {
               </View>
               <View style={styles.cardGradeBox}>
                 <Text style={styles.cardGradeLabel}>{Strings.overallGrade}</Text>
-                <Text style={styles.cardGrade}>{result.overall}</Text>
+                <Text style={styles.cardGrade}>
+                  {isParent && loading ? '—' : result.overall}
+                </Text>
               </View>
             </View>
             <TouchableOpacity
               style={styles.downloadBtn}
               activeOpacity={0.85}
-              onPress={() => setDownloaded(true)}>
-              <Icon
-                name={downloaded ? 'checkmark-circle' : 'download-outline'}
-                size={wp(4.6)}
-                color={Colors.white}
-              />
+              disabled={downloading}
+              // onPress={handleDownload}
+              >
+              {downloading ? (
+                <ActivityIndicator size="small" color={Colors.white} />
+              ) : (
+                <Icon
+                  name={downloaded ? 'checkmark-circle' : 'download-outline'}
+                  size={wp(4.6)}
+                  color={Colors.white}
+                />
+              )}
               <Text style={styles.downloadText}>
                 {downloaded ? Strings.resultDownloaded : Strings.downloadResult}
               </Text>
@@ -176,7 +276,10 @@ const StudentResults = () => {
         </AnimatedCard>
 
         <View style={styles.listWrap}>
-          {result.subjects.map((item, index) => {
+          {isParent && loading ? (
+            <ActivityIndicator style={styles.loader} size="large" color={Colors.primary} />
+          ) : null}
+          {!(isParent && loading) && result.subjects.map((item, index) => {
             const slot = index + 2;
             const meta = SUBJECT_ICONS[item.name] || {
               name: 'school-outline',
@@ -214,6 +317,9 @@ const StudentResults = () => {
               </AnimatedCard>
             );
           })}
+          {isParent && !loading && result.subjects.length === 0 ? (
+            <Text style={styles.emptyText}>No results yet.</Text>
+          ) : null}
         </View>
 
         <AnimatedCard
@@ -223,19 +329,19 @@ const StudentResults = () => {
           replayToken={termReplay}
           style={styles.gradeCardWrap}>
           <OverallGradeCard
-            grade={result.overall}
-            hint={result.hint || Strings.greatProgress}
+            grade={isParent && loading ? '—' : result.overall}
+            hint={isParent && loading ? '' : result.hint || Strings.greatProgress}
           />
         </AnimatedCard>
       </ScrollEnterScrollView>
 
-      {isParent && canSwitchChild ? (
+      {isParent && parentCanSwitch ? (
         <ChildSwitchModal
           visible={switchVisible}
-          childrenList={childList}
-          selectedId={selectedChildId}
+          childrenList={children}
+          selectedId={String(activeChildId || '')}
           onSelect={nextId => {
-            setSelectedChildId(nextId);
+            setPickedChildId(String(nextId));
             setDownloaded(false);
           }}
           onClose={() => setSwitchVisible(false)}
@@ -433,5 +539,15 @@ const styles = StyleSheet.create({
   gradeCardWrap: {
     borderRadius: wp(5.5),
     overflow: 'hidden',
+  },
+  loader: {
+    marginVertical: hp(3),
+  },
+  emptyText: {
+    color: Colors.grayText,
+    fontFamily: Fonts.medium,
+    fontSize: Fontsize.xs1,
+    textAlign: 'center',
+    marginTop: hp(1),
   },
 });

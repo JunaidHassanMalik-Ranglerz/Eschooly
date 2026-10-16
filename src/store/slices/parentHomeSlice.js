@@ -2,8 +2,10 @@ import {createAsyncThunk, createSlice} from '@reduxjs/toolkit';
 import {getApiErrorMessage} from '../../utils/apiError';
 import {
   getChildDashboard,
+  getChildResultCard,
   getChildTimetable,
   getParentHome,
+  mapChildResultCard,
   mapChildTimetable,
   mapDashboard,
   mapParentHome,
@@ -109,6 +111,28 @@ export const fetchChildTimetable = createAsyncThunk(
         });
       }
       return mapChildTimetable(body);
+    } catch (error) {
+      return rejectWithValue(rejectMessage(error));
+    }
+  },
+);
+
+export const fetchChildResultCard = createAsyncThunk(
+  'parentHome/fetchChildResultCard',
+  async (childId, {rejectWithValue}) => {
+    try {
+      const response = await getChildResultCard(childId);
+      const body = response?.data;
+      if (isFailedBody(body)) {
+        return rejectWithValue({
+          message:
+            typeof body.message === 'string' && body.message
+              ? body.message
+              : 'Unable to load results.',
+          status: response?.status ?? null,
+        });
+      }
+      return mapChildResultCard(body);
     } catch (error) {
       return rejectWithValue(rejectMessage(error));
     }

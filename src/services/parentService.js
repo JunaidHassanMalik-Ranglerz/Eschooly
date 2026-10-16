@@ -1,4 +1,7 @@
-import axiosInstance from '../api/axiosInstance';
+import {Platform} from 'react-native';
+import ReactNativeBlobUtil from 'react-native-blob-util';
+import axiosInstance, {API_BASE_URL, getAuthToken} from '../api/axiosInstance';
+import {storage, storageKeys} from '../utils/storage';
 
 const asObject = value =>
   value && typeof value === 'object' && !Array.isArray(value) ? value : null;
@@ -164,6 +167,70 @@ export const mapChildTimetable = body => {
     .filter(item => item.subject);
 };
 
+const scoreValue = slot => {
+  const percentage = slot.percentage ?? slot.percent ?? slot.score;
+  if (percentage !== undefined && percentage !== null && percentage !== '') {
+    return text(percentage).replace('%', '');
+  }
+  const obtained = Number(slot.obtained_marks ?? slot.obtained ?? slot.marks);
+  const total = Number(slot.total_marks ?? slot.total ?? slot.max_marks);
+  if (Number.isFinite(obtained) && Number.isFinite(total) && total > 0) {
+    return String(Math.round((obtained / total) * 100));
+  }
+  return text(slot.obtained_marks ?? slot.marks);
+};
+
+const subjectRows = record => {
+  if (Array.isArray(record.subjects)) {
+    return record.subjects;
+  }
+  if (Array.isArray(record.results)) {
+    return record.results;
+  }
+  if (Array.isArray(record.marks)) {
+    return record.marks;
+  }
+  return [];
+};
+
+const mapResultCard = record => {
+  const source = asObject(record) || {};
+  return {
+    overall: text(source.overall_grade || source.overall || source.grade) || '—',
+    hint: text(source.remark || source.hint || source.comment),
+    subjects: subjectRows(source)
+      .map((item, index) => {
+        const slot = asObject(item) || {};
+        return {
+          id: text(slot.id) || String(index),
+          name: named(slot.subject) || text(slot.subject_name || slot.name),
+          grade: text(slot.grade || slot.grade_name),
+          score: scoreValue(slot),
+        };
+      })
+      .filter(item => item.name),
+  };
+};
+
+export const mapChildResultCard = body => {
+  const root = asObject(body) || {};
+  const data = asObject(root.data) || root;
+  const monthly = asObject(data.monthly) || asObject(data.month);
+  const year = asObject(data.yearly) || asObject(data.year) || asObject(data.annual);
+  const child = data.child ? mapHomeChild(data.child) : null;
+
+  if (monthly || year) {
+    return {
+      child,
+      monthly: mapResultCard(monthly || {}),
+      year: mapResultCard(year || {}),
+    };
+  }
+
+  const card = mapResultCard(data);
+  return {child, monthly: card, year: card};
+};
+
 export const getParentHome = () => axiosInstance.get('/parent/home');
 
 export const getChildDashboard = childId =>
@@ -173,3 +240,96 @@ export const getChildTimetable = (childId, day) =>
   axiosInstance.get(`/parent/children/${childId}/timetable`, {
     params: {day},
   });
+
+export const getChildResultCard = childId =>
+  axiosInstance.get(`/parent/children/${childId}/results/card`);
+
+const authHeaders = async () => {
+  let token = getAuthToken();
+  if (!token) {
+    try {
+      token = await storage.getItem(storageKeys.token);
+    } catch (error) {
+      token = null;
+    }
+  }
+  return {
+    Accept: 'application/pdf, application/json',
+    ...(token ? {Authorization: `Bearer ${token}`} : {}),
+  };
+};
+
+const responseMessage = async response => {
+  try {
+    const body = await response.json();
+    if (typeof body?.message === 'string' && body.message.trim()) {
+      return body.message.trim();
+    }
+  } catch (error) {
+    return '';
+  }
+  return '';
+};
+
+const fileUri = path => (path.startsWith('file://') ? path : `file://${path}`);
+
+const saveResultPdf = async (sourcePath, fileName) => {
+  if (Platform.OS !== 'android') {
+    return fileUri(sourcePath);
+  }
+
+  try {
+    await ReactNativeBlobUtil.MediaCollection.copyToMediaStore(
+      {
+        name: fileName,
+        parentFolder: '',
+        mimeType: 'application/pdf',
+      },
+      'Download',
+      sourcePath,
+    );
+  } catch (error) {
+    // The in-app viewer still opens from the saved copy.
+  }
+
+  return fileUri(sourcePath);
+};
+
+export const downloadChildResultCard = async childId => {
+  const headers = await authHeaders();
+  const url = `${API_BASE_URL}/parent/children/${childId}/results/card/print`;
+  const fileName = `result-card-${childId}.pdf`;
+  const path = `${ReactNativeBlobUtil.fs.dirs.CacheDir}/${fileName}`;
+
+  const response = await ReactNativeBlobUtil.config({
+    fileCache: true,
+    path,
+  }).fetch('GET', url, headers);
+  const info = response.info();
+  const type = String(info.headers?.['Content-Type'] || info.headers?.['content-type'] || '');
+
+  if (info.status >= 400) {
+    throw new Error((await responseMessage(response)) || 'Unable to download result card.');
+  }
+
+  if (type.includes('json')) {
+    const body = await response.json();
+    if (body?.success === false) {
+      throw new Error(body.message || 'Unable to download result card.');
+    }
+    const fileUrl = body?.data?.url || body?.data?.pdf_url || body?.url;
+    if (!fileUrl) {
+      throw new Error(body?.message || 'Unable to download result card.');
+    }
+    const saved = await ReactNativeBlobUtil.config({
+      fileCache: true,
+      path,
+    }).fetch('GET', fileUrl, headers);
+    if (saved.info().status >= 400) {
+      throw new Error('Unable to download result card.');
+    }
+    return saveResultPdf(saved.path(), fileName);
+  }
+
+  return saveResultPdf(response.path(), fileName);
+};

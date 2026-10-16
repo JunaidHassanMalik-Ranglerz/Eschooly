@@ -7,7 +7,7 @@ const sanitizeFileName = name =>
     .replace(/_+/g, '_')
     .slice(0, 80);
 
-export const downloadFile = async ({url, fileName, title}) => {
+export const downloadFile = async ({url, fileName, title, headers}) => {
   const safeName = sanitizeFileName(fileName);
   const finalName = safeName.endsWith('.pdf') ? safeName : `${safeName}.pdf`;
 
@@ -22,7 +22,7 @@ export const downloadFile = async ({url, fileName, title}) => {
         mime: 'application/pdf',
         mediaScannable: true,
       },
-    }).fetch('GET', url);
+    }).fetch('GET', url, headers || {});
 
     return finalName;
   }
@@ -31,6 +31,7 @@ export const downloadFile = async ({url, fileName, title}) => {
   const res = await ReactNativeBlobUtil.config({fileCache: true, path}).fetch(
     'GET',
     url,
+    headers || {},
   );
 
   ReactNativeBlobUtil.ios.previewDocument(res.path());

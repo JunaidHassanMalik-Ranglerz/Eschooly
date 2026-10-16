@@ -33,6 +33,7 @@ const PdfViewer = () => {
             source={{uri: pdfUrl, cache: true}}
             style={styles.pdf}
             trustAllCerts={false}
+            fitPolicy={0}
             onLoadComplete={() => setLoading(false)}
             onError={() => setLoading(false)}
           />
