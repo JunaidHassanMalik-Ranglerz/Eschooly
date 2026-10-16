@@ -1,5 +1,5 @@
-import React, {useCallback, useRef, useState} from 'react';
-import {StatusBar, StyleSheet, Text} from 'react-native';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
+import {ActivityIndicator, StatusBar, StyleSheet, Text} from 'react-native';
 import ScrollEnterScrollView from '../../Component/ScrollEnterScrollView';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import AnnouncementCard from '../../Component/AnnouncementCard';
@@ -17,13 +17,17 @@ import {wp, hp} from '../../Constants/Responsive';
 import {useRoleData} from '../../hooks/useRoleData';
 import {withScreenEnter} from '../../hooks/useScreenEnterGate';
 import {getHomeScreenEnter} from '../../utils/cardAnimation';
+import {useDispatch, useSelector} from 'react-redux';
+import {showToast} from '../../utils/toast';
+import {fetchChildAnnouncements, fetchParentHome} from '../../store/slices/parentHomeSlice';
 
 const AnnouncementsScreen = () => {
+  const dispatch = useDispatch();
   const scrollRef = useRef(null);
   const {
     isParent,
     activeStudent,
-    announcements,
+    announcements: studentAnnouncements,
     childList,
     attendanceStudents,
     selectedChildId,
@@ -31,11 +35,66 @@ const AnnouncementsScreen = () => {
     canSwitchChild,
     studentLabel,
   } = useRoleData();
+  const {selectedChildId: homeChildId, children} = useSelector(state => state.parentHome);
+  const [pickedChildId, setPickedChildId] = useState(null);
+  const [parentAnnouncements, setParentAnnouncements] = useState([]);
+  const [parentChildCard, setParentChildCard] = useState(null);
+  const [loading, setLoading] = useState(isParent);
   const [switchVisible, setSwitchVisible] = useState(false);
   const [modalReplay, setModalReplay] = useState(0);
   const [contentReplay, setContentReplay] = useState(0);
+  const activeChildId = pickedChildId || homeChildId || children[0]?.value || null;
+  const parentChild =
+    parentChildCard?.label
+      ? parentChildCard
+      : children.find(item => item.value === String(activeChildId)) || null;
+  const announcements = isParent ? parentAnnouncements : studentAnnouncements;
+  const bannerChild = isParent ? parentChild : activeStudent;
+  const parentCanSwitch = children.length > 1;
 
-  const childKey = String(selectedChildId ?? activeStudent?.value ?? '');
+  const childKey = String(isParent ? activeChildId : selectedChildId ?? activeStudent?.value ?? '');
+
+  useEffect(() => {
+    if (!isParent || homeChildId || children.length) {
+      return undefined;
+    }
+    dispatch(fetchParentHome());
+  }, [children.length, dispatch, homeChildId, isParent]);
+
+  useEffect(() => {
+    if (!isParent || !activeChildId) {
+      return undefined;
+    }
+    let active = true;
+    setLoading(true);
+    dispatch(fetchChildAnnouncements(activeChildId))
+      .unwrap()
+      .then(payload => {
+        if (!active) {
+          return;
+        }
+        setParentAnnouncements(payload.items || []);
+        setParentChildCard(payload.child);
+      })
+      .catch(error => {
+        if (!active) {
+          return;
+        }
+        setParentAnnouncements([]);
+        showToast({
+          type: 'error',
+          text1: error?.message || 'Unable to load announcements.',
+        });
+      })
+      .finally(() => {
+        if (active) {
+          setLoading(false);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [activeChildId, dispatch, isParent]);
 
   const handleSelectChild = useCallback(
     nextId => {
@@ -43,11 +102,15 @@ const AnnouncementsScreen = () => {
       if (nextKey === childKey) {
         return;
       }
-      setSelectedChildId(nextId);
+      if (isParent) {
+        setPickedChildId(nextKey);
+      } else {
+        setSelectedChildId(nextId);
+      }
       scrollRef.current?.scrollTo?.({y: 0, animated: false});
       setContentReplay(value => value + 1);
     },
-    [childKey, setSelectedChildId],
+    [childKey, isParent, setSelectedChildId],
   );
 
   const students = isParent ? childList : attendanceStudents;
@@ -74,18 +137,18 @@ const AnnouncementsScreen = () => {
         style={styles.profileCard}>
         {isParent ? (
           <SelectedChildBanner
-            child={activeStudent}
+            child={bannerChild}
             variant="large"
             disableEnterAnimation
             onSwitchPress={
-              canSwitchChild
+              parentCanSwitch
                 ? () => {
                     setSwitchVisible(true);
                     setModalReplay(value => value + 1);
                   }
                 : undefined
             }
-            canSwitch={canSwitchChild}
+            canSwitch={parentCanSwitch}
           />
         ) : (
           <AttendanceStudentDropdown
@@ -110,7 +173,9 @@ const AnnouncementsScreen = () => {
         overScrollMode="never"
         removeClippedSubviews={false}
         keyboardShouldPersistTaps="handled">
-        {announcements.length === 0 ? (
+        {isParent && loading ? (
+          <ActivityIndicator style={styles.loader} size="large" color={Colors.primary} />
+        ) : announcements.length === 0 ? (
           <Text style={styles.empty}>{Strings.noAnnouncements}</Text>
         ) : (
           announcements.map((item, index) => {
@@ -128,11 +193,11 @@ const AnnouncementsScreen = () => {
         )}
       </ScrollEnterScrollView>
 
-      {canSwitchChild ? (
+      {(isParent ? parentCanSwitch : canSwitchChild) ? (
         <ChildSwitchModal
           visible={switchVisible}
-          childrenList={childList}
-          selectedId={selectedChildId}
+          childrenList={isParent ? children : childList}
+          selectedId={isParent ? String(activeChildId || '') : selectedChildId}
           onSelect={handleSelectChild}
           onClose={() => setSwitchVisible(false)}
           replayToken={modalReplay}
@@ -164,6 +229,9 @@ const styles = StyleSheet.create({
     paddingBottom: hp(3),
     flexGrow: 1,
     backgroundColor: Colors.parentBg,
+  },
+  loader: {
+    marginTop: hp(6),
   },
   empty: {
     textAlign: 'center',

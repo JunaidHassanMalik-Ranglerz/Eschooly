@@ -3,7 +3,6 @@ import {Image, StatusBar, StyleSheet, Text, View} from 'react-native';
 import ScrollEnterScrollView from '../../Component/ScrollEnterScrollView';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
-import Icon from 'react-native-vector-icons/Ionicons';
 import DepthIcon from '../../Component/DepthIcon';
 import AnimatedCard from '../../Component/AnimatedCard';
 import CardWave, {SCREEN_WAVES} from '../../Component/CardWave';

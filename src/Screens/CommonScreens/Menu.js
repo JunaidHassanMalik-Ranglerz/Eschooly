@@ -1,8 +1,9 @@
-import React, {useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {StyleSheet, View} from 'react-native';
 import ScrollEnterScrollView from '../../Component/ScrollEnterScrollView';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
+import {useDispatch, useSelector} from 'react-redux';
 import MainHeaderComponent from '../../Component/MainHeaderComponent';
 import ParentChildCard from '../../Component/Parent/ParentChildCard';
 import ChildSwitchModal from '../../Component/Parent/ChildSwitchModal';
@@ -21,25 +22,57 @@ import {
   ScreenEnterProvider,
 } from '../../hooks/useScreenEnterGate';
 import {ACADEMICS_PROFILE_ENTERING} from '../../utils/cardAnimation';
+import {showToast} from '../../utils/toast';
+import {fetchChildDashboard, fetchParentHome} from '../../store/slices/parentHomeSlice';
 
 const Menu = () => {
   const navigation = useNavigation();
+  const dispatch = useDispatch();
   const {
     isParent,
     activeStudent,
-    childList,
     attendanceStudents,
     selectedChildId,
     setSelectedChildId,
-    canSwitchChild,
     studentLabel,
   } = useRoleData();
+  const {children, selectedChildId: homeChildId} = useSelector(state => state.parentHome);
   const [switchVisible, setSwitchVisible] = useState(false);
-  const studentOptions = isParent ? childList : attendanceStudents;
+  const parentChild =
+    children.find(item => item.value === String(homeChildId)) || children[0] || null;
+  const parentCanSwitch = children.length > 1;
+  const studentOptions = attendanceStudents;
   const attendanceMeta =
     ATTENDANCE_STUDENTS.find(item => item.value === selectedChildId) ||
     ATTENDANCE_STUDENTS[0];
   const dropdownStudent = {...activeStudent, ...attendanceMeta};
+
+  useEffect(() => {
+    if (!isParent || homeChildId || children.length) {
+      return undefined;
+    }
+    dispatch(fetchParentHome());
+  }, [children.length, dispatch, homeChildId, isParent]);
+
+  const handleSelectChild = useCallback(
+    nextId => {
+      if (String(nextId) === String(homeChildId)) {
+        return;
+      }
+      dispatch(fetchChildDashboard(nextId))
+        .unwrap()
+        .catch(error => {
+          if (error?.stale) {
+            return;
+          }
+          showToast({
+            type: 'error',
+            text1: error?.message || 'Unable to load dashboard.',
+          });
+        });
+    },
+    [dispatch, homeChildId],
+  );
 
   const handlePress = item => {
     const target = isParent && item.parentScreen ? item.parentScreen : item.screen;
@@ -71,14 +104,14 @@ const Menu = () => {
               entering={ACADEMICS_PROFILE_ENTERING}
               style={styles.childCard}>
               <ParentChildCard
-                child={activeStudent}
-                chevron={canSwitchChild ? 'chevron-down' : undefined}
+                child={parentChild}
+                chevron={parentCanSwitch ? 'chevron-down' : undefined}
                 accented
                 solid
                 prominent
                 showWave
                 waveVariant={SCREEN_WAVES.academics}
-                onPress={canSwitchChild ? () => setSwitchVisible(true) : undefined}
+                onPress={parentCanSwitch ? () => setSwitchVisible(true) : undefined}
               />
             </AnimatedCard>
           </View>
@@ -129,12 +162,12 @@ const Menu = () => {
           })}
         </ScrollEnterScrollView>
 
-        {canSwitchChild ? (
+        {isParent && parentCanSwitch ? (
           <ChildSwitchModal
             visible={switchVisible}
-            childrenList={childList}
-            selectedId={selectedChildId}
-            onSelect={setSelectedChildId}
+            childrenList={children}
+            selectedId={String(homeChildId || '')}
+            onSelect={handleSelectChild}
             onClose={() => setSwitchVisible(false)}
           />
         ) : null}

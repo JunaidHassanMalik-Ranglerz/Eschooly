@@ -1,5 +1,6 @@
-import React, {useCallback, useState} from 'react';
-import {Image, StatusBar, StyleSheet, Text, useWindowDimensions, View} from 'react-native';
+import React, {useCallback, useEffect, useState} from 'react';
+import {ActivityIndicator, Image, StatusBar, StyleSheet, Text, useWindowDimensions, View} from 'react-native';
+import {useDispatch, useSelector} from 'react-redux';
 import ScrollEnterScrollView from '../../Component/ScrollEnterScrollView';
 import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
@@ -25,6 +26,8 @@ import {wp, hp} from '../../Constants/Responsive';
 import {useRoleData} from '../../hooks/useRoleData';
 import {withScreenEnter} from '../../hooks/useScreenEnterGate';
 import {getHomeScreenEnter} from '../../utils/cardAnimation';
+import {showToast} from '../../utils/toast';
+import {fetchChildDashboard, fetchChildTransport, fetchParentHome} from '../../store/slices/parentHomeSlice';
 
 const TripCard = ({title, steps, animationIndex}) => (
   <AnimatedCard
@@ -55,7 +58,7 @@ const TripCard = ({title, steps, animationIndex}) => (
             <View style={styles.stepText}>
               <Text style={styles.stepTitle}>{step.title}</Text>
               <Text style={styles.stepTime} numberOfLines={1}>
-                {step.done && step.time ? step.time : Strings.notYet}
+                {step.time || Strings.notYet}
               </Text>
             </View>
           </View>
@@ -65,21 +68,69 @@ const TripCard = ({title, steps, animationIndex}) => (
   </AnimatedCard>
 );
 
+const EMPTY_TRIP = {status: '', morning: [], evening: []};
+
 const ChildTrack = () => {
-  const {
-    activeStudent,
-    childList,
-    selectedChildId,
-    setSelectedChildId,
-    canSwitchChild,
-    childTrip,
-  } = useRoleData();
+  const {activeStudent, childList, selectedChildId: roleChildId, setSelectedChildId, canSwitchChild: roleCanSwitch, childTrip, isParent} = useRoleData();
+  const dispatch = useDispatch();
+  const {selectedChildId: homeChildId, children} = useSelector(state => state.parentHome);
+  const [parentTransport, setParentTransport] = useState(null);
+  const [loading, setLoading] = useState(isParent);
   const [switchVisible, setSwitchVisible] = useState(false);
   const [modalReplay, setModalReplay] = useState(0);
   const {width, height} = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const mapHeight = Math.min(width * 0.62, height * 0.34);
-  const trip = childTrip || {status: '', morning: [], evening: []};
+  const activeChildId = homeChildId || children[0]?.value || null;
+  const parentChild =
+    children.find(item => item.value === String(activeChildId)) || children[0] || null;
+  const shownChild = isParent ? parentChild : activeStudent;
+  const canSwitchChild = isParent ? children.length > 1 : roleCanSwitch;
+  const trip = isParent
+    ? parentTransport?.allocated
+      ? parentTransport.trip
+      : EMPTY_TRIP
+    : childTrip || EMPTY_TRIP;
+
+  useEffect(() => {
+    if (!isParent || activeChildId) {
+      return undefined;
+    }
+    dispatch(fetchParentHome());
+  }, [activeChildId, dispatch, isParent]);
+
+  useEffect(() => {
+    if (!isParent || !activeChildId) {
+      return undefined;
+    }
+    let active = true;
+    setLoading(true);
+    dispatch(fetchChildTransport(activeChildId))
+      .unwrap()
+      .then(payload => {
+        if (active) {
+          setParentTransport(payload);
+        }
+      })
+      .catch(error => {
+        if (!active) {
+          return;
+        }
+        setParentTransport(null);
+        showToast({
+          type: 'error',
+          text1: error?.message || 'Unable to load transport.',
+        });
+      })
+      .finally(() => {
+        if (active) {
+          setLoading(false);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [activeChildId, dispatch, isParent]);
 
   const openSwitch = useCallback(() => {
     setSwitchVisible(true);
@@ -104,7 +155,7 @@ const ChildTrack = () => {
         keyboardShouldPersistTaps="handled">
         <AnimatedCard index={1} entering={getHomeScreenEnter(1)}>
           <SelectedChildBanner
-            child={activeStudent}
+            child={shownChild}
             variant="large"
             waveVariant={SCREEN_WAVES.parentHome}
             disableEnterAnimation
@@ -129,33 +180,49 @@ const ChildTrack = () => {
             <Icon name="bus" size={wp(5.2)} color={Colors.iconAmber} />
             <View style={styles.statusText}>
               <Text style={styles.statusLabel} numberOfLines={1}>
-                {activeStudent?.label}
+                {shownChild?.label}
               </Text>
               <Text style={styles.statusValue} numberOfLines={2}>
-                {trip.status}
+                {isParent && loading ? '—' : trip.status}
               </Text>
             </View>
           </LinearGradient>
         </AnimatedCard>
 
-        <TripCard
-          title={Strings.homeToSchool}
-          steps={trip.morning}
-          animationIndex={3}
-        />
-        <TripCard
-          title={Strings.schoolToHome}
-          steps={trip.evening}
-          animationIndex={4}
-        />
+        {isParent && loading ? (
+          <ActivityIndicator style={styles.loader} size="large" color={Colors.primary} />
+        ) : isParent && parentTransport && !parentTransport.allocated ? (
+          <Text style={styles.empty}>{Strings.noTransport}</Text>
+        ) : (
+          <>
+            <TripCard
+              title={Strings.homeToSchool}
+              steps={trip.morning}
+              animationIndex={3}
+            />
+            <TripCard
+              title={Strings.schoolToHome}
+              steps={trip.evening}
+              animationIndex={4}
+            />
+          </>
+        )}
       </ScrollEnterScrollView>
 
       {canSwitchChild ? (
         <ChildSwitchModal
           visible={switchVisible}
-          childrenList={childList}
-          selectedId={selectedChildId}
-          onSelect={setSelectedChildId}
+          childrenList={isParent ? children : childList}
+          selectedId={isParent ? String(activeChildId || '') : roleChildId}
+          onSelect={nextId => {
+            if (isParent) {
+              if (String(nextId) !== String(activeChildId)) {
+                dispatch(fetchChildDashboard(nextId));
+              }
+              return;
+            }
+            setSelectedChildId(nextId);
+          }}
           onClose={() => setSwitchVisible(false)}
           replayToken={modalReplay}
         />
@@ -287,5 +354,15 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.regular,
     fontSize: Fontsize.xs0,
     marginTop: hp(0.2),
+  },
+  loader: {
+    marginVertical: hp(3),
+  },
+  empty: {
+    color: Colors.grayText,
+    fontFamily: Fonts.regular,
+    fontSize: Fontsize.s,
+    textAlign: 'center',
+    marginVertical: hp(2),
   },
 });

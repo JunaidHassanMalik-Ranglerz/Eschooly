@@ -1,12 +1,24 @@
 import {createAsyncThunk, createSlice} from '@reduxjs/toolkit';
 import {getApiErrorMessage} from '../../utils/apiError';
 import {
+  getChildAttendance,
   getChildDashboard,
+  getChildAnnouncements,
+  getChildExams,
+  getChildLibrary,
   getChildResultCard,
+  getChildSyllabus,
   getChildTimetable,
+  getChildTransport,
   getParentHome,
+  mapChildAnnouncements,
+  mapChildAttendance,
+  mapChildExams,
+  mapChildLibrary,
   mapChildResultCard,
+  mapChildSyllabus,
   mapChildTimetable,
+  mapChildTransport,
   mapDashboard,
   mapParentHome,
 } from '../../services/parentService';
@@ -35,7 +47,6 @@ export const fetchParentHome = createAsyncThunk(
     try {
       const response = await getParentHome();
       const body = response?.data;
-      console.log('body', body) 
       if (isFailedBody(body)) {
         return rejectWithValue({
           message:
@@ -137,6 +148,77 @@ export const fetchChildResultCard = createAsyncThunk(
       return rejectWithValue(rejectMessage(error));
     }
   },
+);
+
+const fetchChildResource = (type, request, map, fallback) =>
+  createAsyncThunk(type, async (childId, {rejectWithValue}) => {
+    try {
+      const response = await request(childId);
+      const body = response?.data;
+      if (isFailedBody(body)) {
+        return rejectWithValue({
+          message: typeof body.message === 'string' && body.message ? body.message : fallback,
+          status: response?.status ?? null,
+        });
+      }
+      return map(body);
+    } catch (error) {
+      return rejectWithValue(rejectMessage(error));
+    }
+  });
+
+export const fetchChildAnnouncements = fetchChildResource(
+  'parentHome/fetchChildAnnouncements',
+  getChildAnnouncements,
+  mapChildAnnouncements,
+  'Unable to load announcements.',
+);
+
+export const fetchChildSyllabus = fetchChildResource(
+  'parentHome/fetchChildSyllabus',
+  getChildSyllabus,
+  mapChildSyllabus,
+  'Unable to load syllabus.',
+);
+
+export const fetchChildLibrary = fetchChildResource(
+  'parentHome/fetchChildLibrary',
+  getChildLibrary,
+  mapChildLibrary,
+  'Unable to load library.',
+);
+
+export const fetchChildAttendance = createAsyncThunk(
+  'parentHome/fetchChildAttendance',
+  async ({childId, view = 'monthly', month}, {rejectWithValue}) => {
+    try {
+      const response = await getChildAttendance(childId, {view, month});
+      const body = response?.data;
+      if (isFailedBody(body)) {
+        return rejectWithValue({
+          message: typeof body.message === 'string' && body.message ? body.message : 'Unable to load attendance.',
+          status: response?.status ?? null,
+        });
+      }
+      return mapChildAttendance(body);
+    } catch (error) {
+      return rejectWithValue(rejectMessage(error));
+    }
+  },
+);
+
+export const fetchChildExams = fetchChildResource(
+  'parentHome/fetchChildExams',
+  getChildExams,
+  mapChildExams,
+  'Unable to load exams.',
+);
+
+export const fetchChildTransport = fetchChildResource(
+  'parentHome/fetchChildTransport',
+  getChildTransport,
+  mapChildTransport,
+  'Unable to load transport.',
 );
 
 const parentHomeSlice = createSlice({

@@ -1,5 +1,5 @@
-import React from 'react';
-import {StatusBar, StyleSheet, Text, View} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {ActivityIndicator, StatusBar, StyleSheet, Text, View} from 'react-native';
 import ScrollEnterScrollView from '../../Component/ScrollEnterScrollView';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import AnimatedCard from '../../Component/AnimatedCard';
@@ -15,6 +15,9 @@ import {wp, hp} from '../../Constants/Responsive';
 import {useRoleData} from '../../hooks/useRoleData';
 import {withScreenEnter} from '../../hooks/useScreenEnterGate';
 import {getHomeScreenEnter} from '../../utils/cardAnimation';
+import {useDispatch, useSelector} from 'react-redux';
+import {showToast} from '../../utils/toast';
+import {fetchChildExams, fetchParentHome} from '../../store/slices/parentHomeSlice';
 
 const parseExamDate = date => {
   const parts = String(date || '').replace(',', '').split(' ').filter(Boolean);
@@ -63,7 +66,7 @@ const ExamScheduleCard = ({item, animationIndex = 0, entering}) => {
             <Icon name="time-outline" size={wp(3.6)} color={Colors.iconOrange} />
             <Text style={styles.detailLabel}>{Strings.examTimeLabel}</Text>
             <Text style={styles.detailValue}>
-              {item.time} · {item.duration}
+              {[item.time, item.duration].filter(Boolean).join(' · ')}
             </Text>
           </View>
           <View style={styles.detailRow}>
@@ -84,7 +87,71 @@ const ExamScheduleCard = ({item, animationIndex = 0, entering}) => {
 };
 
 const ExamSchedule = () => {
-  const {activeStudent, examSchedule, classLabel} = useRoleData();
+  const {activeStudent, examSchedule: dummySchedule, classLabel: studentClassLabel, isParent} = useRoleData();
+  const dispatch = useDispatch();
+  const {selectedChildId, children} = useSelector(state => state.parentHome);
+  const [parentExams, setParentExams] = useState(null);
+  const [loading, setLoading] = useState(isParent);
+  const parentChild =
+    children.find(item => item.value === String(selectedChildId)) || parentExams?.child || null;
+  const shownChild = isParent ? parentChild : activeStudent;
+  const classLabel = isParent ? shownChild?.className || '' : studentClassLabel;
+  const examSchedule = isParent ? parentExams?.schedule || [] : dummySchedule;
+
+  useEffect(() => {
+    if (!isParent || selectedChildId) {
+      return undefined;
+    }
+    let active = true;
+    dispatch(fetchParentHome())
+      .unwrap()
+      .then(payload => {
+        if (active && !payload?.selectedChildId && !(payload?.children || []).length) {
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setLoading(false);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [dispatch, isParent, selectedChildId]);
+
+  useEffect(() => {
+    if (!isParent || !selectedChildId) {
+      return undefined;
+    }
+    let active = true;
+    setLoading(true);
+    dispatch(fetchChildExams(selectedChildId))
+      .unwrap()
+      .then(payload => {
+        if (active) {
+          setParentExams(payload);
+        }
+      })
+      .catch(error => {
+        if (!active) {
+          return;
+        }
+        setParentExams(null);
+        showToast({
+          type: 'error',
+          text1: error?.message || 'Unable to load exams.',
+        });
+      })
+      .finally(() => {
+        if (active) {
+          setLoading(false);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [dispatch, isParent, selectedChildId]);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -109,10 +176,10 @@ const ExamSchedule = () => {
           entering={getHomeScreenEnter(1)}>
           <Text style={styles.headerTitle}>{Strings.upcomingExamsTitle}</Text>
           <Text style={styles.headerChild} numberOfLines={1}>
-            {activeStudent?.label} · {classLabel}
+            {shownChild?.label} · {classLabel}
           </Text>
           <Text style={styles.headerCount}>
-            {examSchedule.length} {Strings.upcoming}
+            {isParent && loading ? '—' : `${examSchedule.length} ${Strings.upcoming}`}
           </Text>
         </ProfileGradientCard>
 
@@ -125,7 +192,9 @@ const ExamSchedule = () => {
           </ProfileSectionTitle>
         </AnimatedCard>
 
-        {examSchedule.length === 0 ? (
+        {isParent && loading ? (
+          <ActivityIndicator style={styles.loader} size="large" color={Colors.primary} />
+        ) : examSchedule.length === 0 ? (
           <Text style={styles.empty}>{Strings.noExams}</Text>
         ) : (
           examSchedule.map((item, index) => {
@@ -283,6 +352,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: Colors.grayText,
     fontFamily: Fonts.regular,
+    marginTop: hp(6),
+  },
+  loader: {
     marginTop: hp(6),
   },
 });

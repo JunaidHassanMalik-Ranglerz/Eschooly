@@ -32,18 +32,20 @@ const TopicItem = props => {
           numberOfLines={1}>
           {props?.topic?.title}
         </Text>
-        <View style={styles.durationRow}>
-          <Icon
-            name="time-outline"
-            size={wp(3.2)}
-            color={premium ? Colors.whiteMuted75 : Colors.grayText}
-          />
-          <Text
-            style={[styles.duration, premium && styles.durationPremium]}
-            numberOfLines={1}>
-            {props?.topic?.duration}
-          </Text>
-        </View>
+        {props?.topic?.duration ? (
+          <View style={styles.durationRow}>
+            <Icon
+              name="time-outline"
+              size={wp(3.2)}
+              color={premium ? Colors.whiteMuted75 : Colors.grayText}
+            />
+            <Text
+              style={[styles.duration, premium && styles.durationPremium]}
+              numberOfLines={1}>
+              {props?.topic?.duration}
+            </Text>
+          </View>
+        ) : null}
       </View>
 
       {status === 'completed' && (

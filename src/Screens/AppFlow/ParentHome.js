@@ -215,7 +215,7 @@ const ParentHome = () => {
                 hint={Strings.upcoming}
                 entering={getAcademicsMenuEntering(null, 4)}
                 animationIndex={4}
-                onPress={() => navigation.navigate('ExamSchedule')}
+                // onPress={() => navigation.navigate('ExamSchedule')}
               />
               <ParentStatCard
                 icon="megaphone"

@@ -90,10 +90,13 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
+    width: '100%',
+    minWidth: 0,
   },
   dateBox: {
     width: wp(12),
     height: wp(12),
+    maxWidth: wp(16),
     borderRadius: wp(2.5),
     backgroundColor: Colors.cardBg,
     alignItems: 'center',
@@ -139,6 +142,8 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.bold,
     fontSize: Fontsize.xs0,
     marginLeft: wp(2),
-    flexShrink: 0,
+    flexShrink: 1,
+    maxWidth: '34%',
+    textAlign: 'right',
   },
 });

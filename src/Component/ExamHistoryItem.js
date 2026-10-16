@@ -12,9 +12,11 @@ import {wp, hp} from '../Constants/Responsive';
 
 const ExamHistoryItem = ({item, animationIndex = 0}) => {
   const isPassed = item.status === 'PASSED';
+  const isFailed = item.status === 'FAILED';
   const badgeBg = isPassed ? Colors.whiteOverlay22 : 'rgba(239, 68, 68, 0.22)';
   const badgeColor = isPassed ? '#86EFAC' : '#FCA5A5';
   const statusText = isPassed ? Strings.passed : Strings.failed;
+  const hasResult = Boolean(item.marks || item.score);
   const gradientIndex = Number(String(item?.id || '0').replace(/\D/g, '')) || animationIndex;
 
   const subjectIcon = getSubjectIconTheme(item.subject);
@@ -31,25 +33,29 @@ const ExamHistoryItem = ({item, animationIndex = 0}) => {
             <DepthIcon name={subjectIcon.icon} size={wp(4.5)} color={subjectIcon.color} />
           </View>
           <View style={styles.subjectInfo}>
-            <Text style={styles.subject}>{item.subject}</Text>
+            <Text style={styles.subject}>{item.title || item.subject}</Text>
             <Text style={styles.date}>{item.date}</Text>
           </View>
         </View>
-        <View style={[styles.badge, {backgroundColor: badgeBg}]}>
-          <Text style={[styles.badgeText, {color: badgeColor}]}>{statusText}</Text>
-        </View>
+        {isPassed || isFailed ? (
+          <View style={[styles.badge, {backgroundColor: badgeBg}]}>
+            <Text style={[styles.badgeText, {color: badgeColor}]}>{statusText}</Text>
+          </View>
+        ) : null}
       </View>
 
-      <View style={styles.bottomRow}>
-        <View style={styles.statCol}>
-          <Text style={styles.statLabel}>{Strings.marks}</Text>
-          <Text style={styles.statValue}>{item.marks}</Text>
+      {hasResult ? (
+        <View style={styles.bottomRow}>
+          <View style={styles.statCol}>
+            <Text style={styles.statLabel}>{Strings.marks}</Text>
+            <Text style={styles.statValue}>{item.marks}</Text>
+          </View>
+          <View style={styles.statCol}>
+            <Text style={styles.statLabel}>{Strings.score}</Text>
+            <Text style={styles.statValue}>{item.score}</Text>
+          </View>
         </View>
-        <View style={styles.statCol}>
-          <Text style={styles.statLabel}>{Strings.score}</Text>
-          <Text style={styles.statValue}>{item.score}</Text>
-        </View>
-      </View>
+      ) : null}
     </ProfileGradientCard>
   );
 };

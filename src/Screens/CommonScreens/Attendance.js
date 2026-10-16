@@ -1,7 +1,8 @@
-import React, {useEffect, useRef, useState} from 'react';
-import {StatusBar, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import React, {useEffect, useMemo, useRef, useState} from 'react';
+import {ActivityIndicator, StatusBar, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {useDispatch, useSelector} from 'react-redux';
 import ScrollEnterScrollView from '../../Component/ScrollEnterScrollView';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import MainHeaderComponent from '../../Component/MainHeaderComponent';
 import AnimatedCard from '../../Component/AnimatedCard';
@@ -31,26 +32,99 @@ import {useRoleData} from '../../hooks/useRoleData';
 import {withScreenEnter} from '../../hooks/useScreenEnterGate';
 import {CARD_RADIUS} from '../../Component/Profile/ProfileTheme';
 import {getAttendanceCardEnter} from '../../utils/cardAnimation';
+import {showToast} from '../../utils/toast';
+import {fetchChildAttendance, fetchChildDashboard, fetchParentHome} from '../../store/slices/parentHomeSlice';
+
+const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+const currentMonthKey = () => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+};
+
+const buildMonthRanges = () =>
+  Array.from({length: 6}, (_, index) => {
+    const now = new Date();
+    const date = new Date(now.getFullYear(), now.getMonth() - index, 1);
+    const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+    const month = MONTH_SHORT[date.getMonth()];
+    return {
+      value: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`,
+      label: `${month} 1 - ${month} ${lastDay}, ${date.getFullYear()}`,
+    };
+  });
 
 const AttendanceContent = () => {
+  const insets = useSafeAreaInsets();
+  const dispatch = useDispatch();
   const {
     studentLabel,
     isParent,
     selectedChildId,
     setSelectedChildId,
     activeStudent,
-    childList,
     attendanceStudents,
-    attendanceHistory,
-    canSwitchChild,
   } = useRoleData();
+  const {children, selectedChildId: homeChildId} = useSelector(state => state.parentHome);
+  const [parentAttendance, setParentAttendance] = useState(null);
+  const [loading, setLoading] = useState(isParent);
   const [showHistory, setShowHistory] = useState(false);
   const [dateRangeId, setDateRangeId] = useState('1');
+  const [monthId, setMonthId] = useState(currentMonthKey);
   const [viewMode, setViewMode] = useState(Strings.monthly);
   const [contentReplay, setContentReplay] = useState(0);
   const [switchVisible, setSwitchVisible] = useState(false);
   const skipContentReplayRef = useRef(true);
-  const childKey = String(selectedChildId ?? activeStudent?.value ?? '');
+  const monthRanges = useMemo(() => buildMonthRanges(), []);
+  const activeChildId = homeChildId || children[0]?.value || null;
+  const parentChild =
+    children.find(item => item.value === String(activeChildId)) || parentAttendance?.child || null;
+  const childKey = isParent ? String(activeChildId || '') : String(selectedChildId ?? activeStudent?.value ?? '');
+
+  useEffect(() => {
+    if (!isParent || homeChildId || children.length) {
+      return undefined;
+    }
+    dispatch(fetchParentHome());
+  }, [children.length, dispatch, homeChildId, isParent]);
+
+  useEffect(() => {
+    if (!isParent || !activeChildId) {
+      return undefined;
+    }
+    let active = true;
+    const monthly = viewMode !== Strings.daily;
+    setLoading(true);
+    dispatch(fetchChildAttendance({
+      childId: activeChildId,
+      view: monthly ? 'monthly' : 'daily',
+      month: monthly ? monthId : undefined,
+    }))
+      .unwrap()
+      .then(payload => {
+        if (active) {
+          setParentAttendance(payload);
+        }
+      })
+      .catch(error => {
+        if (!active) {
+          return;
+        }
+        setParentAttendance(null);
+        showToast({
+          type: 'error',
+          text1: error?.message || 'Unable to load attendance.',
+        });
+      })
+      .finally(() => {
+        if (active) {
+          setLoading(false);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [activeChildId, dispatch, isParent, monthId, viewMode]);
 
   useEffect(() => {
     if (skipContentReplayRef.current) {
@@ -58,7 +132,7 @@ const AttendanceContent = () => {
       return;
     }
     setContentReplay(value => value + 1);
-  }, [childKey, dateRangeId, viewMode]);
+  }, [childKey, dateRangeId, monthId, viewMode]);
 
   const statsSlot = isParent ? 3 : 2;
   const dateSlot = isParent ? 4 : 3;
@@ -69,11 +143,24 @@ const AttendanceContent = () => {
   const attendanceMeta =
     ATTENDANCE_STUDENTS.find(item => item.value === activeStudent?.value) ||
     ATTENDANCE_STUDENTS[0];
-  const student = {...activeStudent, ...attendanceMeta};
-  const history = isParent ? attendanceHistory : ATTENDANCE_HISTORY;
-  const students = isParent ? childList : attendanceStudents;
+  const parentStats = parentAttendance || {};
+  const student = isParent
+    ? {
+        ...parentChild,
+        month: loading ? '—' : parentStats.month || '',
+        present: loading ? '—' : parentStats.present ?? '',
+        absent: loading ? '—' : parentStats.absent ?? '',
+        late: loading ? '—' : parentStats.late ?? '',
+        rate: loading ? 0 : parentStats.rate || 0,
+        rateText: loading ? '—' : parentStats.rateText || '',
+        todayStatus: loading ? '—' : parentStats.todayStatus || '',
+        todayDate: loading ? '—' : parentStats.todayDate || '',
+      }
+    : {...activeStudent, ...attendanceMeta};
+  const history = isParent ? (loading ? [] : parentStats.history || []) : ATTENDANCE_HISTORY;
+  const students = isParent ? children : attendanceStudents;
   const showDaily = isParent && viewMode === Strings.daily;
-  const dropdownReadOnly = isParent ? !canSwitchChild : students.length <= 1;
+  const dropdownReadOnly = students.length <= 1;
   const useExternalSwitch = !dropdownReadOnly && students.length > 1;
   const showHistoryList = showHistory || isParent;
   const todayStatusStyle =
@@ -107,7 +194,7 @@ const AttendanceContent = () => {
                 {isParent ? Strings.monthlyAttendance : Strings.thisMonth}
               </Text>
               <Text style={styles.monthTextPremium} numberOfLines={1}>
-                {student.month}
+                {student.month} 
               </Text>
             </View>
             <View style={styles.statsRowPremium}>
@@ -168,7 +255,7 @@ const AttendanceContent = () => {
         overScrollMode="never"
         removeClippedSubviews={false}
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={styles.content}>
+        contentContainerStyle={[styles.content, {paddingBottom: hp(2) + insets.bottom}]}>
         <View style={styles.dropdownWrap}>
           <AnimatedCard
             index={1}
@@ -178,10 +265,18 @@ const AttendanceContent = () => {
             <AttendanceStudentDropdown
               student={student}
               students={students}
-              selectedId={selectedChildId}
+              selectedId={isParent ? String(activeChildId || '') : selectedChildId}
               premium
               embedded
-              onSelect={item => setSelectedChildId(item.value)}
+              onSelect={item => {
+                if (isParent) {
+                  if (String(item.value) !== String(activeChildId)) {
+                    dispatch(fetchChildDashboard(item.value));
+                  }
+                  return;
+                }
+                setSelectedChildId(item.value);
+              }}
               readOnly={dropdownReadOnly}
               label={studentLabel}
               externalPicker={useExternalSwitch}
@@ -205,12 +300,16 @@ const AttendanceContent = () => {
           </AnimatedCard>
         ) : null}
 
-        {statsBlock}
+        {isParent && loading ? (
+          <ActivityIndicator style={styles.loader} size="large" color={Colors.primary} />
+        ) : (
+          statsBlock
+        )}
 
         <AttendanceDateDropdown
-          ranges={ATTENDANCE_DATE_RANGES}
-          selectedId={dateRangeId}
-          onSelect={setDateRangeId}
+          ranges={isParent ? monthRanges : ATTENDANCE_DATE_RANGES}
+          selectedId={isParent ? monthId : dateRangeId}
+          onSelect={isParent ? setMonthId : setDateRangeId}
           animationIndex={dateSlot}
           entering={getAttendanceCardEnter(dateSlot)}
           replayToken={contentReplay}
@@ -265,7 +364,7 @@ const AttendanceContent = () => {
                 item={item}
                 premium
                 animationIndex={index + historyListStart}
-                entering={getAttendanceCardEnter(index + historyListStart)}
+                entering={getAttendanceCardEnter(Math.min(index + historyListStart, 8))}
                 replayToken={contentReplay}
               />
             ))
@@ -276,8 +375,16 @@ const AttendanceContent = () => {
         <ChildSwitchModal
           visible={switchVisible}
           childrenList={students}
-          selectedId={selectedChildId}
-          onSelect={setSelectedChildId}
+          selectedId={isParent ? String(activeChildId || '') : selectedChildId}
+          onSelect={nextId => {
+            if (isParent) {
+              if (String(nextId) !== String(activeChildId)) {
+                dispatch(fetchChildDashboard(nextId));
+              }
+              return;
+            }
+            setSelectedChildId(nextId);
+          }}
           onClose={() => setSwitchVisible(false)}
         />
       ) : null}
@@ -300,6 +407,7 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: wp(4),
     paddingBottom: hp(3),
+    flexGrow: 1,
   },
   dropdownWrap: {
     marginTop: -hp(0.6),
@@ -321,34 +429,42 @@ const styles = StyleSheet.create({
   statsShell: {
     marginBottom: hp(1.2),
     borderRadius: CARD_RADIUS,
-    overflow: 'visible',
+    overflow: 'hidden',
+    width: '100%',
   },
   statEnter: {
     flex: 1,
+    minWidth: 0,
   },
   monthRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: hp(1.2),
+    width: '100%',
   },
   monthTitlePremium: {
     color: Colors.white,
     fontFamily: Fonts.semibold,
     fontSize: Fontsize.xs5,
     flex: 1,
+    minWidth: 0,
+    marginRight: wp(2),
   },
   monthTextPremium: {
     color: Colors.whiteMuted75,
     fontFamily: Fonts.regular,
     fontSize: Fontsize.xs0,
+    flexShrink: 1,
+    textAlign: 'right',
   },
   statsCardInner: {
     paddingVertical: hp(1.4),
   },
   statsRowPremium: {
     flexDirection: 'row',
-    marginHorizontal: -wp(0.5),
+    alignItems: 'stretch',
+    width: '100%',
     marginBottom: hp(1.2),
   },
   historyBtn: {
@@ -396,5 +512,8 @@ const styles = StyleSheet.create({
   historyTitleWrap: {
     marginTop: hp(0.4),
     marginBottom: hp(0.4),
+  },
+  loader: {
+    marginVertical: hp(3),
   },
 });

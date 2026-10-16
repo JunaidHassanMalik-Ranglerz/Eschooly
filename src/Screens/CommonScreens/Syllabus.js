@@ -1,5 +1,5 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
-import {StatusBar, StyleSheet, Text, View} from 'react-native';
+import {ActivityIndicator, StatusBar, StyleSheet, Text, View} from 'react-native';
 import ScrollEnterFlatList from '../../Component/ScrollEnterFlatList';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
@@ -22,6 +22,9 @@ import MainHeaderComponent from '../../Component/MainHeaderComponent';
 import {useRoleData} from '../../hooks/useRoleData';
 import {withScreenEnter} from '../../hooks/useScreenEnterGate';
 import {getHomeScreenEnter} from '../../utils/cardAnimation';
+import {useDispatch, useSelector} from 'react-redux';
+import {showToast} from '../../utils/toast';
+import {fetchChildSyllabus, fetchParentHome} from '../../store/slices/parentHomeSlice';
 
 const STATS = [
   {
@@ -42,12 +45,7 @@ const STATS = [
     colors: ['#F59E0B', '#EA580C'],
     label: Strings.inDraft,
   },
-  {
-    key: 'update',
-    icon: 'alert-circle-outline',
-    colors: ['#FB923C', '#EA580C'],
-    label: Strings.needsUpdate,
-  },
+ 
 ];
 
 const StatCard = ({item, value, hint}) => (
@@ -71,42 +69,94 @@ const StatCard = ({item, value, hint}) => (
 
 const Syllabus = () => {
   const navigation = useNavigation();
+  const dispatch = useDispatch();
   const {
-    classLabel,
+    classLabel: studentClassLabel,
     activeStudent,
     isParent,
-    childList,
-    selectedChildId,
-    setSelectedChildId,
-    canSwitchChild,
   } = useRoleData();
-  const subjects = useMemo(
+  const {selectedChildId: homeChildId, children} = useSelector(state => state.parentHome);
+  const [pickedChildId, setPickedChildId] = useState(null);
+  const [parentSyllabus, setParentSyllabus] = useState(null);
+  const [loading, setLoading] = useState(isParent);
+  const dummySubjects = useMemo(
     () => getSyllabusListForClass(activeStudent?.className),
     [activeStudent?.className],
   );
+  const subjects = isParent ? parentSyllabus?.subjects || [] : dummySubjects;
+  const activeChildId = pickedChildId || homeChildId || children[0]?.value || null;
+  const parentChild =
+    parentSyllabus?.child?.label
+      ? parentSyllabus.child
+      : children.find(item => item.value === String(activeChildId)) || null;
+  const classLabel = isParent ? parentChild?.className || '' : studentClassLabel;
   const [syllabus, setSyllabus] = useState(subjects[0]);
   const [openChapterId, setOpenChapterId] = useState(null);
   const [switchVisible, setSwitchVisible] = useState(false);
   const [modalReplay, setModalReplay] = useState(0);
+  const parentCanSwitch = children.length > 1;
 
   useEffect(() => {
-    setSyllabus(subjects[0]);
+    if (!isParent || homeChildId || children.length) {
+      return undefined;
+    }
+    dispatch(fetchParentHome());
+  }, [children.length, dispatch, homeChildId, isParent]);
+
+  useEffect(() => {
+    if (!isParent || !activeChildId) {
+      return undefined;
+    }
+    let active = true;
+    setLoading(true);
+    dispatch(fetchChildSyllabus(activeChildId))
+      .unwrap()
+      .then(payload => {
+        if (active) {
+          setParentSyllabus(payload);
+        }
+      })
+      .catch(error => {
+        if (!active) {
+          return;
+        }
+        setParentSyllabus(null);
+        showToast({
+          type: 'error',
+          text1: error?.message || 'Unable to load syllabus.',
+        });
+      })
+      .finally(() => {
+        if (active) {
+          setLoading(false);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [activeChildId, dispatch, isParent]);
+
+  useEffect(() => {
+    const next = isParent ? parentSyllabus?.subjects || [] : dummySubjects;
+    setSyllabus(next[0]);
     setOpenChapterId(null);
-  }, [subjects]);
+  }, [dummySubjects, isParent, parentSyllabus]);
 
   const openSwitch = useCallback(() => {
     setSwitchVisible(true);
     setModalReplay(value => value + 1);
   }, []);
 
-  const publishedCount = subjects.filter(item => item.progress >= 0.5).length;
-  const draftCount = subjects.filter(item => item.progress > 0 && item.progress < 0.5).length;
-  const updateCount = subjects.filter(item => item.progress < 0.55).length;
+  const publishedCount = subjects.filter(item => item.status === 'published' || item.progress >= 0.5).length;
+  const draftCount = subjects.filter(item => item.status === 'draft' || (item.progress > 0 && item.progress < 0.5)).length;
+  const updateCount = subjects.filter(item => item.status === 'needs_update' || item.progress < 0.55).length;
+  const apiStats = isParent ? parentSyllabus?.stats : null;
+  const shownCount = (value, fallback) => value === undefined || value === null || value === '' ? fallback : value;
   const statValues = {
-    total: {value: subjects.length, hint: classLabel || Strings.thisClass},
-    published: {value: publishedCount, hint: syllabus?.percentText || ''},
-    draft: {value: draftCount, hint: Strings.inDraft},
-    update: {value: updateCount, hint: Strings.needsUpdate},
+    total: {value: shownCount(apiStats?.total, subjects.length), hint: classLabel || Strings.thisClass},
+    published: {value: shownCount(apiStats?.published, publishedCount), hint: syllabus?.percentText || ''},
+    draft: {value: shownCount(apiStats?.draft, draftCount), hint: Strings.inDraft},
+    update: {value: shownCount(apiStats?.update, updateCount), hint: Strings.needsUpdate},
   };
 
   return (
@@ -121,7 +171,7 @@ const Syllabus = () => {
       />
 
       <ScrollEnterFlatList
-        data={syllabus?.chapters}
+        data={isParent && loading ? [] : syllabus?.chapters}
         keyExtractor={item => `${syllabus?.value}-${item.id}`}
         extraData={openChapterId}
         renderItem={({item, index}) => (
@@ -145,13 +195,13 @@ const Syllabus = () => {
             {isParent ? (
               <AnimatedCard index={1} entering={getHomeScreenEnter(1)} style={styles.childWrap}>
                 <SelectedChildBanner
-                  child={activeStudent}
+                  child={parentChild}
                   variant="large"
                   waveVariant={SCREEN_WAVES.parentHome}
                   disableEnterAnimation
                   compactMargin
-                  canSwitch={canSwitchChild}
-                  onSwitchPress={canSwitchChild ? openSwitch : undefined}
+                  canSwitch={parentCanSwitch}
+                  onSwitchPress={parentCanSwitch ? openSwitch : undefined}
                 />
               </AnimatedCard>
             ) : null}
@@ -186,16 +236,19 @@ const Syllabus = () => {
             />
 
             <Text style={styles.sectionTitle}>{Strings.syllabusUnits}</Text>
+            {isParent && loading ? (
+              <ActivityIndicator style={styles.loader} size="large" color={Colors.primary} />
+            ) : null}
           </View>
         }
       />
 
-      {isParent && canSwitchChild ? (
+      {isParent && parentCanSwitch ? (
         <ChildSwitchModal
           visible={switchVisible}
-          childrenList={childList}
-          selectedId={selectedChildId}
-          onSelect={setSelectedChildId}
+          childrenList={children}
+          selectedId={String(activeChildId || '')}
+          onSelect={nextId => setPickedChildId(String(nextId))}
           onClose={() => setSwitchVisible(false)}
           replayToken={modalReplay}
         />
@@ -264,6 +317,9 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.regular,
     fontSize: Fontsize.xxm,
     marginTop: hp(0.1),
+  },
+  loader: {
+    marginVertical: hp(2),
   },
   sectionTitle: {
     color: Colors.black,

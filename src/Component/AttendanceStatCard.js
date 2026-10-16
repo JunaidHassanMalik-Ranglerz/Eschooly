@@ -36,12 +36,16 @@ const AttendanceStatCard = props => {
       </View>
       <Text
         style={[styles.label, premium && styles.labelPremium]}
-        numberOfLines={1}>
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.75}>
         {props?.label}
       </Text>
       <Text
         style={[styles.count, premium && styles.countPremium]}
-        numberOfLines={1}>
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.7}>
         {props?.count}
       </Text>
     </View>
@@ -53,14 +57,15 @@ export default AttendanceStatCard;
 const styles = StyleSheet.create({
   card: {
     flex: 1,
+    minWidth: 0,
     backgroundColor: Colors.white,
     borderRadius: wp(4),
     borderWidth: 1,
     borderColor: Colors.border,
     alignItems: 'center',
-    paddingVertical: hp(1.7),
-    paddingHorizontal: wp(2),
-    marginHorizontal: wp(1),
+    paddingVertical: hp(1.4),
+    paddingHorizontal: wp(1),
+    marginHorizontal: wp(0.6),
   },
   cardPremium: {
     backgroundColor: Colors.transparent,
@@ -82,7 +87,8 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.regular,
     fontSize: wp(3.2),
     marginBottom: hp(0.5),
-    maxWidth: wp(16),
+    width: '100%',
+    textAlign: 'center',
   },
   labelPremium: {
     color: Colors.whiteMuted75,
@@ -90,7 +96,9 @@ const styles = StyleSheet.create({
   count: {
     color: Colors.black,
     fontFamily: Fonts.bold,
-    fontSize: Fontsize.mx,
+    fontSize: Fontsize.sm,
+    width: '100%',
+    textAlign: 'center',
   },
   countPremium: {
     color: Colors.white,
