@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useEffect, useMemo, useRef, useState} from 'react';
 
 import {ActivityIndicator, StatusBar, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import ScrollEnterScrollView from '../../Component/ScrollEnterScrollView';
@@ -23,6 +23,8 @@ import {useRoleData} from '../../hooks/useRoleData';
 import {useDispatch, useSelector} from 'react-redux';
 import {showToast} from '../../utils/toast';
 import {fetchChildLibrary, fetchParentHome} from '../../store/slices/parentHomeSlice';
+import {fetchStudentLibrary} from '../../store/slices/studentHomeSlice';
+import {downloadStudentLibraryFile} from '../../services/studentService';
 
 import {withScreenEnter} from '../../hooks/useScreenEnterGate';
 
@@ -51,10 +53,13 @@ const DigitalLibrary = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
 
-  const {activeStudent, libraryResources, isParent} = useRoleData();
+  const {isParent} = useRoleData();
   const {selectedChildId: homeChildId, children} = useSelector(state => state.parentHome);
+  const homeStudent = useSelector(state => state.studentHome.student);
   const [parentLibrary, setParentLibrary] = useState(null);
-  const [loading, setLoading] = useState(isParent);
+  const [studentItems, setStudentItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const downloadLock = useRef(false);
 
   const [search, setSearch] = useState('');
 
@@ -65,10 +70,16 @@ const DigitalLibrary = () => {
     parentLibrary?.child?.label
       ? parentLibrary.child
       : children.find(item => item.value === String(activeChildId)) || null;
-  const resources = isParent ? parentLibrary?.items || [] : libraryResources;
+  const resources = isParent ? parentLibrary?.items || [] : studentItems;
   const profileStudent = isParent
     ? {...parentChild, status: parentChild?.status || 'Active'}
-    : {...activeStudent, status: 'Active'};
+    : {
+        label: homeStudent?.label || '',
+        classLabel: homeStudent?.classLabel || homeStudent?.className || '',
+        className: homeStudent?.className || '',
+        photoUrl: homeStudent?.photoUrl || '',
+        status: 'Active',
+      };
 
   useEffect(() => {
     if (!isParent || homeChildId || children.length) {
@@ -110,6 +121,44 @@ const DigitalLibrary = () => {
     };
   }, [activeChildId, dispatch, isParent]);
 
+  useEffect(() => {
+    if (isParent) {
+      return undefined;
+    }
+
+    let active = true;
+    const timer = setTimeout(() => {
+      setLoading(true);
+      dispatch(fetchStudentLibrary(search.trim()))
+        .unwrap()
+        .then(items => {
+          if (active) {
+            setStudentItems(items);
+          }
+        })
+        .catch(error => {
+          if (!active) {
+            return;
+          }
+          setStudentItems([]);
+          showToast({
+            type: 'error',
+            text1: error?.message || 'Unable to load library.',
+          });
+        })
+        .finally(() => {
+          if (active) {
+            setLoading(false);
+          }
+        });
+    }, search.trim() ? 350 : 0);
+
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [dispatch, isParent, search]);
+
   const categories = useMemo(() => {
     const known = new Set(LIBRARY_CATEGORIES.map(item => item.id));
     const extra = resources
@@ -123,26 +172,53 @@ const DigitalLibrary = () => {
     return [...LIBRARY_CATEGORIES, ...extra];
   }, [resources]);
 
-  const books = getFilteredResources(resources, search, category);
+  const books = isParent
+    ? getFilteredResources(resources, search, category)
+    : resources.filter(item => category === 'all' || item.category === category);
 
 
+
+  const openStudentFile = async item => {
+    if (!item?.id || downloadLock.current) {
+      return;
+    }
+    downloadLock.current = true;
+    try {
+      const fileUrl = await downloadStudentLibraryFile(item.id, item.title);
+      console.log('fileUrl', fileUrl);
+      navigation.navigate('PdfViewer', {
+        pdfUrl: fileUrl,
+        title: item.title,
+      });
+    } catch (error) {
+      console.log('error', error);
+      showToast({
+        type: 'error',
+        text1: error?.message || 'Unable to download this file.',
+      });
+    } finally {
+      downloadLock.current = false;
+    }
+  };
+
+  const handleDownload = item => {
+    if (!isParent) {
+      openStudentFile(item);
+    }
+  };
 
   const handleOpen = item => {
-
-    if (!item.pdfUrl) {
-
+    if (!isParent) {
+      openStudentFile(item);
       return;
-
     }
 
-    navigation.navigate('PdfViewer', {
-
-      pdfUrl: item.pdfUrl,
-
-      title: item.title,
-
-    });
-
+    if (item.pdfUrl) {
+      navigation.navigate('PdfViewer', {
+        pdfUrl: item.pdfUrl,
+        title: item.title,
+      });
+    }
   };
 
 
@@ -229,10 +305,9 @@ const DigitalLibrary = () => {
 
 
 
-          {isParent && loading ? (
+          {loading ? (
             <ActivityIndicator style={styles.loader} size="large" color={Colors.primary} />
-          ) : null}
-
+          ) : (
           <View style={styles.grid}>
 
             {books.map((item, index) => (
@@ -245,12 +320,15 @@ const DigitalLibrary = () => {
 
                 onPress={handleOpen}
 
+                onDownload={isParent ? undefined : handleDownload}
+
                 animationIndex={index + 5}
               />
 
             ))}
 
           </View>
+          )}
 
 
 

@@ -1,4 +1,7 @@
-import axiosInstance from '../api/axiosInstance';
+import {Platform} from 'react-native';
+import ReactNativeBlobUtil from 'react-native-blob-util';
+import axiosInstance, {API_BASE_URL, getAuthToken} from '../api/axiosInstance';
+import {storage, storageKeys} from '../utils/storage';
 import {Strings} from '../Constants/Strings';
 
 const asObject = value =>
@@ -434,3 +437,155 @@ export const getStudentAssignments = (params = {}) =>
   axiosInstance.get('/student/assignments', {
     params: {per_page: 50, ...params},
   });
+
+const fileSizeLabel = value => {
+  if (typeof value === 'number') {
+    if (value >= 1048576) {
+      return `${(value / 1048576).toFixed(1)} MB`;
+    }
+    if (value >= 1024) {
+      return `${Math.round(value / 1024)} KB`;
+    }
+    return `${value} B`;
+  }
+  return text(value);
+};
+
+const libraryCategory = item => {
+  const name = (namedRecord(item.subject) || text(item.category || item.subject_name)).toLowerCase();
+  if (name.includes('math')) {
+    return 'math';
+  }
+  if (name.includes('english')) {
+    return 'english';
+  }
+  if (name.includes('physics')) {
+    return 'physics';
+  }
+  if (name.includes('science')) {
+    return 'science';
+  }
+  return name.replace(/[^a-z0-9]+/g, '') || 'other';
+};
+
+const mapLibraryItem = (item, index) => {
+  const slot = asObject(item) || {};
+  const subjectName = namedRecord(slot.subject) || text(slot.subject_name);
+  const className = namedRecord(slot.class) || text(slot.class_name);
+  return {
+    id: text(slot.id) || String(index),
+    title: text(slot.title || slot.name) || subjectName,
+    subtitle: text(slot.subtitle) || [subjectName, className ? `Class ${className}` : ''].filter(Boolean).join(' - '),
+    fileType: text(slot.file_type || slot.type || slot.extension).replace(/^\./, '').toUpperCase(),
+    fileSize: fileSizeLabel(slot.file_size ?? slot.size),
+    category: libraryCategory(slot),
+    isNew: Boolean(slot.is_new || slot.isNew),
+    pdfUrl: text(slot.file_url || slot.pdf_url || slot.download_url || slot.url),
+  };
+};
+
+export const readLibraryPage = body => {
+  const root = asObject(body) || {};
+  const data = root.data;
+  const page = asObject(data) || {};
+  const list = Array.isArray(data)
+    ? data
+    : Array.isArray(page.data)
+      ? page.data
+      : Array.isArray(page.library)
+        ? page.library
+        : Array.isArray(page.resources)
+          ? page.resources
+          : Array.isArray(page.books)
+            ? page.books
+            : Array.isArray(page.entries)
+              ? page.entries
+              : [];
+  return {
+    items: list.map(mapLibraryItem).filter(item => item.title),
+    lastPage: Number(page.meta?.last_page || page.last_page || root.meta?.last_page) || 1,
+  };
+};
+
+export const getStudentLibrary = (params = {}) =>
+  axiosInstance.get('/student/library', {
+    params,
+  });
+
+const fileUri = path => (path.startsWith('file://') ? path : `file://${path}`);
+
+const libraryFileName = (title, resourceId) => {
+  const base = text(title)
+    .replace(/[^\w.-]+/g, '_')
+    .replace(/_+/g, '_')
+    .slice(0, 60);
+  const name = base || `library-${resourceId}`;
+  return name.toLowerCase().endsWith('.pdf') ? name : `${name}.pdf`;
+};
+
+export const downloadStudentLibraryFile = async (resourceId, title) => {
+  let token = getAuthToken();
+  if (!token) {
+    try {
+      token = await storage.getItem(storageKeys.token);
+    } catch (error) {
+      token = null;
+    }
+  }
+
+  const headers = {
+    Accept: 'application/pdf, application/json',
+    ...(token ? {Authorization: `Bearer ${token}`} : {}),
+  };
+  const fileName = libraryFileName(title, resourceId);
+  const path = `${ReactNativeBlobUtil.fs.dirs.CacheDir}/${fileName}`;
+  const url = `${API_BASE_URL}/student/library/${resourceId}/download`;
+  const response = await ReactNativeBlobUtil.config({
+    fileCache: true,
+    path,
+  }).fetch('GET', url, headers);
+  const info = response.info();
+  const type = String(info.headers?.['Content-Type'] || info.headers?.['content-type'] || '');
+
+  if (info.status >= 400) {
+    throw new Error('Unable to download this file.');
+  }
+
+  let savedPath = response.path();
+  if (type.includes('json')) {
+    const body = await response.json();
+    if (body?.success === false) {
+      throw new Error(body?.message || 'Unable to download this file.');
+    }
+    const fileUrl = body?.data?.url || body?.data?.file_url || body?.data?.pdf_url || body?.url;
+    if (!fileUrl) {
+      throw new Error(body?.message || 'Unable to download this file.');
+    }
+    const saved = await ReactNativeBlobUtil.config({
+      fileCache: true,
+      path,
+    }).fetch('GET', fileUrl, headers);
+    if (saved.info().status >= 400) {
+      throw new Error('Unable to download this file.');
+    }
+    savedPath = saved.path();
+  }
+
+  if (Platform.OS === 'android') {
+    try {
+      await ReactNativeBlobUtil.MediaCollection.copyToMediaStore(
+        {
+          name: fileName,
+          parentFolder: '',
+          mimeType: 'application/pdf',
+        },
+        'Download',
+        savedPath,
+      );
+    } catch (error) {
+      // The viewer still opens the cached copy.
+    }
+  }
+
+  return fileUri(savedPath);
+};

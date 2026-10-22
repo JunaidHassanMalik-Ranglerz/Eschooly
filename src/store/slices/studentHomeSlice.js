@@ -4,11 +4,13 @@ import {
   getStudentAssignmentOverview,
   getStudentAssignments,
   getStudentHome,
+  getStudentLibrary,
   getStudentTimetable,
   mapStudentAssignments,
   mapStudentHome,
   mapStudentTimetable,
   readAssignmentPage,
+  readLibraryPage,
 } from '../../services/studentService';
 
 const initialState = {
@@ -104,6 +106,47 @@ export const fetchStudentAssignments = createAsyncThunk(
       }
 
       return mapStudentAssignments(pages, overviewBody);
+    } catch (error) {
+      return rejectWithValue({
+        message: getApiErrorMessage(error),
+        status: error?.response?.status ?? null,
+      });
+    }
+  },
+);
+
+export const fetchStudentLibrary = createAsyncThunk(
+  'studentHome/fetchStudentLibrary',
+  async (query, {rejectWithValue}) => {
+    try {
+      const params = {per_page: 20};
+      const search = typeof query === 'string' ? query.trim() : '';
+      if (search) {
+        params.q = search;
+      }
+      const response = await getStudentLibrary(params);
+      const body = response?.data;
+      if (body && body.success === false) {
+        return rejectWithValue({
+          message:
+            typeof body.message === 'string' && body.message
+              ? body.message
+              : 'Unable to load library.',
+          status: response?.status ?? null,
+        });
+      }
+      const firstPage = readLibraryPage(body);
+      const items = [...firstPage.items];
+      const lastPage = Math.min(firstPage.lastPage || 1, 10);
+      for (let page = 2; page <= lastPage; page += 1) {
+        const nextResponse = await getStudentLibrary({...params, page});
+        const nextBody = nextResponse?.data;
+        if (nextBody && nextBody.success === false) {
+          break;
+        }
+        items.push(...readLibraryPage(nextBody).items);
+      }
+      return items;
     } catch (error) {
       return rejectWithValue({
         message: getApiErrorMessage(error),

@@ -11,7 +11,7 @@ import {Fontsize} from '../../Constants/Fontsize';
 import {getSubjectGradient} from '../../Constants/CardTheme';
 import {wp, hp} from '../../Constants/Responsive';
 
-const LibraryResourceCard = ({item, onPress, animationIndex = 0}) => {
+const LibraryResourceCard = ({item, onPress, onDownload, animationIndex = 0}) => {
   const gradientIndex = Number(String(item?.id || '0').replace(/\D/g, '')) || animationIndex;
 
   const subjectIcon = getSubjectIconTheme(item.subtitle?.split('-')[0]?.trim() || item.title);
@@ -44,12 +44,15 @@ const LibraryResourceCard = ({item, onPress, animationIndex = 0}) => {
 
       <View style={styles.footer}>
         <Text style={styles.fileInfo}>
-          {item.fileType} - {item.fileSize}
+          {[item.fileType, item.fileSize].filter(Boolean).join(' - ')}
         </Text>
         <TouchableOpacity
           activeOpacity={1}
           hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
-          onPress={() => {}}>
+          onPress={event => {
+            event?.stopPropagation?.();
+            onDownload?.(item);
+          }}>
           <Icon name="download-outline" size={wp(4.5)} color={Colors.whiteMuted85} />
         </TouchableOpacity>
       </View>
