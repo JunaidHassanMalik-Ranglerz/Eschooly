@@ -1,5 +1,5 @@
-import React, {useState} from 'react';
-import {StatusBar, StyleSheet} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {ActivityIndicator, StatusBar, StyleSheet, Text} from 'react-native';
 import ScrollEnterFlatList from '../../Component/ScrollEnterFlatList';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import MainHeaderComponent from '../../Component/MainHeaderComponent';
@@ -11,8 +11,14 @@ import {Strings} from '../../Constants/Strings';
 import {wp, hp} from '../../Constants/Responsive';
 import {useRoleData} from '../../hooks/useRoleData';
 import {withScreenEnter} from '../../hooks/useScreenEnterGate';
+import {useDispatch} from 'react-redux';
+import {showToast} from '../../utils/toast';
+import {fetchStudentAssignments} from '../../store/slices/studentHomeSlice';
+import {Fonts} from '../../Constants/Fonts';
+import {Fontsize} from '../../Constants/Fontsize';
 
 const Assignment = () => {
+  const dispatch = useDispatch();
   const {
     isParent,
     activeStudent,
@@ -21,6 +27,49 @@ const Assignment = () => {
     canSwitchChild,
   } = useRoleData();
   const [openSubjectId, setOpenSubjectId] = useState(null);
+  const [studentOverview, setStudentOverview] = useState(null);
+  const [studentSubjects, setStudentSubjects] = useState([]);
+  const [loading, setLoading] = useState(!isParent);
+  const overview = isParent ? assignmentOverview : studentOverview;
+  const subjects = isParent ? assignmentSubjects : studentSubjects;
+
+  useEffect(() => {
+    if (isParent) {
+      return undefined;
+    }
+
+    let active = true;
+    setLoading(true);
+    dispatch(fetchStudentAssignments())
+      .unwrap()
+      .then(result => {
+        if (!active) {
+          return;
+        }
+        setStudentOverview(result.overview);
+        setStudentSubjects(result.subjects);
+      })
+      .catch(error => {
+        if (!active) {
+          return;
+        }
+        setStudentOverview({total: 0, pending: 0, submitted: 0, overdue: 0});
+        setStudentSubjects([]);
+        showToast({
+          type: 'error',
+          text1: error?.message || 'Unable to load assignments.',
+        });
+      })
+      .finally(() => {
+        if (active) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [dispatch, isParent]);
 
   return (
       <SafeAreaView style={styles.container} edges={['top']}>
@@ -32,7 +81,7 @@ const Assignment = () => {
       />
 
       <ScrollEnterFlatList
-        data={assignmentSubjects}
+        data={loading && !isParent ? [] : subjects}
         keyExtractor={item => item.id}
         showsVerticalScrollIndicator={false}
         bounces={false}
@@ -48,12 +97,25 @@ const Assignment = () => {
                 animationIndex={1}
               />
             ) : null}
-            <AssignmentOverviewCard
-              overview={assignmentOverview}
-              premium
-              animationIndex={isParent ? 2 : 1}
-            />
+            {!isParent && loading ? (
+              <ActivityIndicator
+                style={styles.loader}
+                size="large"
+                color={Colors.primary}
+              />
+            ) : (
+              <AssignmentOverviewCard
+                overview={overview}
+                premium
+                animationIndex={isParent ? 2 : 1}
+              />
+            )}
           </>
+        }
+        ListEmptyComponent={
+          !isParent && !loading && subjects.length === 0 ? (
+            <Text style={styles.emptyText}>{Strings.noHomework}</Text>
+          ) : null
         }
         renderItem={({item, index}) => (
           <AssignmentSubjectCard
@@ -82,5 +144,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(4),
     paddingTop: hp(1),
     paddingBottom: hp(3),
+  },
+  loader: {
+    marginTop: hp(4),
+    marginBottom: hp(2),
+  },
+  emptyText: {
+    color: Colors.grayText,
+    fontFamily: Fonts.regular,
+    fontSize: Fontsize.xs1,
+    textAlign: 'center',
+    marginTop: hp(2),
   },
 });

@@ -63,6 +63,7 @@ const AssignmentItem = props => {
           {assignment?.title}
         </Text>
 
+        {assignment?.teacher ? (
         <View style={styles.metaRow}>
           <Icon
             name="person-outline"
@@ -72,10 +73,12 @@ const AssignmentItem = props => {
           <Text
             style={[styles.metaText, premium && styles.metaTextPremium]}
             numberOfLines={1}>
-            {assignment?.teacher}
+            {assignment.teacher}
           </Text>
         </View>
+        ) : null}
 
+        {assignment?.dueDate ? (
         <View style={styles.metaRow}>
           <Icon
             name="calendar-outline"
@@ -85,9 +88,10 @@ const AssignmentItem = props => {
           <Text
             style={[styles.metaText, premium && styles.metaTextPremium]}
             numberOfLines={1}>
-            {Strings.dueDate}: {assignment?.dueDate}
+            {Strings.dueDate}: {assignment.dueDate}
           </Text>
         </View>
+        ) : null}
 
         <View style={styles.bottomRow}>
           {type !== 'homework' ? (

@@ -1,10 +1,14 @@
 import {createAsyncThunk, createSlice} from '@reduxjs/toolkit';
 import {getApiErrorMessage} from '../../utils/apiError';
 import {
+  getStudentAssignmentOverview,
+  getStudentAssignments,
   getStudentHome,
   getStudentTimetable,
+  mapStudentAssignments,
   mapStudentHome,
   mapStudentTimetable,
+  readAssignmentPage,
 } from '../../services/studentService';
 
 const initialState = {
@@ -56,6 +60,50 @@ export const fetchStudentTimetable = createAsyncThunk(
         });
       }
       return mapStudentTimetable(body, day);
+    } catch (error) {
+      return rejectWithValue({
+        message: getApiErrorMessage(error),
+        status: error?.response?.status ?? null,
+      });
+    }
+  },
+);
+
+export const fetchStudentAssignments = createAsyncThunk(
+  'studentHome/fetchStudentAssignments',
+  async (_, {rejectWithValue}) => {
+    try {
+      const [overviewResponse, listResponse] = await Promise.all([
+        getStudentAssignmentOverview(),
+        getStudentAssignments({per_page: 50}),
+      ]);
+      const overviewBody = overviewResponse?.data;
+      const listBody = listResponse?.data;
+      if (
+        (overviewBody && overviewBody.success === false) ||
+        (listBody && listBody.success === false)
+      ) {
+        return rejectWithValue({
+          message:
+            (typeof listBody?.message === 'string' && listBody.message) ||
+            (typeof overviewBody?.message === 'string' && overviewBody.message) ||
+            'Unable to load assignments.',
+        });
+      }
+
+      const firstPage = readAssignmentPage(listBody);
+      const pages = [firstPage];
+      const lastPage = Math.min(firstPage.lastPage || 1, 10);
+      for (let page = 2; page <= lastPage; page += 1) {
+        const nextResponse = await getStudentAssignments({per_page: 50, page});
+        const nextBody = nextResponse?.data;
+        if (nextBody && nextBody.success === false) {
+          break;
+        }
+        pages.push(readAssignmentPage(nextBody));
+      }
+
+      return mapStudentAssignments(pages, overviewBody);
     } catch (error) {
       return rejectWithValue({
         message: getApiErrorMessage(error),
