@@ -1,14 +1,18 @@
 import {createAsyncThunk, createSlice} from '@reduxjs/toolkit';
 import {getApiErrorMessage} from '../../utils/apiError';
 import {
+  getStudentAnnouncement,
+  getStudentAnnouncements,
   getStudentAssignmentOverview,
   getStudentAssignments,
   getStudentHome,
   getStudentLibrary,
   getStudentTimetable,
+  mapStudentAnnouncement,
   mapStudentAssignments,
   mapStudentHome,
   mapStudentTimetable,
+  readAnnouncementPage,
   readAssignmentPage,
   readLibraryPage,
 } from '../../services/studentService';
@@ -147,6 +151,67 @@ export const fetchStudentLibrary = createAsyncThunk(
         items.push(...readLibraryPage(nextBody).items);
       }
       return items;
+    } catch (error) {
+      return rejectWithValue({
+        message: getApiErrorMessage(error),
+        status: error?.response?.status ?? null,
+      });
+    }
+  },
+);
+
+export const fetchStudentAnnouncements = createAsyncThunk(
+  'studentHome/fetchStudentAnnouncements',
+  async (_, {rejectWithValue}) => {
+    try {
+      const response = await getStudentAnnouncements({per_page: 20});
+      const body = response?.data;
+      if (body && body.success === false) {
+        return rejectWithValue({
+          message:
+            typeof body.message === 'string' && body.message
+              ? body.message
+              : 'Unable to load announcements.',
+          status: response?.status ?? null,
+        });
+      }
+      const firstPage = readAnnouncementPage(body);
+      const items = [...firstPage.items];
+      const lastPage = Math.min(firstPage.lastPage || 1, 10);
+      for (let page = 2; page <= lastPage; page += 1) {
+        const nextResponse = await getStudentAnnouncements({per_page: 20, page});
+        const nextBody = nextResponse?.data;
+        if (nextBody && nextBody.success === false) {
+          break;
+        }
+        items.push(...readAnnouncementPage(nextBody).items);
+      }
+      return items;
+    } catch (error) {
+      return rejectWithValue({
+        message: getApiErrorMessage(error),
+        status: error?.response?.status ?? null,
+      });
+    }
+  },
+);
+
+export const fetchStudentAnnouncement = createAsyncThunk(
+  'studentHome/fetchStudentAnnouncement',
+  async (announcementId, {rejectWithValue}) => {
+    try {
+      const response = await getStudentAnnouncement(announcementId);
+      const body = response?.data;
+      if (body && body.success === false) {
+        return rejectWithValue({
+          message:
+            typeof body.message === 'string' && body.message
+              ? body.message
+              : 'Unable to load announcement.',
+          status: response?.status ?? null,
+        });
+      }
+      return mapStudentAnnouncement(body);
     } catch (error) {
       return rejectWithValue({
         message: getApiErrorMessage(error),

@@ -1,5 +1,5 @@
 import React from 'react';
-import {StyleSheet, Text, View} from 'react-native';
+import {Pressable, StyleSheet, Text, View} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
 import DepthIcon from './DepthIcon';
@@ -40,6 +40,8 @@ const AnnouncementCard = ({
   animationIndex = 0,
   entering,
   replayToken = 0,
+  expanded = false,
+  onPress,
 }) => {
   const category = CATEGORY_STYLES[item.category] || CATEGORY_STYLES.Notice;
   const accent = item.iconColor || category.accent;
@@ -50,7 +52,7 @@ const AnnouncementCard = ({
       entering={entering}
       replayToken={replayToken}
       style={styles.wrap}>
-      <View style={styles.clip}>
+      <Pressable disabled={!onPress} onPress={onPress} style={styles.clip}>
       <LinearGradient
         colors={CARD_GRADIENT}
         locations={[0, 0.5, 1]}
@@ -67,10 +69,12 @@ const AnnouncementCard = ({
                 {item.category}
               </Text>
             </View>
+            {item.date ? (
             <View style={styles.dateRow}>
               <Icon name="calendar-outline" size={wp(3.5)} color="#B9CEF0" />
               <Text style={styles.date}>{item.date}</Text>
             </View>
+            ) : null}
           </View>
 
           <View style={styles.titleRow}>
@@ -83,17 +87,21 @@ const AnnouncementCard = ({
               {item.title}
             </Text>
           </View>
-          <Text style={styles.message} numberOfLines={4}>
+          {item.message ? (
+          <Text style={styles.message} numberOfLines={expanded ? undefined : 4}>
             {item.message}
           </Text>
+          ) : null}
 
+          {item.time ? (
           <View style={styles.timeRow}>
             <Icon name="time-outline" size={wp(3.5)} color="#B9CEF0" />
             <Text style={styles.time}>{item.time}</Text>
           </View>
+          ) : null}
         </View>
       </LinearGradient>
-      </View>
+      </Pressable>
     </AnimatedCard>
   );
 };

@@ -12,7 +12,6 @@ import {Colors} from '../../Constants/Colors';
 import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
-import {ATTENDANCE_STUDENTS} from '../../Constants/dummydata';
 import {wp, hp} from '../../Constants/Responsive';
 import {useRoleData} from '../../hooks/useRoleData';
 import {withScreenEnter} from '../../hooks/useScreenEnterGate';
@@ -20,6 +19,7 @@ import {getHomeScreenEnter} from '../../utils/cardAnimation';
 import {useDispatch, useSelector} from 'react-redux';
 import {showToast} from '../../utils/toast';
 import {fetchChildAnnouncements, fetchParentHome} from '../../store/slices/parentHomeSlice';
+import {fetchStudentAnnouncement, fetchStudentAnnouncements} from '../../store/slices/studentHomeSlice';
 
 const AnnouncementsScreen = () => {
   const dispatch = useDispatch();
@@ -27,19 +27,21 @@ const AnnouncementsScreen = () => {
   const {
     isParent,
     activeStudent,
-    announcements: studentAnnouncements,
     childList,
-    attendanceStudents,
     selectedChildId,
     setSelectedChildId,
     canSwitchChild,
     studentLabel,
   } = useRoleData();
   const {selectedChildId: homeChildId, children} = useSelector(state => state.parentHome);
+  const homeStudent = useSelector(state => state.studentHome.student);
   const [pickedChildId, setPickedChildId] = useState(null);
   const [parentAnnouncements, setParentAnnouncements] = useState([]);
+  const [studentAnnouncements, setStudentAnnouncements] = useState([]);
+  const [detailById, setDetailById] = useState({});
+  const [openId, setOpenId] = useState(null);
   const [parentChildCard, setParentChildCard] = useState(null);
-  const [loading, setLoading] = useState(isParent);
+  const [loading, setLoading] = useState(true);
   const [switchVisible, setSwitchVisible] = useState(false);
   const [modalReplay, setModalReplay] = useState(0);
   const [contentReplay, setContentReplay] = useState(0);
@@ -49,7 +51,15 @@ const AnnouncementsScreen = () => {
       ? parentChildCard
       : children.find(item => item.value === String(activeChildId)) || null;
   const announcements = isParent ? parentAnnouncements : studentAnnouncements;
-  const bannerChild = isParent ? parentChild : activeStudent;
+  const bannerChild = isParent
+    ? parentChild
+    : {
+        label: homeStudent?.label || '',
+        classInfo: homeStudent?.className || homeStudent?.classLabel || '',
+        classLabel: homeStudent?.classLabel || homeStudent?.className || '',
+        className: homeStudent?.className || '',
+        photoUrl: homeStudent?.photoUrl || '',
+      };
   const parentCanSwitch = children.length > 1;
 
   const childKey = String(isParent ? activeChildId : selectedChildId ?? activeStudent?.value ?? '');
@@ -96,6 +106,64 @@ const AnnouncementsScreen = () => {
     };
   }, [activeChildId, dispatch, isParent]);
 
+  useEffect(() => {
+    if (isParent) {
+      return undefined;
+    }
+    let active = true;
+    setLoading(true);
+    dispatch(fetchStudentAnnouncements())
+      .unwrap()
+      .then(items => {
+        if (active) {
+          setStudentAnnouncements(items);
+        }
+      })
+      .catch(error => {
+        if (!active) {
+          return;
+        }
+        setStudentAnnouncements([]);
+        showToast({
+          type: 'error',
+          text1: error?.message || 'Unable to load announcements.',
+        });
+      })
+      .finally(() => {
+        if (active) {
+          setLoading(false);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [dispatch, isParent]);
+
+  const openAnnouncement = announcement => {
+    if (isParent || !announcement?.id) {
+      return;
+    }
+    if (openId === announcement.id) {
+      setOpenId(null);
+      return;
+    }
+    setOpenId(announcement.id);
+    if (detailById[announcement.id]) {
+      return;
+    }
+    dispatch(fetchStudentAnnouncement(announcement.id))
+      .unwrap()
+      .then(detail => {
+        setDetailById(current => ({...current, [announcement.id]: detail}));
+      })
+      .catch(error => {
+        showToast({
+          type: 'error',
+          text1: error?.message || 'Unable to load announcement.',
+        });
+      });
+  };
+
   const handleSelectChild = useCallback(
     nextId => {
       const nextKey = String(nextId);
@@ -112,13 +180,6 @@ const AnnouncementsScreen = () => {
     },
     [childKey, isParent, setSelectedChildId],
   );
-
-  const students = isParent ? childList : attendanceStudents;
-  const dropdownReadOnly = isParent ? !canSwitchChild : students.length <= 1;
-  const attendanceMeta =
-    ATTENDANCE_STUDENTS.find(item => item.value === selectedChildId) ||
-    ATTENDANCE_STUDENTS[0];
-  const dropdownStudent = {...activeStudent, ...attendanceMeta};
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -152,13 +213,10 @@ const AnnouncementsScreen = () => {
           />
         ) : (
           <AttendanceStudentDropdown
-            student={dropdownStudent}
-            students={students}
-            selectedId={selectedChildId}
+            student={bannerChild}
             premium
             embedded
-            onSelect={item => handleSelectChild(item.value)}
-            readOnly={dropdownReadOnly}
+            readOnly
             label={studentLabel}
           />
         )}
@@ -173,17 +231,21 @@ const AnnouncementsScreen = () => {
         overScrollMode="never"
         removeClippedSubviews={false}
         keyboardShouldPersistTaps="handled">
-        {isParent && loading ? (
+        {loading ? (
           <ActivityIndicator style={styles.loader} size="large" color={Colors.primary} />
         ) : announcements.length === 0 ? (
           <Text style={styles.empty}>{Strings.noAnnouncements}</Text>
         ) : (
           announcements.map((item, index) => {
             const slot = index + 2;
+            const detail = !isParent ? detailById[item.id] : null;
+            const shown = detail ? {...item, ...detail} : item;
             return (
               <AnnouncementCard
                 key={item.id}
-                item={item}
+                item={shown}
+                expanded={!isParent && openId === item.id}
+                onPress={isParent ? undefined : () => openAnnouncement(item)}
                 animationIndex={slot}
                 entering={getHomeScreenEnter(slot)}
                 replayToken={contentReplay}

@@ -589,3 +589,92 @@ export const downloadStudentLibraryFile = async (resourceId, title) => {
 
   return fileUri(savedPath);
 };
+
+const announcementWhen = value => {
+  const raw = text(value);
+  if (!raw) {
+    return {date: '', time: ''};
+  }
+  const dateOnly = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (dateOnly) {
+    const month = SHORT_MONTHS[Number(dateOnly[2]) - 1];
+    return {
+      date: month ? `${Number(dateOnly[3])} ${month} ${dateOnly[1]}` : raw,
+      time: '',
+    };
+  }
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) {
+    return {date: raw, time: clockLabel(raw)};
+  }
+  return {
+    date: `${parsed.getDate()} ${SHORT_MONTHS[parsed.getMonth()]} ${parsed.getFullYear()}`,
+    time: clockLabel(`${parsed.getHours()}:${String(parsed.getMinutes()).padStart(2, '0')}`),
+  };
+};
+
+const announcementCategory = slot => {
+  const name = text(slot.category || slot.type) || named(slot.category);
+  const lower = name.toLowerCase();
+  if (!name || lower.includes('notice')) {
+    return 'Notice';
+  }
+  if (lower.includes('event')) {
+    return 'Event';
+  }
+  if (lower.includes('update')) {
+    return 'Update';
+  }
+  return name.charAt(0).toUpperCase() + name.slice(1);
+};
+
+const mapAnnouncement = (item, index) => {
+  const slot = asObject(item) || {};
+  const published = slot.published_at || slot.created_at || slot.date;
+  const when = announcementWhen(published);
+  const clock = text(slot.time) ? clockLabel(slot.time) : when.time;
+  return {
+    id: text(slot.id) || String(index),
+    category: announcementCategory(slot),
+    title: text(slot.title) || named(slot.subject),
+    message: text(slot.message || slot.body || slot.description || slot.content),
+    date: text(slot.date_label) || when.date,
+    time: clock,
+  };
+};
+
+export const readAnnouncementPage = body => {
+  const root = asObject(body) || {};
+  const data = root.data;
+  const page = asObject(data) || {};
+  const list = Array.isArray(data)
+    ? data
+    : Array.isArray(page.data)
+      ? page.data
+      : Array.isArray(page.announcements)
+        ? page.announcements
+        : Array.isArray(page.entries)
+          ? page.entries
+          : Array.isArray(page.notices)
+            ? page.notices
+            : [];
+  return {
+    items: list.map(mapAnnouncement).filter(item => item.title),
+    lastPage: Number(page.meta?.last_page || page.last_page || root.meta?.last_page) || 1,
+  };
+};
+
+export const mapStudentAnnouncement = body => {
+  const root = asObject(body) || {};
+  const data = asObject(root.data) || root;
+  const slot = asObject(data.announcement) || data;
+  return mapAnnouncement(slot, 0);
+};
+
+export const getStudentAnnouncements = (params = {}) =>
+  axiosInstance.get('/student/announcements', {
+    params,
+  });
+
+export const getStudentAnnouncement = announcementId =>
+  axiosInstance.get(`/student/announcements/${announcementId}`);
