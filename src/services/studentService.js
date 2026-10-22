@@ -88,6 +88,61 @@ export const mapStudentHome = body => {
 
 export const getStudentHome = () => axiosInstance.get('/student/home');
 
+const clockLabel = value => {
+  const raw = text(value);
+  const match = raw.match(/^(\d{1,2}):(\d{2})/);
+  if (!match) {
+    return raw;
+  }
+  let hours = Number(match[1]);
+  const minutes = match[2];
+  const suffix = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12 || 12;
+  return `${hours}:${minutes} ${suffix}`;
+};
+
+const named = value => {
+  const record = asObject(value);
+  if (record) {
+    return text(record.name);
+  }
+  return text(value);
+};
+
+export const mapStudentTimetable = (body, day) => {
+  const root = asObject(body) || {};
+  const data = asObject(root.data) || {};
+  const wanted = text(day).toLowerCase();
+  const entries = Array.isArray(data.entries) ? data.entries : [];
+
+  return entries
+    .filter(item => {
+      const entryDay = text(asObject(item)?.day).toLowerCase();
+      return !wanted || !entryDay || entryDay === wanted;
+    })
+    .map((item, index) => {
+      const slot = asObject(item) || {};
+      const start = clockLabel(slot.starts_at);
+      const end = clockLabel(slot.ends_at);
+      const className = named(slot.class);
+      const sectionName = named(slot.section);
+      return {
+        id: text(slot.id) || String(index),
+        period: text(slot.period_number),
+        subject: named(slot.subject),
+        time: start && end ? `${start} - ${end}` : start || end,
+        classLabel: [className, sectionName].filter(Boolean).join(' · '),
+        teacher: named(slot.teacher),
+      };
+    })
+    .filter(item => item.subject);
+};
+
+export const getStudentTimetable = day =>
+  axiosInstance.get('/student/timetable', {
+    params: day ? {day} : undefined,
+  });
+
 const MONTHS = [
   'January',
   'February',

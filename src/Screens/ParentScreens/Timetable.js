@@ -33,6 +33,7 @@ import {withScreenEnter} from '../../hooks/useScreenEnterGate';
 import {useDispatch, useSelector} from 'react-redux';
 import {showToast} from '../../utils/toast';
 import {fetchChildTimetable, fetchParentHome} from '../../store/slices/parentHomeSlice';
+import {fetchStudentTimetable} from '../../store/slices/studentHomeSlice';
 
 const DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 
@@ -87,10 +88,11 @@ const buildWeek = date => {
 const Timetable = () => {
 
   const dispatch = useDispatch();
-  const {timetable: studentTimetable, classLabel: studentClassLabel, isParent} = useRoleData();
+  const {isParent} = useRoleData();
   const {selectedChildId, children} = useSelector(state => state.parentHome);
   const [parentSlots, setParentSlots] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [studentSlots, setStudentSlots] = useState([]);
+  const [loading, setLoading] = useState(!isParent);
 
   const [viewMode, setViewMode] = useState(Strings.day);
 
@@ -99,8 +101,8 @@ const Timetable = () => {
   const week = useMemo(() => buildWeek(currentDate), [currentDate]);
   const dayName = DAY_NAMES[currentDate.getDay()];
   const parentChild = children.find(item => item.value === String(selectedChildId));
-  const classLabel = isParent ? parentChild?.className || '' : studentClassLabel;
-  const timetable = isParent ? parentSlots : studentTimetable;
+  const classLabel = isParent ? parentChild?.className || '' : '';
+  const timetable = isParent ? parentSlots : studentSlots;
 
   const visibleItems = timetable.filter(item => item.subject !== 'Break');
 
@@ -149,6 +151,42 @@ const Timetable = () => {
     };
   }, [dayName, dispatch, isParent, selectedChildId]);
 
+  useEffect(() => {
+    if (isParent) {
+      return undefined;
+    }
+
+    let active = true;
+    setLoading(true);
+
+    dispatch(fetchStudentTimetable(dayName))
+      .unwrap()
+      .then(slots => {
+        if (active) {
+          setStudentSlots(slots);
+        }
+      })
+      .catch(error => {
+        if (!active) {
+          return;
+        }
+        setStudentSlots([]);
+        showToast({
+          type: 'error',
+          text1: error?.message || 'Unable to load timetable.',
+        });
+      })
+      .finally(() => {
+        if (active) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [dayName, dispatch, isParent]);
+
 
 
   const changeWeek = direction => {
@@ -176,7 +214,7 @@ const Timetable = () => {
       colors={CARD_GRADIENTS.notification}
 
       waveVariant={index === 0 ? 'timetable' : null}
-      disableAnimation={isParent}>
+      disableAnimation>
 
       <View style={styles.slotRow}>
 
@@ -325,13 +363,13 @@ const Timetable = () => {
 
 
 
-          {isParent && (loading || !selectedChildId) ? (
+          {loading || (isParent && !selectedChildId) ? (
             <ActivityIndicator style={styles.loader} size="large" color={Colors.primary} />
           ) : (
             list.map(renderSlot)
           )}
 
-          {!(isParent && (loading || !selectedChildId)) && list.length === 0 ? (
+          {!loading && !(isParent && !selectedChildId) && list.length === 0 ? (
             <Text style={styles.emptyText}>{Strings.noTimetable}</Text>
           ) : null}
 

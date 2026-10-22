@@ -1,6 +1,11 @@
 import {createAsyncThunk, createSlice} from '@reduxjs/toolkit';
 import {getApiErrorMessage} from '../../utils/apiError';
-import {getStudentHome, mapStudentHome} from '../../services/studentService';
+import {
+  getStudentHome,
+  getStudentTimetable,
+  mapStudentHome,
+  mapStudentTimetable,
+} from '../../services/studentService';
 
 const initialState = {
   student: null,
@@ -26,6 +31,31 @@ export const fetchStudentHome = createAsyncThunk(
         });
       }
       return mapStudentHome(body);
+    } catch (error) {
+      return rejectWithValue({
+        message: getApiErrorMessage(error),
+        status: error?.response?.status ?? null,
+      });
+    }
+  },
+);
+
+export const fetchStudentTimetable = createAsyncThunk(
+  'studentHome/fetchStudentTimetable',
+  async (day, {rejectWithValue}) => {
+    try {
+      const response = await getStudentTimetable(day);
+      const body = response?.data;
+      if (body && body.success === false) {
+        return rejectWithValue({
+          message:
+            typeof body.message === 'string' && body.message
+              ? body.message
+              : 'Unable to load timetable.',
+          status: response?.status ?? null,
+        });
+      }
+      return mapStudentTimetable(body, day);
     } catch (error) {
       return rejectWithValue({
         message: getApiErrorMessage(error),
