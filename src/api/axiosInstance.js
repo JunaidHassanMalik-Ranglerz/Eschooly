@@ -85,7 +85,8 @@ axiosInstance.interceptors.response.use(
   response => response,
   error => {
     const url = error?.config?.url || '';
-    const isLogin = url.includes('/parent/login');
+    const isLogin =
+      url.includes('/parent/login') || url.includes('/student/login');
     if (error?.response?.status === 401 && onUnauthorized && !isLogin) {
       onUnauthorized(error);
     }

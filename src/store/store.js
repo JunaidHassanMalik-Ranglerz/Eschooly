@@ -12,6 +12,7 @@ import {
 } from 'redux-persist';
 import authReducer from './slices/authSlice';
 import parentHomeReducer from './slices/parentHomeSlice';
+import studentHomeReducer from './slices/studentHomeSlice';
 
 const authPersistConfig = {
   key: 'auth',
@@ -23,6 +24,7 @@ export const store = configureStore({
   reducer: {
     auth: persistReducer(authPersistConfig, authReducer),
     parentHome: parentHomeReducer,
+    studentHome: studentHomeReducer,
   },
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware({

@@ -73,6 +73,77 @@ export const parentLogin = ({familyId, password}) => {
   return axiosInstance.post('/parent/login', form);
 };
 
+const slimStudent = student => {
+  if (!student) {
+    return null;
+  }
+
+  const user = {};
+  ['id', 'student_id', 'admission_no', 'school_id', 'name', 'full_name', 'email', 'phone', 'class_name', 'section', 'roll_no'].forEach(
+    key => {
+      if (student[key] !== undefined && student[key] !== null && student[key] !== '') {
+        user[key] = student[key];
+      }
+    },
+  );
+
+  return Object.keys(user).length ? user : null;
+};
+
+const humanAuthMessage = (rawMessage, fallback) => {
+  const message = stringOrNull(rawMessage);
+  if (!message || message.includes('.api.')) {
+    return fallback;
+  }
+  return message;
+};
+
+export const mapStudentLogin = body => {
+  const root = asObject(body) || {};
+  const data = asObject(root.data);
+  const student =
+    asObject(root.student) ||
+    asObject(root.user) ||
+    asObject(data?.student) ||
+    asObject(data?.user);
+  const token =
+    stringOrNull(root.token) ||
+    stringOrNull(root.access_token) ||
+    stringOrNull(data?.token) ||
+    stringOrNull(data?.access_token);
+  const tokenType =
+    stringOrNull(root.token_type) || stringOrNull(data?.token_type) || 'Bearer';
+
+  return {
+    token,
+    tokenType,
+    role: 'student',
+    user: slimStudent(student),
+    message: humanAuthMessage(root.message, 'Signed in successfully.'),
+  };
+};
+
+export const studentLogin = ({studentId, password}) => {
+  const form = toFormData({
+    student_id: studentId,
+    password,
+  });
+
+  return axiosInstance.post('/student/login', form);
+};
+
+export const changeStudentPassword = fields => {
+  const form = toFormData({
+    current_password: fields.current_password,
+    password: fields.password,
+    password_confirmation: fields.password_confirmation,
+  });
+
+  return axiosInstance.post('/student/password', form);
+};
+
+export const studentLogout = () => axiosInstance.post('/student/logout');
+
 export const changeParentPassword = fields => {
   const form = toFormData({
     parent_current_password: fields.parent_current_password,

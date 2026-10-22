@@ -211,6 +211,7 @@ const IdCardPreview = ({data, isBack, navy = false}) => {
 };
 
 const PreviewField = ({icon, label, value, navy}) => (
+  !textValue(value) ? null : (
   <View style={styles.fieldRow}>
     <Icon
       name={icon}
@@ -222,7 +223,10 @@ const PreviewField = ({icon, label, value, navy}) => (
       <Text style={[styles.fieldValue, navy && styles.textOnNavy]}>{value}</Text>
     </View>
   </View>
+  )
 );
+
+const textValue = value => (value == null ? '' : String(value).trim());
 
 const StatItem = ({label, value, navy}) => (
   <View style={styles.statItem}>

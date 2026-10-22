@@ -1,7 +1,8 @@
-import React, {useCallback, useLayoutEffect} from 'react';
-import {StatusBar, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
+import {ActivityIndicator, StatusBar, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import ScrollEnterScrollView from '../../Component/ScrollEnterScrollView';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import {useDispatch, useSelector} from 'react-redux';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import LinearGradient from 'react-native-linear-gradient';
@@ -18,11 +19,12 @@ import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
 import {getHubIconMeta} from '../../Constants/IconTheme';
 import {wp, hp} from '../../Constants/Responsive';
-import {useRoleData} from '../../hooks/useRoleData';
 import {
   ACADEMICS_ENTER_MOTION,
   ScreenEnterProvider,
 } from '../../hooks/useScreenEnterGate';
+import {showToast} from '../../utils/toast';
+import {fetchStudentHome} from '../../store/slices/studentHomeSlice';
 import {getGreeting} from '../../utils/getGreeting';
 import {
   ACADEMICS_HEADER_ENTERING,
@@ -43,17 +45,38 @@ const HUB_ITEMS = [
 
 const StudentHome = () => {
   const navigation = useNavigation();
-  const {
-    activeStudent,
-    unreadNotificationCount,
-    studentUpcomingClass,
-    studentLabel,
-  } = useRoleData();
-  const dropdownStudent = {
-    ...activeStudent,
-    gender: activeStudent?.gender || 'Male',
-    classInfo: activeStudent?.classLabel || activeStudent?.classInfo,
-  };
+  const dispatch = useDispatch();
+  const {student, modules, upcomingClass, unreadNotifications} = useSelector(
+    state => state.studentHome,
+  );
+  const [homeLoading, setHomeLoading] = useState(true);
+  const hubItems = HUB_ITEMS.filter(item => modules?.[item.key] === true);
+
+  useEffect(() => {
+    let active = true;
+    setHomeLoading(true);
+
+    dispatch(fetchStudentHome())
+      .unwrap()
+      .catch(error => {
+        if (!active) {
+          return;
+        }
+        showToast({
+          type: 'error',
+          text1: error?.message || 'Unable to load home.',
+        });
+      })
+      .finally(() => {
+        if (active) {
+          setHomeLoading(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [dispatch]);
 
   useLayoutEffect(() => {
     setDarkStatusBar();
@@ -92,30 +115,40 @@ const StudentHome = () => {
                   {getGreeting()},
                 </Text>
                 <Text style={styles.studentName} numberOfLines={1}>
-                  {activeStudent?.label}
+                  {student?.label}
                 </Text>
               </View>
-              <NotificationBell count={unreadNotificationCount} onDark />
+              <NotificationBell count={unreadNotifications} onDark />
             </View>
           </AnimatedCard>
 
           <View style={styles.body}>
+            {homeLoading ? (
+              <ActivityIndicator
+                style={styles.loader}
+                size="large"
+                color={Colors.primary}
+              />
+            ) : null}
+            {!homeLoading && student ? (
             <AnimatedCard
               index={1}
               entering={ACADEMICS_PROFILE_ENTERING}
               style={styles.dropdownAnchor}>
               <AttendanceStudentDropdown
-                student={dropdownStudent}
+                student={student}
                 premium
                 waveVariant={SCREEN_WAVES.parentHome}
                 readOnly
-                label={studentLabel}
+                label={Strings.student}
                 embedded
               />
             </AnimatedCard>
+            ) : null}
 
+            {!homeLoading ? (
             <View style={styles.hubGrid}>
-              {HUB_ITEMS.map((item, index) => {
+              {hubItems.map((item, index) => {
                 const iconMeta = getHubIconMeta(index);
                 const cardIndex = index + 2;
                 return (
@@ -131,7 +164,10 @@ const StudentHome = () => {
                 );
               })}
             </View>
+            ) : null}
 
+            {!homeLoading && modules?.online === true && upcomingClass ? (
+            <>
             <AnimatedCard
               index={8}
               entering={getAcademicsMenuEntering(null, 8)}
@@ -160,15 +196,15 @@ const StudentHome = () => {
                 </View>
                 <View style={styles.upcomingInfo}>
                   <Text style={styles.upcomingTitle} numberOfLines={1}>
-                    {studentUpcomingClass?.title}
+                    {upcomingClass.title}
                   </Text>
                   <Text style={styles.upcomingMeta} numberOfLines={1}>
-                    {studentUpcomingClass?.classInfo}
+                    {upcomingClass.classInfo}
                   </Text>
                   <View style={styles.upcomingFooter}>
                     <View style={styles.timeRow}>
                       <Icon name="time-outline" size={wp(3.6)} color={Colors.whiteMuted85} />
-                      <Text style={styles.timeText}>{studentUpcomingClass?.time}</Text>
+                      <Text style={styles.timeText}>{upcomingClass.time}</Text>
                     </View>
                     <TouchableOpacity
                       style={styles.joinBtn}
@@ -180,6 +216,8 @@ const StudentHome = () => {
                 </View>
               </LinearGradient>
             </AnimatedCard>
+            </>
+            ) : null}
           </View>
         </ScrollEnterScrollView>
       </SafeAreaView>
@@ -225,6 +263,10 @@ const styles = StyleSheet.create({
     marginTop: -hp(4.5),
     overflow: 'visible',
     zIndex: 2,
+  },
+  loader: {
+    marginTop: hp(10),
+    alignSelf: 'center',
   },
   dropdownAnchor: {
     width: '100%',

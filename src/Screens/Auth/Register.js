@@ -22,9 +22,9 @@ import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
 import {wp, hp} from '../../Constants/Responsive';
-import {LOGGED_IN_STUDENT, STUDENT_LIST} from '../../Constants/dummydata';
+import {STUDENT_LIST} from '../../Constants/dummydata';
 import {ROLES, useRole} from '../../context/RoleContext';
-import {loginParent, setStudentSession} from '../../store/slices/authSlice';
+import {loginParent, loginStudent} from '../../store/slices/authSlice';
 import {showToast} from '../../utils/toast';
 import {withScreenEnter} from '../../hooks/useScreenEnterGate';
 import {EnterView} from '../../Component/AnimatedCard';
@@ -56,8 +56,8 @@ const RegisterContent = () => {
   const submitLock = useRef(false);
   const {clearRole, isParent, setLoggedInStudentId, setRole} = useRole();
   const [familyId, setFamilyId] = useState('FAM-049');
-  const [studentId, setStudentId] = useState('');
-  const [password, setPassword] = useState('12345678');
+  const [studentId, setStudentId] = useState('QA-STU-0001');
+  const [password, setPassword] = useState('StudentQA1!');
   const [showPassword, setShowPassword] = useState(false);
 
   const signInParent = async () => {
@@ -98,34 +98,61 @@ const RegisterContent = () => {
     }
   };
 
+  const signInStudent = async () => {
+    if (signingIn || submitLock.current) {
+      return;
+    }
+
+    const trimmedStudentId = studentId.trim();
+    if (!trimmedStudentId) {
+      showToast({type: 'error', text1: 'Student ID is required.'});
+      return;
+    }
+    if (!password.trim()) {
+      showToast({type: 'error', text1: 'Password is required.'});
+      return;
+    }
+
+    submitLock.current = true;
+    try {
+      const result = await dispatch(
+        loginStudent({studentId: trimmedStudentId, password}),
+      ).unwrap();
+      const matched = STUDENT_LIST.find(
+        item =>
+          item.studentId.toLowerCase() === trimmedStudentId.toLowerCase() ||
+          String(item.value) === String(result?.user?.id),
+      );
+      if (matched) {
+        setLoggedInStudentId(matched.value);
+      } else if (result?.user?.id != null) {
+        setLoggedInStudentId(String(result.user.id));
+      }
+      setRole(ROLES.STUDENT);
+      if (result?.message) {
+        showToast({type: 'success', text1: result.message});
+      }
+      navigation.getParent()?.reset({
+        index: 0,
+        routes: [{name: 'BottomTab'}],
+      });
+    } catch (error) {
+      showToast({
+        type: 'error',
+        text1: error?.message || 'Unable to sign in.',
+      });
+    } finally {
+      submitLock.current = false;
+    }
+  };
+
   const goToHome = () => {
     if (isParent) {
       signInParent();
       return;
     }
 
-    const query = studentId.trim().toLowerCase();
-    const match = query
-      ? STUDENT_LIST.find(
-          item =>
-            item.studentId.toLowerCase() === query ||
-            item.label.toLowerCase() === query,
-        )
-      : null;
-    const matchedStudent = match || LOGGED_IN_STUDENT;
-    setLoggedInStudentId(matchedStudent.value);
-    dispatch(
-      setStudentSession({
-        id: matchedStudent.value,
-        studentId: matchedStudent.studentId,
-        name: matchedStudent.label,
-      }),
-    );
-    setRole(ROLES.STUDENT);
-    navigation.getParent()?.reset({
-      index: 0,
-      routes: [{name: 'BottomTab'}],
-    });
+    signInStudent();
   };
 
   const goToRole = useCallback(() => {
@@ -297,7 +324,7 @@ const RegisterContent = () => {
                 iconSize={wp(4.5)}
                 style={styles.signInBtn}
                 textStyle={styles.signInBtnText}
-                loading={isParent && signingIn}
+                loading={signingIn}
                 onPress={goToHome}
               />
             </RegisterEnter>

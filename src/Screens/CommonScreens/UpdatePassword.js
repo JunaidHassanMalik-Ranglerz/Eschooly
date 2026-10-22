@@ -25,7 +25,7 @@ import {wp, hp} from '../../Constants/Responsive';
 import {withScreenEnter} from '../../hooks/useScreenEnterGate';
 import {getHomeScreenEnter} from '../../utils/cardAnimation';
 import {useRole} from '../../context/RoleContext';
-import {updateParentPassword} from '../../store/slices/authSlice';
+import {updateParentPassword, updateStudentPassword} from '../../store/slices/authSlice';
 import {showToast} from '../../utils/toast';
 
 const REQUIREMENTS = [
@@ -122,10 +122,6 @@ const UpdatePassword = () => {
   };
 
   const handleSave = async () => {
-    if (!isParent) {
-      navigation.goBack();
-      return;
-    }
     if (saving || submitLock.current) {
       return;
     }
@@ -138,13 +134,18 @@ const UpdatePassword = () => {
 
     submitLock.current = true;
     try {
-      const result = await dispatch(
-        updateParentPassword({
-          parent_current_password: currentPassword,
-          parent_password: newPassword,
-          parent_password_confirmation: confirmPassword,
-        }),
-      ).unwrap();
+      const request = isParent
+        ? updateParentPassword({
+            parent_current_password: currentPassword,
+            parent_password: newPassword,
+            parent_password_confirmation: confirmPassword,
+          })
+        : updateStudentPassword({
+            current_password: currentPassword,
+            password: newPassword,
+            password_confirmation: confirmPassword,
+          });
+      const result = await dispatch(request).unwrap();
       showToast({type: 'success', text1: result.message});
       resetToLogin();
     } catch (error) {
@@ -261,14 +262,14 @@ const UpdatePassword = () => {
               style={styles.saveBtnWrap}>
             <Pressable
               style={[styles.saveBtnWrap, IDENTITY_CARD_SHADOW]}
-              disabled={isParent && saving}
+              disabled={saving}
               onPress={handleSave}>
               <LinearGradient
                 colors={PROFILE_GRADIENT}
                 start={GRADIENT_START}
                 end={GRADIENT_END}
                 style={styles.saveBtn}>
-                {isParent && saving ? (
+                {saving ? (
                   <ActivityIndicator size="small" color={Colors.white} />
                 ) : null}
                 <Text style={styles.saveBtnText}>{Strings.updatePassword}</Text>

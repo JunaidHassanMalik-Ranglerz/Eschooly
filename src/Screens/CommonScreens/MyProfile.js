@@ -1,16 +1,13 @@
 import React, {useCallback, useMemo, useRef, useState} from 'react';
 
-import {StatusBar, StyleSheet, Text, View} from 'react-native';
+import {ActivityIndicator, Modal, Pressable, StatusBar, StyleSheet, Text, View} from 'react-native';
 import ScrollEnterScrollView from '../../Component/ScrollEnterScrollView';
 
 import {SafeAreaView} from 'react-native-safe-area-context';
 
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {useDispatch, useSelector} from 'react-redux';
-import {setAuthToken} from '../../api/axiosInstance';
-import {clearCredentials, fetchParentProfile, logoutParent} from '../../store/slices/authSlice';
-import {resetParentHome} from '../../store/slices/parentHomeSlice';
-import {storage} from '../../utils/storage';
+import {fetchParentProfile, fetchStudentProfile, logoutParent, logoutStudent} from '../../store/slices/authSlice';
 import {showToast} from '../../utils/toast';
 
 import LinearGradient from 'react-native-linear-gradient';
@@ -48,8 +45,6 @@ import {
 } from '../../Component/Profile/ProfileTheme';
 
 import {useProfileStudent} from '../../hooks/useProfileStudent';
-
-import {getIdCardData} from '../../Constants/StudentIdCardData';
 
 import {Colors} from '../../Constants/Colors';
 
@@ -94,12 +89,14 @@ const MyProfile = ({isTab = false}) => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const apiProfile = useSelector(state => state.auth.profile);
+  const profileLoading = useSelector(state => state.auth.profileLoading);
   const loggingOut = useSelector(state => state.auth.logoutLoading);
   const logoutLock = useRef(false);
 
   const {profilePerson, profileDetails, isParent} = useProfileStudent();
   const [moreInfoVisible, setMoreInfoVisible] = useState(false);
   const [modalReplay, setModalReplay] = useState(0);
+  const [logoutConfirmVisible, setLogoutConfirmVisible] = useState(false);
 
   const parentPerson = useMemo(() => {
     if (!isParent || !apiProfile) {
@@ -118,6 +115,9 @@ const MyProfile = ({isTab = false}) => {
     });
   }, [apiProfile, isParent, profileDetails]);
 
+  const studentCard = !isParent ? apiProfile?.card : null;
+  const studentDetails = !isParent ? apiProfile?.details || [] : [];
+  const shownDetails = isParent ? parentDetails : studentDetails;
   const title = isParent ? Strings.parentAccount : Strings.myProfile;
 
   const openMoreInfo = useCallback(() => {
@@ -134,10 +134,8 @@ const MyProfile = ({isTab = false}) => {
 
   useFocusEffect(
     useCallback(() => {
-      if (!isParent) {
-        return undefined;
-      }
-      dispatch(fetchParentProfile())
+      const request = isParent ? fetchParentProfile() : fetchStudentProfile();
+      dispatch(request)
         .unwrap()
         .catch(error => {
           if (error?.message) {
@@ -167,30 +165,34 @@ const MyProfile = ({isTab = false}) => {
   };
 
   const handleLogout = async () => {
-    if (!isParent) {
-      storage.clearSession();
-      setAuthToken(null);
-      dispatch(clearCredentials());
-      dispatch(resetParentHome());
-      resetToLogin();
-      return;
-    }
     if (loggingOut || logoutLock.current) {
       return;
     }
 
     logoutLock.current = true;
     try {
-      const result = await dispatch(logoutParent()).unwrap();
+      const result = await dispatch(isParent ? logoutParent() : logoutStudent()).unwrap();
       if (result?.message) {
         showToast({type: 'success', text1: result.message});
       }
     } catch (error) {
       // Local session is already cleared. Return to login either way.
     } finally {
+      setLogoutConfirmVisible(false);
       resetToLogin();
       logoutLock.current = false;
     }
+  };
+
+  const onLogoutPress = () => {
+    if (loggingOut) {
+      return;
+    }
+    if (!isParent) {
+      setLogoutConfirmVisible(true);
+      return;
+    }
+    handleLogout();
   };
 
 
@@ -233,15 +235,23 @@ const MyProfile = ({isTab = false}) => {
             animationIndex={1}
             entering={getHomeScreenEnter(1)}
           />
-        ) : (
+        ) : studentCard ? (
           <AnimatedCard
             index={1}
             entering={getHomeScreenEnter(1)}
             style={styles.idPreviewWrap}>
-            <IdCardPreview data={getIdCardData(profilePerson)} navy />
+            <IdCardPreview data={studentCard} navy />
           </AnimatedCard>
-        )}
+        ) : profileLoading ? (
+          <ActivityIndicator
+            style={styles.profileLoader}
+            size="large"
+            color={Colors.primary}
+          />
+        ) : null}
 
+        {isParent || shownDetails.length > 0 ? (
+        <>
         <AnimatedCard
           index={2}
           entering={getHomeScreenEnter(2)}
@@ -265,7 +275,7 @@ const MyProfile = ({isTab = false}) => {
               end={GRADIENT_END}
               style={styles.detailsCard}>
             <CardWave variant={SCREEN_WAVES.contactDetails} />
-            {(isParent ? parentDetails : profileDetails).map((item, index) => {
+            {shownDetails.map((item, index) => {
               const iconColor = DETAIL_ICON_COLOR[item.key] || Colors.iconSky;
 
               return (
@@ -273,7 +283,7 @@ const MyProfile = ({isTab = false}) => {
                   key={item.key}
                   style={[
                     styles.detailRow,
-                    index === (isParent ? parentDetails : profileDetails).length - 1 && styles.detailRowLast,
+                    index === shownDetails.length - 1 && styles.detailRowLast,
                   ]}>
                   <View style={styles.iconWrap}>
                     <Icon
@@ -297,6 +307,8 @@ const MyProfile = ({isTab = false}) => {
             </LinearGradient>
           </View>
         </AnimatedCard>
+        </>
+        ) : null}
 
 
 
@@ -326,8 +338,8 @@ const MyProfile = ({isTab = false}) => {
           icon="log-out-outline"
           iconColor={ACTION_ICON_COLOR.logout}
           title={Strings.logout}
-          onPress={handleLogout}
-          loading={isParent && loggingOut}
+          onPress={onLogoutPress}
+          loading={loggingOut}
           animationIndex={isParent ? 6 : 5}
           entering={getHomeScreenEnter(isParent ? 6 : 5)}
         />
@@ -344,6 +356,42 @@ const MyProfile = ({isTab = false}) => {
           onClose={closeMoreInfo}
         />
       ) : null}
+
+      <Modal
+        visible={logoutConfirmVisible}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => {
+          if (!loggingOut) {
+            setLogoutConfirmVisible(false);
+          }
+        }}>
+        <View style={styles.confirmOverlay}>
+          <View style={styles.confirmCard}>
+            <Text style={styles.confirmTitle}>{Strings.logout}</Text>
+            <Text style={styles.confirmMessage}>Are you sure you want to logout?</Text>
+            <View style={styles.confirmActions}>
+              <Pressable
+                style={styles.confirmNo}
+                disabled={loggingOut}
+                onPress={() => setLogoutConfirmVisible(false)}>
+                <Text style={styles.confirmNoText}>No</Text>
+              </Pressable>
+              <Pressable
+                style={styles.confirmYes}
+                disabled={loggingOut}
+                onPress={handleLogout}>
+                {loggingOut ? (
+                  <ActivityIndicator size="small" color={Colors.white} />
+                ) : (
+                  <Text style={styles.confirmYesText}>Yes</Text>
+                )}
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
     </SafeAreaView>
   );
@@ -377,6 +425,10 @@ const styles = StyleSheet.create({
 
   },
 
+  profileLoader: {
+    marginTop: hp(4),
+    marginBottom: hp(2),
+  },
   idPreviewWrap: {
     width: '100%',
     marginBottom: hp(2.4),
@@ -478,6 +530,67 @@ const styles = StyleSheet.create({
 
     marginTop: hp(0.08),
 
+  },
+
+  confirmOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(7, 26, 61, 0.55)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: wp(8),
+  },
+  confirmCard: {
+    width: '100%',
+    backgroundColor: Colors.white,
+    borderRadius: CARD_RADIUS,
+    paddingHorizontal: wp(5),
+    paddingTop: hp(2.2),
+    paddingBottom: hp(2),
+  },
+  confirmTitle: {
+    color: Colors.black,
+    fontFamily: Fonts.bold,
+    fontSize: Fontsize.sm,
+  },
+  confirmMessage: {
+    color: Colors.grayText,
+    fontFamily: Fonts.regular,
+    fontSize: Fontsize.xs1,
+    marginTop: hp(0.8),
+  },
+  confirmActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: wp(3),
+    marginTop: hp(2.2),
+  },
+  confirmNo: {
+    minWidth: wp(18),
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: hp(1.2),
+    paddingHorizontal: wp(4),
+    borderRadius: CARD_RADIUS,
+    backgroundColor: Colors.parentBg,
+  },
+  confirmNoText: {
+    color: Colors.black,
+    fontFamily: Fonts.semibold,
+    fontSize: Fontsize.xs1,
+  },
+  confirmYes: {
+    minWidth: wp(18),
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: hp(1.2),
+    paddingHorizontal: wp(4),
+    borderRadius: CARD_RADIUS,
+    backgroundColor: PROFILE_GRADIENT[0],
+  },
+  confirmYesText: {
+    color: Colors.white,
+    fontFamily: Fonts.semibold,
+    fontSize: Fontsize.xs1,
   },
 
 });
