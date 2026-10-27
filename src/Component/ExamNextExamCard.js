@@ -22,11 +22,13 @@ const ExamNextExamCard = ({subject, date, time, animationIndex = 2}) => (
       </View>
       <View style={styles.info}>
         <Text style={styles.title} numberOfLines={1}>
-          {Strings.nextExam}: {subject}
+          {subject ? `${Strings.nextExam}: ${subject}` : Strings.nextExam}
         </Text>
+        {[date, time].filter(Boolean).length ? (
         <Text style={styles.subtitle} numberOfLines={1}>
-          {date} - {time}
+          {[date, time].filter(Boolean).join(' - ')}
         </Text>
+        ) : null}
       </View>
     </View>
   </ProfileGradientCard>

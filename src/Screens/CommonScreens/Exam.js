@@ -1,7 +1,8 @@
-import React, {useState} from 'react';
-import {Image, StatusBar, StyleSheet, Text, View} from 'react-native';
+import React, {useEffect, useMemo, useState} from 'react';
+import {ActivityIndicator, Image, StatusBar, StyleSheet, Text, View} from 'react-native';
+import {useDispatch, useSelector} from 'react-redux';
 import ScrollEnterFlatList from '../../Component/ScrollEnterFlatList';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import MainHeaderComponent from '../../Component/MainHeaderComponent';
 import AttendanceStudentDropdown from '../../Component/AttendanceStudentDropdown';
 import ExamOverviewCard from '../../Component/ExamOverviewCard';
@@ -16,15 +17,23 @@ import {Images} from '../../Assets';
 import {Colors} from '../../Constants/Colors';
 import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
-import {Strings, EXAM_HISTORY} from '../../Constants/Strings';
+import {Strings, EXAM_HISTORY, EXAM_STUDENTS} from '../../Constants/Strings';
+import {ATTENDANCE_STUDENTS, getExamStudentForChild} from '../../Constants/dummydata';
 import {EXAM_STAT_GRADIENTS} from '../../Constants/CardTheme';
 import {wp, hp} from '../../Constants/Responsive';
-import {useRoleData} from '../../hooks/useRoleData';
 import {withScreenEnter} from '../../hooks/useScreenEnterGate';
+import {showToast} from '../../utils/toast';
+import {fetchStudentExam, fetchStudentExams} from '../../store/slices/studentHomeSlice';
 
 const DEFAULT_START = new Date(2025, 10, 13);
 const DEFAULT_END = new Date(2025, 10, 21);
 const EXAM_WAVES = [SCREEN_WAVES.results, null, null, null];
+const EMPTY_OVERVIEW = {
+  totalExams: '',
+  averageScore: '',
+  highestScore: '',
+  lowestScore: '',
+};
 
 const toDateKey = date => {
   const y = date.getFullYear();
@@ -34,15 +43,88 @@ const toDateKey = date => {
 };
 
 const Exam = () => {
-  const {studentLabel, isParent, selectedChildId, setSelectedChildId, activeStudent, childList, attendanceStudents, examStudent, canSwitchChild} =
-    useRoleData();
+  const insets = useSafeAreaInsets();
+  const dispatch = useDispatch();
+  const role = useSelector(state => state.auth.role);
+  const isParent = role === 'parent';
+  const homeStudent = useSelector(state => state.studentHome.student);
+  const [pickedChildId, setPickedChildId] = useState(ATTENDANCE_STUDENTS[0]?.value);
+  const [studentExams, setStudentExams] = useState({
+    overview: EMPTY_OVERVIEW,
+    nextExam: null,
+    history: [],
+  });
+  const [loading, setLoading] = useState(!isParent);
   const [showHistory, setShowHistory] = useState(false);
-  const [startDate, setStartDate] = useState(DEFAULT_START);
-  const [endDate, setEndDate] = useState(DEFAULT_END);
-  const students = isParent ? childList : attendanceStudents;
-  const dropdownReadOnly = isParent ? !canSwitchChild : students.length <= 1;
+  const [startDate, setStartDate] = useState(isParent ? DEFAULT_START : null);
+  const [endDate, setEndDate] = useState(isParent ? DEFAULT_END : null);
 
-  const filteredHistory = React.useMemo(() => {
+  const parentChild =
+    ATTENDANCE_STUDENTS.find(item => item.value === pickedChildId) || ATTENDANCE_STUDENTS[0];
+  const examStudent = isParent
+    ? getExamStudentForChild(parentChild, EXAM_STUDENTS)
+    : {
+        ...EMPTY_OVERVIEW,
+        ...studentExams.overview,
+        nextExamSubject: studentExams.nextExam?.subject || '',
+        nextExamDate: studentExams.nextExam?.date || '',
+        nextExamTime: studentExams.nextExam?.time || '',
+      };
+  const bannerStudent = isParent
+    ? parentChild
+    : {
+        label: homeStudent?.label || '',
+        classInfo: homeStudent?.className || homeStudent?.classLabel || '',
+        classLabel: homeStudent?.classLabel || homeStudent?.className || '',
+        className: homeStudent?.className || '',
+        photoUrl: homeStudent?.photoUrl || '',
+      };
+  const students = isParent ? ATTENDANCE_STUDENTS : [];
+  const studentLabel = isParent ? Strings.child : Strings.student;
+  const range = useMemo(() => {
+    if (isParent || !startDate || !endDate) {
+      return null;
+    }
+    return {from: toDateKey(startDate), to: toDateKey(endDate)};
+  }, [endDate, isParent, startDate]);
+
+  useEffect(() => {
+    if (isParent) {
+      return undefined;
+    }
+    let active = true;
+    setLoading(true);
+    dispatch(fetchStudentExams(range))
+      .unwrap()
+      .then(payload => {
+        if (active) {
+          setStudentExams(payload);
+        }
+      })
+      .catch(error => {
+        if (!active) {
+          return;
+        }
+        setStudentExams({overview: EMPTY_OVERVIEW, nextExam: null, history: []});
+        showToast({
+          type: 'error',
+          text1: error?.message || 'Unable to load exams.',
+        });
+      })
+      .finally(() => {
+        if (active) {
+          setLoading(false);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [dispatch, isParent, range]);
+
+  const filteredHistory = useMemo(() => {
+    if (!isParent) {
+      return studentExams.history;
+    }
     if (!startDate || !endDate) {
       return EXAM_HISTORY;
     }
@@ -51,7 +133,32 @@ const Exam = () => {
     return EXAM_HISTORY.filter(
       item => item.dateISO >= startKey && item.dateISO <= endKey,
     );
-  }, [startDate, endDate]);
+  }, [endDate, isParent, startDate, studentExams.history]);
+
+  const openExamDetail = item => {
+    if (isParent || !item?.id) {
+      return;
+    }
+    dispatch(fetchStudentExam(item.id))
+      .unwrap()
+      .then(detail => {
+        setStudentExams(current => ({
+          ...current,
+          history: current.history.map(row =>
+            row.id === detail.id ? {...row, ...detail} : row,
+          ),
+        }));
+      })
+      .catch(error => {
+        showToast({
+          type: 'error',
+          text1: error?.message || 'Unable to load exam.',
+        });
+      });
+  };
+
+  const overviewValue = (value, loadingValue = '—') =>
+    loading && !isParent ? loadingValue : value || (isParent ? value : '');
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -65,41 +172,53 @@ const Exam = () => {
       <View style={styles.dropdownWrap}>
         <AttendanceStudentDropdown
           animationIndex={1}
-          student={activeStudent}
+          student={bannerStudent}
           students={students}
-          selectedId={selectedChildId}
+          selectedId={isParent ? pickedChildId : undefined}
           premium
-          onSelect={item => setSelectedChildId(item.value)}
-          readOnly={dropdownReadOnly}
+          embedded
+          onSelect={isParent ? item => setPickedChildId(item.value) : undefined}
+          readOnly={!isParent || students.length <= 1}
           label={studentLabel}
         />
       </View>
 
       <ScrollEnterFlatList
-        data={showHistory ? filteredHistory : []}
+        data={showHistory && !loading ? filteredHistory : []}
         keyExtractor={item => item.id}
         renderItem={({item, index}) => (
-          <ExamHistoryItem item={item} animationIndex={index + 2} />
+          <ExamHistoryItem
+            item={item}
+            animationIndex={index + 2}
+            onPress={isParent ? undefined : () => openExamDetail(item)}
+          />
         )}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         bounces={false}
         overScrollMode="never"
         removeClippedSubviews={false}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[
+          styles.content,
+          {paddingBottom: hp(5) + Math.max(insets.bottom, hp(1.5))},
+        ]}
         ListHeaderComponent={
           <View>
             <ProfileSectionTitle animationIndex={2}>
               {isParent ? Strings.resultOverview : Strings.examOverview}
             </ProfileSectionTitle>
 
+            {loading && !isParent ? (
+              <ActivityIndicator style={styles.loader} size="large" color={Colors.primary} />
+            ) : (
+              <>
             <View style={styles.overviewGrid}>
               <ExamOverviewCard
                 icon="document-text-outline"
                 iconBg={Colors.whiteOverlay22}
                 iconColor={Colors.white}
                 label={Strings.totalExams}
-                value={examStudent.totalExams}
+                value={overviewValue(examStudent.totalExams)}
                 trendIcon="pulse-outline"
                 premium
                 animationIndex={3}
@@ -111,8 +230,8 @@ const Exam = () => {
                 iconBg={Colors.whiteOverlay22}
                 iconColor="#86EFAC"
                 label={Strings.averageScore}
-                value={examStudent.averageScore}
-                percent
+                value={overviewValue(examStudent.averageScore)}
+                percent={Boolean(overviewValue(examStudent.averageScore))}
                 trendIcon="bar-chart-outline"
                 premium
                 animationIndex={4}
@@ -123,8 +242,8 @@ const Exam = () => {
                 iconBg={Colors.whiteOverlay22}
                 iconColor="#FCD34D"
                 label={Strings.highestScore}
-                value={examStudent.highestScore}
-                percent
+                value={overviewValue(examStudent.highestScore)}
+                percent={Boolean(overviewValue(examStudent.highestScore))}
                 trendIcon="arrow-up-outline"
                 premium
                 animationIndex={5}
@@ -135,8 +254,8 @@ const Exam = () => {
                 iconBg={Colors.whiteOverlay22}
                 iconColor="#FCA5A5"
                 label={Strings.lowestScore}
-                value={examStudent.lowestScore}
-                percent
+                value={overviewValue(examStudent.lowestScore)}
+                percent={Boolean(overviewValue(examStudent.lowestScore))}
                 trendIcon="arrow-down-outline"
                 premium
                 animationIndex={6}
@@ -144,12 +263,16 @@ const Exam = () => {
               />
             </View>
 
+            {isParent || examStudent.nextExamSubject ? (
             <ExamNextExamCard
               subject={examStudent.nextExamSubject}
               date={examStudent.nextExamDate}
               time={examStudent.nextExamTime}
               animationIndex={7}
             />
+            ) : null}
+              </>
+            )}
 
             <Btn
               title={showHistory ? Strings.hideHistory : Strings.examHistory}
@@ -191,19 +314,21 @@ const Exam = () => {
           </View>
         }
         ListEmptyComponent={
-          showHistory ? (
+          showHistory && !loading ? (
             <Text style={styles.empty}>{Strings.noResultsInRange}</Text>
           ) : null
         }
         ListFooterComponent={
           showHistory ? (
-            <Btn
-              title={Strings.downloadPdf}
-              icon="document-outline"
-              style={styles.downloadBtn}
-              animationIndex={filteredHistory.length + 2}
-              onPress={() => {}}
-            />
+            <View style={styles.footerWrap}>
+              <Btn
+                title={Strings.downloadPdf}
+                icon="document-outline"
+                style={styles.downloadBtn}
+                animationIndex={filteredHistory.length + 2}
+                onPress={() => {}}
+              />
+            </View>
           ) : null
         }
       />
@@ -220,7 +345,8 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: wp(4),
-    paddingBottom: hp(3),
+    paddingBottom: hp(5),
+    flexGrow: 1,
   },
   dropdownWrap: {
     paddingHorizontal: wp(4),
@@ -235,7 +361,8 @@ const styles = StyleSheet.create({
     marginBottom: hp(1),
   },
   historyBtn: {
-    marginTop: hp(0.5),
+    marginTop: hp(1.6),
+    marginBottom: hp(0.8),
   },
   historyHeader: {
     flexDirection: 'row',
@@ -263,8 +390,12 @@ const styles = StyleSheet.create({
     width: wp(5),
     height: wp(5),
   },
+  footerWrap: {
+    marginTop: hp(1.2),
+    paddingBottom: hp(1.2),
+  },
   downloadBtn: {
-    marginTop: hp(1),
+    marginTop: 0,
   },
   empty: {
     color: Colors.grayText,
@@ -273,5 +404,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: hp(2),
     marginBottom: hp(1),
+  },
+  loader: {
+    marginVertical: hp(3),
   },
 });

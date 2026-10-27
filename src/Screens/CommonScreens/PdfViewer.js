@@ -30,7 +30,10 @@ const PdfViewer = () => {
           ) : null}
 
           <Pdf
-            source={{uri: pdfUrl, cache: true}}
+            source={{
+              uri: pdfUrl,
+              cache: !String(pdfUrl || '').startsWith('file://'),
+            }}
             style={styles.pdf}
             trustAllCerts={false}
             fitPolicy={0}

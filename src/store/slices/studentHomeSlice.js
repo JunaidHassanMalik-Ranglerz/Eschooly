@@ -6,7 +6,12 @@ import {
   getStudentAssignmentOverview,
   getStudentAssignments,
   combineStudentResults,
+  combineStudentExams,
   getStudentAttendance,
+  getStudentExam,
+  getStudentExams,
+  getStudentExamsHistory,
+  getStudentExamsOverview,
   getStudentHolidays,
   getStudentHome,
   getStudentLibrary,
@@ -20,6 +25,8 @@ import {
   mapStudentAnnouncement,
   mapStudentAssignments,
   mapStudentAttendance,
+  mapStudentExam,
+  mapStudentExamsOverview,
   mapStudentHolidays,
   mapStudentHome,
   mapStudentResultCard,
@@ -30,6 +37,8 @@ import {
   mapStudentTimetable,
   readAnnouncementPage,
   readAssignmentPage,
+  readExamHistoryPage,
+  readExamPage,
   readLibraryPage,
   readResultsPage,
 } from '../../services/studentService';
@@ -276,7 +285,11 @@ export const fetchStudentResults = createAsyncThunk(
   'studentHome/fetchStudentResults',
   async (_, {rejectWithValue}) => {
     const settled = await Promise.allSettled([
-      loadMappedResult(getStudentResultCard, mapStudentResultCard, 'Unable to load results.'),
+      loadMappedResult(
+        () => getStudentResultCard({result_mode: 'final'}),
+        mapStudentResultCard,
+        'Unable to load results.',
+      ),
       loadMappedResult(
         getStudentResultsSummary,
         mapStudentResultsSummary,
@@ -367,6 +380,113 @@ export const fetchStudentAttendance = createAsyncThunk(
         });
       }
       return mapStudentAttendance(body);
+    } catch (error) {
+      return rejectWithValue({
+        message: getApiErrorMessage(error),
+        status: error?.response?.status ?? null,
+      });
+    }
+  },
+);
+
+const loadExamSchedule = async () => {
+  const response = await getStudentExams({per_page: 20});
+  const body = response?.data;
+  if (body && body.success === false) {
+    throw {message: body.message || 'Unable to load exams.', status: response?.status ?? null};
+  }
+  const firstPage = readExamPage(body);
+  const items = [...firstPage.items];
+  const lastPage = Math.min(firstPage.lastPage || 1, 10);
+  for (let page = 2; page <= lastPage; page += 1) {
+    const nextResponse = await getStudentExams({per_page: 20, page});
+    const nextBody = nextResponse?.data;
+    if (nextBody && nextBody.success === false) {
+      break;
+    }
+    items.push(...readExamPage(nextBody).items);
+  }
+  return items;
+};
+
+const loadExamHistory = async range => {
+  const params = {};
+  if (range?.from) {
+    params.from = range.from;
+  }
+  if (range?.to) {
+    params.to = range.to;
+  }
+  const response = await getStudentExamsHistory(params);
+  const body = response?.data;
+  if (body && body.success === false) {
+    throw {message: body.message || 'Unable to load exams.', status: response?.status ?? null};
+  }
+  const firstPage = readExamHistoryPage(body);
+  const items = [...firstPage.items];
+  const lastPage = Math.min(firstPage.lastPage || 1, 10);
+  for (let page = 2; page <= lastPage; page += 1) {
+    const nextResponse = await getStudentExamsHistory({...params, page});
+    const nextBody = nextResponse?.data;
+    if (nextBody && nextBody.success === false) {
+      break;
+    }
+    items.push(...readExamHistoryPage(nextBody).items);
+  }
+  return items;
+};
+
+export const fetchStudentExams = createAsyncThunk(
+  'studentHome/fetchStudentExams',
+  async (range, {rejectWithValue}) => {
+    const settled = await Promise.allSettled([
+      (async () => {
+        const response = await getStudentExamsOverview();
+        const body = response?.data;
+        if (body && body.success === false) {
+          throw {
+            message: body.message || 'Unable to load exams.',
+            status: response?.status ?? null,
+          };
+        }
+        return mapStudentExamsOverview(body);
+      })(),
+      loadExamSchedule(),
+      loadExamHistory(range),
+    ]);
+    const overview = settled[0].status === 'fulfilled' ? settled[0].value : null;
+    const schedule = settled[1].status === 'fulfilled' ? settled[1].value : [];
+    const history = settled[2].status === 'fulfilled' ? settled[2].value : [];
+    if (!overview && !schedule.length && !history.length) {
+      const failed = settled.find(item => item.status === 'rejected');
+      return rejectWithValue({
+        message:
+          failed?.reason?.message ||
+          getApiErrorMessage(failed?.reason) ||
+          'Unable to load exams.',
+        status: failed?.reason?.status ?? failed?.reason?.response?.status ?? null,
+      });
+    }
+    return combineStudentExams({overview, schedule, history});
+  },
+);
+
+export const fetchStudentExam = createAsyncThunk(
+  'studentHome/fetchStudentExam',
+  async (examId, {rejectWithValue}) => {
+    try {
+      const response = await getStudentExam(examId);
+      const body = response?.data;
+      if (body && body.success === false) {
+        return rejectWithValue({
+          message:
+            typeof body.message === 'string' && body.message
+              ? body.message
+              : 'Unable to load exam.',
+          status: response?.status ?? null,
+        });
+      }
+      return mapStudentExam(body);
     } catch (error) {
       return rejectWithValue({
         message: getApiErrorMessage(error),

@@ -236,8 +236,7 @@ export const MENU_LIST = [
     value: 'exams',
     label: Strings.exams,
     icon: Images.exams,
-    screen: 'Exam',
-    tab: true,
+    screen: 'ParentResults',
     parentScreen: 'ExamSchedule',
   },
   {

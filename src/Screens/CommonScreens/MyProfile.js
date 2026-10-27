@@ -204,7 +204,7 @@ const MyProfile = ({isTab = false}) => {
 
       <MainHeaderComponent
 
-        title={title}
+        title={title} 
 
         notificationCount={1}
 

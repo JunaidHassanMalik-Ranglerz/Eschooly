@@ -10,7 +10,7 @@ import {Strings} from '../Constants/Strings';
 import {getSubjectGradient} from '../Constants/CardTheme';
 import {wp, hp} from '../Constants/Responsive';
 
-const ExamHistoryItem = ({item, animationIndex = 0}) => {
+const ExamHistoryItem = ({item, animationIndex = 0, onPress}) => {
   const isPassed = item.status === 'PASSED';
   const isFailed = item.status === 'FAILED';
   const badgeBg = isPassed ? Colors.whiteOverlay22 : 'rgba(239, 68, 68, 0.22)';
@@ -26,7 +26,8 @@ const ExamHistoryItem = ({item, animationIndex = 0}) => {
       innerStyle={styles.inner}
       animationIndex={animationIndex}
       colors={getSubjectGradient(gradientIndex)}
-      waveVariant={animationIndex === 8 ? 'results' : null}>
+      waveVariant={animationIndex === 8 ? 'results' : null}
+      onPress={onPress}>
       <View style={styles.topRow}>
         <View style={styles.subjectRow}>
           <View style={styles.iconWrap}>

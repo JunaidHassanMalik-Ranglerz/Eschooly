@@ -29,6 +29,7 @@ import {showToast} from '../../utils/toast';
 import {fetchChildResultCard, fetchParentHome} from '../../store/slices/parentHomeSlice';
 import {fetchStudentResults} from '../../store/slices/studentHomeSlice';
 import {downloadChildResultCard} from '../../services/parentService';
+import {downloadStudentResultCard} from '../../services/studentService';
 
 const EMPTY_CARD = {overall: '—', hint: '', subjects: []};
 
@@ -61,12 +62,15 @@ const gradeTone = grade => {
 const StudentResults = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const {isParent, studentLabel} = useRoleData();
+  const role = useSelector(state => state.auth.role);
+  const isParent = role === 'parent';
+  const {studentLabel} = useRoleData();
   const {selectedChildId: homeChildId, children} = useSelector(state => state.parentHome);
   const homeStudent = useSelector(state => state.studentHome.student);
   const [pickedChildId, setPickedChildId] = useState(null);
   const [resultCard, setResultCard] = useState(null);
   const [studentResults, setStudentResults] = useState(null);
+  const resultChild = studentResults?.child;
   const [loading, setLoading] = useState(true);
   const [activeTerm, setActiveTerm] = useState(Strings.monthly);
   const [termReplay, setTermReplay] = useState(0);
@@ -82,12 +86,22 @@ const StudentResults = () => {
       ? resultCard.child
       : parentChild
     : {
-        label: homeStudent?.label || '',
-        classInfo: homeStudent?.className || homeStudent?.classLabel || '',
-        classLabel: homeStudent?.classLabel || homeStudent?.className || '',
-        className: homeStudent?.className || '',
-        photoUrl: homeStudent?.photoUrl || '',
-        rollNo: homeStudent?.rollNo || '',
+        label: resultChild?.label || homeStudent?.label || '',
+        classInfo:
+          resultChild?.classInfo ||
+          resultChild?.classLabel ||
+          homeStudent?.className ||
+          homeStudent?.classLabel ||
+          '',
+        classLabel:
+          resultChild?.classLabel ||
+          homeStudent?.classLabel ||
+          homeStudent?.className ||
+          '',
+        className: resultChild?.className || homeStudent?.className || '',
+        photoUrl: resultChild?.photoUrl || homeStudent?.photoUrl || '',
+        rollNo: resultChild?.rollNo || homeStudent?.rollNo || '',
+        sectionName: resultChild?.sectionName || homeStudent?.sectionName || '',
       };
   const parentResult =
     activeTerm === Strings.year ? resultCard?.year : resultCard?.monthly;
@@ -191,17 +205,26 @@ const StudentResults = () => {
   }, []);
 
   const handleDownload = useCallback(async () => {
-    if (!isParent) {
-      setDownloaded(true);
+    if (downloading) {
       return;
     }
-    if (!activeChildId || downloading) {
+    if (isParent && !activeChildId) {
       return;
     }
 
     setDownloading(true);
     try {
-      const pdfUrl = await downloadChildResultCard(activeChildId);
+      if (isParent) {
+        const pdfUrl = await downloadChildResultCard(activeChildId);
+        setDownloaded(true);
+        navigation.navigate('PdfViewer', {
+          pdfUrl,
+          title: Strings.resultCard,
+        });
+        return;
+      }
+
+      const pdfUrl = await downloadStudentResultCard();
       setDownloaded(true);
       navigation.navigate('PdfViewer', {
         pdfUrl,
@@ -285,8 +308,7 @@ const StudentResults = () => {
               style={styles.downloadBtn}
               activeOpacity={0.85}
               disabled={downloading}
-              // onPress={handleDownload}
-              >
+              onPress={handleDownload}>
               {downloading ? (
                 <ActivityIndicator size="small" color={Colors.white} />
               ) : (
@@ -356,15 +378,25 @@ const StudentResults = () => {
                     <Text style={styles.subjectName} numberOfLines={1}>
                       {item.name}
                     </Text>
-                    {item.score ? (
-                    <Text style={styles.subjectScore}>{item.score}%</Text>
+                    {item.obtained && item.total ? (
+                      <Text style={styles.subjectScore}>
+                        {item.score
+                          ? `${item.obtained}/${item.total} · ${item.score}%`
+                          : `${item.obtained}/${item.total}`}
+                      </Text>
+                    ) : item.score ? (
+                      <Text style={styles.subjectScore}>{item.score}%</Text>
+                    ) : item.obtained ? (
+                      <Text style={styles.subjectScore}>{item.obtained}</Text>
                     ) : null}
                   </View>
-                  <View style={[styles.gradeBadge, {backgroundColor: tone.bg}]}>
-                    <Text style={[styles.gradeText, {color: tone.text}]}>
-                      {item.grade}
-                    </Text>
-                  </View>
+                  {item.grade ? (
+                    <View style={[styles.gradeBadge, {backgroundColor: tone.bg}]}>
+                      <Text style={[styles.gradeText, {color: tone.text}]}>
+                        {item.grade}
+                      </Text>
+                    </View>
+                  ) : null}
                 </LinearGradient>
               </AnimatedCard>
             );
