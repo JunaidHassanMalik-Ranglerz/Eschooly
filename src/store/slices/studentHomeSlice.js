@@ -3,8 +3,13 @@ import {getApiErrorMessage} from '../../utils/apiError';
 import {
   getStudentAnnouncement,
   getStudentAnnouncements,
+  getStudentAssignment,
   getStudentAssignmentOverview,
   getStudentAssignments,
+  getStudentAssignmentsGraded,
+  getStudentAssignmentSubmission,
+  submitStudentAssignment,
+  updateStudentAssignmentSubmission,
   combineStudentResults,
   combineStudentExams,
   getStudentAttendance,
@@ -23,7 +28,10 @@ import {
   getStudentTeachers,
   getStudentTimetable,
   mapStudentAnnouncement,
+  mapStudentAssignmentDetail,
   mapStudentAssignments,
+  mapStudentAssignmentSubmission,
+  mergeStudentAssignmentDetail,
   mapStudentAttendance,
   mapStudentExam,
   mapStudentExamsOverview,
@@ -102,41 +110,132 @@ export const fetchStudentTimetable = createAsyncThunk(
   },
 );
 
+const loadAssignmentPages = async request => {
+  const response = await request({per_page: 50});
+  const body = response?.data;
+  if (body && body.success === false) {
+    throw {message: body.message || 'Unable to load assignments.'};
+  }
+  const firstPage = readAssignmentPage(body);
+  const pages = [firstPage];
+  const lastPage = Math.min(firstPage.lastPage || 1, 10);
+  for (let page = 2; page <= lastPage; page += 1) {
+    const nextResponse = await request({per_page: 50, page});
+    const nextBody = nextResponse?.data;
+    if (nextBody && nextBody.success === false) {
+      break;
+    }
+    pages.push(readAssignmentPage(nextBody));
+  }
+  return pages;
+};
+
 export const fetchStudentAssignments = createAsyncThunk(
   'studentHome/fetchStudentAssignments',
   async (_, {rejectWithValue}) => {
     try {
-      const [overviewResponse, listResponse] = await Promise.all([
+      const [overviewSettled, listSettled, gradedSettled] = await Promise.allSettled([
         getStudentAssignmentOverview(),
-        getStudentAssignments({per_page: 50}),
+        loadAssignmentPages(getStudentAssignments),
+        loadAssignmentPages(getStudentAssignmentsGraded),
       ]);
-      const overviewBody = overviewResponse?.data;
-      const listBody = listResponse?.data;
+      const overviewBody =
+        overviewSettled.status === 'fulfilled' ? overviewSettled.value?.data : null;
+      const pages = listSettled.status === 'fulfilled' ? listSettled.value : [];
+      const gradedPages = gradedSettled.status === 'fulfilled' ? gradedSettled.value : [];
       if (
-        (overviewBody && overviewBody.success === false) ||
-        (listBody && listBody.success === false)
+        (overviewBody && overviewBody.success === false) &&
+        !pages.length &&
+        !gradedPages.length
       ) {
         return rejectWithValue({
+          message: overviewBody.message || 'Unable to load assignments.',
+        });
+      }
+      if (listSettled.status === 'rejected' && gradedSettled.status === 'rejected') {
+        return rejectWithValue({
           message:
-            (typeof listBody?.message === 'string' && listBody.message) ||
-            (typeof overviewBody?.message === 'string' && overviewBody.message) ||
+            listSettled.reason?.message ||
+            getApiErrorMessage(listSettled.reason) ||
             'Unable to load assignments.',
         });
       }
+      return mapStudentAssignments(pages, overviewBody, gradedPages);
+    } catch (error) {
+      return rejectWithValue({
+        message: getApiErrorMessage(error),
+        status: error?.response?.status ?? null,
+      });
+    }
+  },
+);
 
-      const firstPage = readAssignmentPage(listBody);
-      const pages = [firstPage];
-      const lastPage = Math.min(firstPage.lastPage || 1, 10);
-      for (let page = 2; page <= lastPage; page += 1) {
-        const nextResponse = await getStudentAssignments({per_page: 50, page});
-        const nextBody = nextResponse?.data;
-        if (nextBody && nextBody.success === false) {
-          break;
-        }
-        pages.push(readAssignmentPage(nextBody));
+export const fetchStudentAssignmentDetail = createAsyncThunk(
+  'studentHome/fetchStudentAssignmentDetail',
+  async (assignmentId, {rejectWithValue}) => {
+    try {
+      const [detailSettled, submissionSettled] = await Promise.allSettled([
+        getStudentAssignment(assignmentId),
+        getStudentAssignmentSubmission(assignmentId),
+      ]);
+      const detailBody =
+        detailSettled.status === 'fulfilled' ? detailSettled.value?.data : null;
+      const submissionBody =
+        submissionSettled.status === 'fulfilled' ? submissionSettled.value?.data : null;
+      if (detailBody && detailBody.success === false && !submissionBody) {
+        return rejectWithValue({
+          message: detailBody.message || 'Unable to load assignment.',
+        });
       }
+      if (detailSettled.status === 'rejected' && submissionSettled.status === 'rejected') {
+        return rejectWithValue({
+          message:
+            detailSettled.reason?.message ||
+            getApiErrorMessage(detailSettled.reason) ||
+            'Unable to load assignment.',
+        });
+      }
+      const detail =
+        detailBody && detailBody.success !== false
+          ? mapStudentAssignmentDetail(detailBody)
+          : null;
+      const submission =
+        submissionBody && submissionBody.success !== false
+          ? mapStudentAssignmentSubmission(submissionBody)
+          : null;
+      return {
+        id: String(assignmentId),
+        ...mergeStudentAssignmentDetail(detail, submission),
+      };
+    } catch (error) {
+      return rejectWithValue({
+        message: getApiErrorMessage(error),
+        status: error?.response?.status ?? null,
+      });
+    }
+  },
+);
 
-      return mapStudentAssignments(pages, overviewBody);
+export const sendStudentAssignmentSubmission = createAsyncThunk(
+  'studentHome/sendStudentAssignmentSubmission',
+  async ({assignmentId, notes, update}, {rejectWithValue}) => {
+    try {
+      const request = update
+        ? updateStudentAssignmentSubmission
+        : submitStudentAssignment;
+      const response = await request(assignmentId, notes);
+      const body = response?.data;
+      if (body && body.success === false) {
+        return rejectWithValue({
+          message: body.message || 'Unable to submit assignment.',
+        });
+      }
+      return {
+        id: String(assignmentId),
+        ...mapStudentAssignmentSubmission(body),
+        notes,
+        status: 'submitted',
+      };
     } catch (error) {
       return rejectWithValue({
         message: getApiErrorMessage(error),

@@ -1,75 +1,222 @@
-import React, {useEffect, useState} from 'react';
-import {ActivityIndicator, StatusBar, StyleSheet, Text} from 'react-native';
+import React, {useCallback, useEffect, useState} from 'react';
+import {ActivityIndicator, RefreshControl, StatusBar, StyleSheet, Text} from 'react-native';
 import ScrollEnterFlatList from '../../Component/ScrollEnterFlatList';
+import {useNavigation} from '@react-navigation/native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {useDispatch, useSelector} from 'react-redux';
 import MainHeaderComponent from '../../Component/MainHeaderComponent';
 import AssignmentOverviewCard from '../../Component/Assignment/AssignmentOverviewCard';
 import AssignmentSubjectCard from '../../Component/Assignment/AssignmentSubjectCard';
+import AttendanceStudentDropdown from '../../Component/AttendanceStudentDropdown';
 import SelectedChildBanner from '../../Component/SelectedChildBanner';
 import {Colors} from '../../Constants/Colors';
 import {Strings} from '../../Constants/Strings';
 import {wp, hp} from '../../Constants/Responsive';
 import {useRoleData} from '../../hooks/useRoleData';
 import {withScreenEnter} from '../../hooks/useScreenEnterGate';
-import {useDispatch} from 'react-redux';
 import {showToast} from '../../utils/toast';
-import {fetchStudentAssignments} from '../../store/slices/studentHomeSlice';
+import {
+  fetchStudentAssignmentDetail,
+  fetchStudentAssignments,
+  sendStudentAssignmentSubmission,
+} from '../../store/slices/studentHomeSlice';
+import {downloadStudentAssignmentAttachment} from '../../services/studentService';
 import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
 
 const Assignment = () => {
+  const navigation = useNavigation();
   const dispatch = useDispatch();
+  const role = useSelector(state => state.auth.role);
+  const isParent = role === 'parent';
+  const homeStudent = useSelector(state => state.studentHome.student);
   const {
-    isParent,
     activeStudent,
     assignmentSubjects,
     assignmentOverview,
     canSwitchChild,
+    studentLabel,
   } = useRoleData();
   const [openSubjectId, setOpenSubjectId] = useState(null);
+  const [openAssignmentId, setOpenAssignmentId] = useState(null);
   const [studentOverview, setStudentOverview] = useState(null);
   const [studentSubjects, setStudentSubjects] = useState([]);
+  const [detailById, setDetailById] = useState({});
+  const [notesById, setNotesById] = useState({});
+  const [loadingAssignmentId, setLoadingAssignmentId] = useState(null);
+  const [submittingId, setSubmittingId] = useState(null);
   const [loading, setLoading] = useState(!isParent);
+  const [refreshing, setRefreshing] = useState(false);
   const overview = isParent ? assignmentOverview : studentOverview;
   const subjects = isParent ? assignmentSubjects : studentSubjects;
+  const bannerChild = {
+    label: homeStudent?.label || '',
+    classInfo: homeStudent?.className || homeStudent?.classLabel || '',
+    classLabel: homeStudent?.classLabel || homeStudent?.className || '',
+    className: homeStudent?.className || '',
+    photoUrl: homeStudent?.photoUrl || '',
+    rollNo: homeStudent?.rollNo || '',
+  };
 
-  useEffect(() => {
-    if (isParent) {
-      return undefined;
+  const loadAssignments = useCallback(
+    (isRefresh = false) => {
+      if (isParent) {
+        return undefined;
+      }
+
+      let active = true;
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+      dispatch(fetchStudentAssignments())
+        .unwrap()
+        .then(result => {
+          if (!active) {
+            return;
+          }
+          setStudentOverview(result.overview);
+          setStudentSubjects(result.subjects);
+          if (isRefresh) {
+            setDetailById({});
+            setOpenAssignmentId(null);
+          }
+        })
+        .catch(error => {
+          if (!active) {
+            return;
+          }
+          if (!isRefresh) {
+            setStudentOverview({total: 0, pending: 0, submitted: 0, overdue: 0});
+            setStudentSubjects([]);
+          }
+          showToast({
+            type: 'error',
+            text1: error?.message || 'Unable to load assignments.',
+          });
+        })
+        .finally(() => {
+          if (!active) {
+            return;
+          }
+          setLoading(false);
+          setRefreshing(false);
+        });
+
+      return () => {
+        active = false;
+      };
+    },
+    [dispatch, isParent],
+  );
+
+  useEffect(() => loadAssignments(false), [loadAssignments]);
+
+  const mergeAssignment = (assignmentId, extra) => {
+    setStudentSubjects(current =>
+      current.map(subject => ({
+        ...subject,
+        assignments: (subject.assignments || []).map(item =>
+          item.id === assignmentId ? {...item, ...extra} : item,
+        ),
+        pendingCount: (subject.assignments || []).filter(item =>
+          item.id === assignmentId
+            ? (extra.status || item.status) === 'pending'
+            : item.status === 'pending',
+        ).length,
+      })),
+    );
+    setDetailById(current => ({
+      ...current,
+      [assignmentId]: {...(current[assignmentId] || {}), ...extra},
+    }));
+  };
+
+  const openAssignment = assignment => {
+    if (isParent || !assignment?.id) {
+      return;
     }
-
-    let active = true;
-    setLoading(true);
-    dispatch(fetchStudentAssignments())
+    if (openAssignmentId === assignment.id) {
+      setOpenAssignmentId(null);
+      return;
+    }
+    setOpenAssignmentId(assignment.id);
+    if (detailById[assignment.id]) {
+      return;
+    }
+    setLoadingAssignmentId(assignment.id);
+    dispatch(fetchStudentAssignmentDetail(assignment.id))
       .unwrap()
-      .then(result => {
-        if (!active) {
-          return;
+      .then(detail => {
+        mergeAssignment(assignment.id, detail);
+        if (detail.notes) {
+          setNotesById(current => ({...current, [assignment.id]: detail.notes}));
         }
-        setStudentOverview(result.overview);
-        setStudentSubjects(result.subjects);
       })
       .catch(error => {
-        if (!active) {
-          return;
-        }
-        setStudentOverview({total: 0, pending: 0, submitted: 0, overdue: 0});
-        setStudentSubjects([]);
         showToast({
           type: 'error',
-          text1: error?.message || 'Unable to load assignments.',
+          text1: error?.message || 'Unable to load assignment.',
         });
       })
       .finally(() => {
-        if (active) {
-          setLoading(false);
-        }
+        setLoadingAssignmentId(null);
       });
+  };
 
-    return () => {
-      active = false;
-    };
-  }, [dispatch, isParent]);
+  const handleAttachment = async (assignment, file) => {
+    try {
+      const pdfUrl = await downloadStudentAssignmentAttachment(
+        assignment.id,
+        file.id,
+        file.name,
+      );
+      navigation.navigate('PdfViewer', {
+        pdfUrl,
+        title: file.name || Strings.assignment,
+      });
+    } catch (error) {
+      showToast({
+        type: 'error',
+        text1: error?.message || 'Unable to download this file.',
+      });
+    }
+  };
+
+  const handleSubmit = assignment => {
+    if (submittingId) {
+      return;
+    }
+    setSubmittingId(assignment.id);
+    dispatch(
+      sendStudentAssignmentSubmission({
+        assignmentId: assignment.id,
+        notes: notesById[assignment.id] || '',
+        update: assignment.status === 'submitted',
+      }),
+    )
+      .unwrap()
+      .then(payload => {
+        mergeAssignment(assignment.id, payload);
+        showToast({
+          type: 'success',
+          text1:
+            assignment.status === 'submitted'
+              ? Strings.updateSubmission
+              : Strings.submitted,
+        });
+      })
+      .catch(error => {
+        showToast({
+          type: 'error',
+          text1: error?.message || 'Unable to submit assignment.',
+        });
+      })
+      .finally(() => {
+        setSubmittingId(null);
+      });
+  };
 
   return (
       <SafeAreaView style={styles.container} edges={['top']}>
@@ -84,10 +231,20 @@ const Assignment = () => {
         data={loading && !isParent ? [] : subjects}
         keyExtractor={item => item.id}
         showsVerticalScrollIndicator={false}
-        bounces={false}
-        overScrollMode="never"
+        bounces
+        overScrollMode="auto"
         removeClippedSubviews={false}
         contentContainerStyle={styles.content}
+        refreshControl={
+          isParent ? undefined : (
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => loadAssignments(true)}
+              tintColor={Colors.primary}
+              colors={[Colors.primary]}
+            />
+          )
+        }
         ListHeaderComponent={
           <>
             {isParent ? (
@@ -96,7 +253,15 @@ const Assignment = () => {
                 canSwitch={canSwitchChild}
                 animationIndex={1}
               />
-            ) : null}
+            ) : (
+              <AttendanceStudentDropdown
+                student={bannerChild}
+                premium
+                embedded
+                readOnly
+                label={studentLabel}
+              />
+            )}
             {!isParent && loading ? (
               <ActivityIndicator
                 style={styles.loader}
@@ -123,6 +288,17 @@ const Assignment = () => {
             open={openSubjectId === item.id}
             premium
             animationIndex={index + (isParent ? 3 : 2)}
+            openAssignmentId={openAssignmentId}
+            loadingAssignmentId={loadingAssignmentId}
+            canSubmit={!isParent}
+            notesById={notesById}
+            submittingId={submittingId}
+            onAssignmentPress={isParent ? undefined : openAssignment}
+            onAttachmentPress={isParent ? undefined : handleAttachment}
+            onNotesChange={(id, value) =>
+              setNotesById(current => ({...current, [id]: value}))
+            }
+            onSubmit={isParent ? undefined : handleSubmit}
             onToggle={() =>
               setOpenSubjectId(openSubjectId === item.id ? null : item.id)
             }

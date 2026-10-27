@@ -303,19 +303,85 @@ const overviewSource = data => {
   );
 };
 
+const assignmentAttachments = record => {
+  const source = asObject(record) || {};
+  const list = Array.isArray(source.attachments)
+    ? source.attachments
+    : Array.isArray(source.files)
+      ? source.files
+      : Array.isArray(source.documents)
+        ? source.documents
+        : [];
+  return list
+    .map((item, index) => {
+      const slot = asObject(item) || {};
+      return {
+        id: text(slot.id || slot.file_id) || String(index),
+        name: text(slot.name || slot.file_name || slot.original_name || slot.title) || 'Attachment',
+      };
+    })
+    .filter(item => item.id);
+};
+
+const assignmentStatus = slot => {
+  const raw = text(slot.status || slot.submission_status || slot.state).toLowerCase();
+  if (raw.includes('overdue') || raw.includes('late')) {
+    return 'overdue';
+  }
+  if (
+    raw.includes('submit') ||
+    raw.includes('graded') ||
+    raw.includes('complete') ||
+    slot.submitted === true ||
+    slot.is_submitted === true ||
+    slot.has_submission === true ||
+    text(slot.grade || slot.obtained_marks)
+  ) {
+    return 'submitted';
+  }
+  return 'pending';
+};
+
+const assignmentScore = slot => {
+  const grade = text(slot.grade || slot.grade_name);
+  const percentage = slot.percentage ?? slot.percent ?? slot.score;
+  if (percentage !== undefined && percentage !== null && percentage !== '') {
+    return {grade, score: text(percentage).replace('%', '')};
+  }
+  const obtained = text(slot.obtained_marks ?? slot.obtained ?? slot.marks);
+  const total = text(slot.total_marks ?? slot.total ?? slot.max_marks);
+  if (obtained && total) {
+    return {grade, score: `${obtained}/${total}`};
+  }
+  return {grade, score: obtained};
+};
+
 const mapAssignment = (item, index) => {
   const slot = asObject(item) || {};
-  const status = text(slot.status).toLowerCase();
+  const submission = asObject(slot.submission) || {};
   const type = text(slot.type || slot.assignment_type).toLowerCase();
+  const marks = assignmentScore({...submission, ...slot});
   return {
     id: text(slot.id) || String(index),
     title: text(slot.title || slot.name),
     teacher: namedRecord(slot.teacher) || text(slot.teacher_name),
-    dueDate: formatDue(slot.due_at || slot.due_date || slot.deadline || slot.due_on || slot.due),
-    status: ['pending', 'submitted', 'overdue'].includes(status) ? status : 'pending',
+    dueDate: formatDue(
+      slot.due_at || slot.due_date || slot.deadline || slot.due_on || slot.due || slot.dueDate,
+    ),
+    status: assignmentStatus({...slot, ...submission}),
     type: ['homework', 'project', 'quiz', 'lab'].includes(type) ? type : 'homework',
     subjectId: text(asObject(slot.subject)?.id ?? slot.subject_id),
     subjectName: namedRecord(slot.subject) || text(slot.subject_name),
+    description: text(
+      slot.description || slot.instructions || slot.details || slot.body || slot.message,
+    ),
+    attachments: assignmentAttachments(slot),
+    grade: marks.grade,
+    score: marks.score,
+    notes: text(slot.notes || submission.notes || slot.submission_notes),
+    submittedAt: formatDue(
+      slot.submitted_at || submission.submitted_at || slot.submitted_on,
+    ),
   };
 };
 
@@ -365,8 +431,8 @@ export const readAssignmentPage = body => {
   };
 };
 
-export const mapStudentAssignments = (pages, overviewBody) => {
-  const collected = pages.reduce(
+const collectAssignmentPages = pages =>
+  pages.reduce(
     (result, page) => {
       if (page.grouped) {
         result.grouped.push(...page.items);
@@ -378,9 +444,55 @@ export const mapStudentAssignments = (pages, overviewBody) => {
     {grouped: [], flat: []},
   );
 
-  const subjects = collected.grouped.length
+const flattenAssignmentSubjects = subjects =>
+  subjects.flatMap(item => item.assignments || []);
+
+const mergeAssignmentRows = (left, right) => {
+  const rows = new Map();
+  [...left, ...right].forEach(item => {
+    if (!item?.id && !item?.title) {
+      return;
+    }
+    const key = text(item.id || item.title);
+    const prev = rows.get(key) || {};
+    rows.set(key, {
+      ...prev,
+      ...item,
+      title: item.title || prev.title,
+      teacher: item.teacher || prev.teacher,
+      dueDate: item.dueDate || prev.dueDate,
+      description: item.description || prev.description,
+      grade: item.grade || prev.grade,
+      score: item.score || prev.score,
+      notes: item.notes || prev.notes,
+      submittedAt: item.submittedAt || prev.submittedAt,
+      attachments: item.attachments?.length ? item.attachments : prev.attachments || [],
+      status:
+        item.status === 'overdue' || prev.status === 'overdue'
+          ? 'overdue'
+          : item.status === 'submitted' || prev.status === 'submitted'
+            ? 'submitted'
+            : item.status || prev.status || 'pending',
+    });
+  });
+  return [...rows.values()];
+};
+
+export const mapStudentAssignments = (pages, overviewBody, gradedPages = []) => {
+  const collected = collectAssignmentPages(pages);
+  const listSubjects = collected.grouped.length
     ? collected.grouped.map(mapSubjectGroup).filter(item => item.name)
     : groupFlatAssignments(collected.flat);
+  const gradedCollected = collectAssignmentPages(gradedPages);
+  const gradedSubjects = gradedCollected.grouped.length
+    ? gradedCollected.grouped.map(mapSubjectGroup).filter(item => item.name)
+    : groupFlatAssignments(gradedCollected.flat);
+  const subjects = groupFlatAssignments(
+    mergeAssignmentRows(
+      flattenAssignmentSubjects(listSubjects),
+      flattenAssignmentSubjects(gradedSubjects),
+    ),
+  );
 
   const overviewData = overviewSource(asObject(overviewBody)?.data);
   const derived = {
@@ -437,6 +549,150 @@ export const getStudentAssignments = (params = {}) =>
   axiosInstance.get('/student/assignments', {
     params: {per_page: 50, ...params},
   });
+
+export const getStudentAssignmentsGraded = (params = {}) =>
+  axiosInstance.get('/student/assignments/graded', {
+    params: {per_page: 50, ...params},
+  });
+
+export const getStudentAssignment = assignmentId =>
+  axiosInstance.get(`/student/assignments/${assignmentId}`);
+
+export const getStudentAssignmentSubmission = assignmentId =>
+  axiosInstance.get(`/student/assignments/${assignmentId}/submission`);
+
+export const getStudentAssignmentAttachment = (assignmentId, fileId) =>
+  axiosInstance.get(`/student/assignments/${assignmentId}/attachments/${fileId}`);
+
+const assignmentNotesForm = notes => {
+  const form = new FormData();
+  if (notes) {
+    form.append('notes', notes);
+  }
+  return form;
+};
+
+export const submitStudentAssignment = (assignmentId, notes) =>
+  axiosInstance.post(`/student/assignments/${assignmentId}/submit`, assignmentNotesForm(notes));
+
+export const updateStudentAssignmentSubmission = (assignmentId, notes) =>
+  axiosInstance.put(
+    `/student/assignments/${assignmentId}/submission`,
+    assignmentNotesForm(notes),
+  );
+
+export const mapStudentAssignmentDetail = body => {
+  const root = asObject(body) || {};
+  return mapAssignment(asObject(root.data) || root);
+};
+
+export const mapStudentAssignmentSubmission = body => {
+  const root = asObject(body) || {};
+  const data = asObject(root.data) || root;
+  const marks = assignmentScore(data);
+  return {
+    notes: text(data.notes || data.submission_notes || data.remark),
+    grade: marks.grade,
+    score: marks.score,
+    status: assignmentStatus(data),
+    submittedAt: formatDue(data.submitted_at || data.submitted_on || data.updated_at),
+    attachments: assignmentAttachments(data),
+  };
+};
+
+export const mergeStudentAssignmentDetail = (detail, submission) => {
+  const card = detail || mapAssignment({});
+  const extra = submission || {};
+  return {
+    ...card,
+    description: card.description,
+    notes: extra.notes || card.notes,
+    grade: extra.grade || card.grade,
+    score: extra.score || card.score,
+    submittedAt: extra.submittedAt || card.submittedAt,
+    attachments: card.attachments?.length ? card.attachments : extra.attachments || [],
+    status:
+      extra.status === 'submitted' || card.status === 'submitted'
+        ? extra.status === 'overdue' || card.status === 'overdue'
+          ? 'overdue'
+          : 'submitted'
+        : extra.status || card.status,
+  };
+};
+
+const assignmentAuthHeaders = async () => {
+  let token = getAuthToken();
+  if (!token) {
+    try {
+      token = await storage.getItem(storageKeys.token);
+    } catch (error) {
+      token = null;
+    }
+  }
+  return {
+    Accept: 'application/pdf, application/json',
+    ...(token ? {Authorization: `Bearer ${token}`} : {}),
+  };
+};
+
+export const downloadStudentAssignmentAttachment = async (assignmentId, fileId, title) => {
+  const headers = await assignmentAuthHeaders();
+  const fileName = `${text(title || `assignment-${fileId}`)
+    .replace(/[^\w.-]+/g, '_')
+    .replace(/_+/g, '_')
+    .slice(0, 60) || `assignment-${fileId}`}.pdf`.replace(/\.pdf\.pdf$/i, '.pdf');
+  const path = `${ReactNativeBlobUtil.fs.dirs.CacheDir}/${fileName}`;
+  const url = `${API_BASE_URL}/student/assignments/${assignmentId}/attachments/${fileId}/download`;
+  const response = await ReactNativeBlobUtil.config({
+    fileCache: true,
+    path,
+  }).fetch('GET', url, headers);
+  const info = response.info();
+  const type = String(info.headers?.['Content-Type'] || info.headers?.['content-type'] || '');
+
+  if (info.status >= 400) {
+    throw new Error('Unable to download this file.');
+  }
+
+  let savedPath = response.path();
+  if (type.includes('json')) {
+    const body = await response.json();
+    if (body?.success === false) {
+      throw new Error(body?.message || 'Unable to download this file.');
+    }
+    const data = asObject(body?.data) || body || {};
+    const fileUrl = text(data.url || data.file_url || data.pdf_url || body?.url);
+    if (!fileUrl) {
+      throw new Error(body?.message || 'Unable to download this file.');
+    }
+    const saved = await ReactNativeBlobUtil.config({
+      fileCache: true,
+      path,
+    }).fetch('GET', fileUrl, headers);
+    if (saved.info().status >= 400) {
+      throw new Error('Unable to download this file.');
+    }
+    savedPath = saved.path();
+  }
+
+  if (Platform.OS === 'android') {
+    try {
+      await ReactNativeBlobUtil.MediaCollection.copyToMediaStore(
+        {
+          name: fileName,
+          parentFolder: '',
+          mimeType: 'application/pdf',
+        },
+        'Download',
+        savedPath,
+      );
+    } catch (error) {
+      // The viewer still opens the cached copy.
+    }
+  }
+
+  return savedPath.startsWith('file://') ? savedPath : `file://${savedPath}`;
+};
 
 const fileSizeLabel = value => {
   if (typeof value === 'number') {

@@ -73,7 +73,21 @@ const AssignmentSubjectCard = props => {
       <FlatList
         data={subject?.assignments}
         keyExtractor={item => item?.id}
-        renderItem={({item}) => <AssignmentItem assignment={item} premium={premium} />}
+        renderItem={({item}) => (
+          <AssignmentItem
+            assignment={item}
+            premium={premium}
+            expanded={props?.openAssignmentId === item.id}
+            loading={props?.loadingAssignmentId === item.id}
+            canSubmit={props?.canSubmit}
+            notes={props?.notesById?.[item.id] || ''}
+            submitting={props?.submittingId === item.id}
+            onPress={props?.onAssignmentPress ? () => props.onAssignmentPress(item) : undefined}
+            onAttachmentPress={file => props?.onAttachmentPress?.(item, file)}
+            onNotesChange={value => props?.onNotesChange?.(item.id, value)}
+            onSubmit={() => props?.onSubmit?.(item)}
+          />
+        )}
         scrollEnabled={false}
         showsVerticalScrollIndicator={false}
         style={[styles.list, premium && styles.listPremium]}
