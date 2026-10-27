@@ -7,6 +7,10 @@ teacher login
 rabia@gmail.com
 12345678
 
+Teacher Panel
+https://ranglerz.click/eschool/public/teacher/login
+
+
 https://www.figma.com/design/TuHF3BoGIo5zNCPJQmQKWK/eSchool?node-id=2170-10170&t=LUic7ktW6Ms6e4sD-1
 
 Multi Languages Support karegi 

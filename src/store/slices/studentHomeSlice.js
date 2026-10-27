@@ -7,10 +7,12 @@ import {
   getStudentAssignments,
   getStudentHome,
   getStudentLibrary,
+  getStudentSyllabus,
   getStudentTimetable,
   mapStudentAnnouncement,
   mapStudentAssignments,
   mapStudentHome,
+  mapStudentSyllabus,
   mapStudentTimetable,
   readAnnouncementPage,
   readAssignmentPage,
@@ -30,6 +32,7 @@ export const fetchStudentHome = createAsyncThunk(
   async (_, {rejectWithValue}) => {
     try {
       const response = await getStudentHome();
+      console.log('response', response);
       const body = response?.data;
       if (body && body.success === false) {
         return rejectWithValue({
@@ -212,6 +215,31 @@ export const fetchStudentAnnouncement = createAsyncThunk(
         });
       }
       return mapStudentAnnouncement(body);
+    } catch (error) {
+      return rejectWithValue({
+        message: getApiErrorMessage(error),
+        status: error?.response?.status ?? null,
+      });
+    }
+  },
+);
+
+export const fetchStudentSyllabus = createAsyncThunk(
+  'studentHome/fetchStudentSyllabus',
+  async (_, {rejectWithValue}) => {
+    try {
+      const response = await getStudentSyllabus();
+      const body = response?.data;
+      if (body && body.success === false) {
+        return rejectWithValue({
+          message:
+            typeof body.message === 'string' && body.message
+              ? body.message
+              : 'Unable to load syllabus.',
+          status: response?.status ?? null,
+        });
+      }
+      return mapStudentSyllabus(body);
     } catch (error) {
       return rejectWithValue({
         message: getApiErrorMessage(error),

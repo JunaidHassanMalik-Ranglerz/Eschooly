@@ -76,6 +76,7 @@ export const loginStudent = createAsyncThunk(
   async ({studentId, password}, {rejectWithValue}) => {
     try {
       const response = await studentLogin({studentId, password});
+      console.log('response', response);
       const body = response?.data;
       if (body && body.success === false) {
         return rejectWithValue({
@@ -111,6 +112,7 @@ export const loginStudent = createAsyncThunk(
 
       return {...session, user};
     } catch (error) {
+      console.log('error', error?.response?.data);
       return rejectWithValue(rejectMessage(error));
     }
   },

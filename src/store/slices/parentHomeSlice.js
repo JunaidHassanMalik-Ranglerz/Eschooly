@@ -153,7 +153,8 @@ export const fetchChildResultCard = createAsyncThunk(
 const fetchChildResource = (type, request, map, fallback) =>
   createAsyncThunk(type, async (childId, {rejectWithValue}) => {
     try {
-      const response = await request(childId);
+      const response = await request(childId);  
+      console.log('response', response);
       const body = response?.data;
       if (isFailedBody(body)) {
         return rejectWithValue({

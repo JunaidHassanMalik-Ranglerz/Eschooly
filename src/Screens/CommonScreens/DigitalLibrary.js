@@ -97,11 +97,13 @@ const DigitalLibrary = () => {
     dispatch(fetchChildLibrary(activeChildId))
       .unwrap()
       .then(payload => {
+        console.log('payload', payload);
         if (active) {
           setParentLibrary(payload);
         }
       })
       .catch(error => {
+        console.log('error', error);
         if (!active) {
           return;
         }

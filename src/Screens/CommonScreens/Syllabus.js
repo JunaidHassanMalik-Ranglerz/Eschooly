@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {ActivityIndicator, StatusBar, StyleSheet, Text, View} from 'react-native';
 import ScrollEnterFlatList from '../../Component/ScrollEnterFlatList';
 import {SafeAreaView} from 'react-native-safe-area-context';
@@ -16,7 +16,6 @@ import {Colors} from '../../Constants/Colors';
 import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
-import {getSyllabusListForClass} from '../../Constants/dummydata';
 import {wp, hp} from '../../Constants/Responsive';
 import MainHeaderComponent from '../../Component/MainHeaderComponent';
 import {useRoleData} from '../../hooks/useRoleData';
@@ -25,6 +24,7 @@ import {getHomeScreenEnter} from '../../utils/cardAnimation';
 import {useDispatch, useSelector} from 'react-redux';
 import {showToast} from '../../utils/toast';
 import {fetchChildSyllabus, fetchParentHome} from '../../store/slices/parentHomeSlice';
+import {fetchStudentSyllabus} from '../../store/slices/studentHomeSlice';
 
 const STATS = [
   {
@@ -70,26 +70,20 @@ const StatCard = ({item, value, hint}) => (
 const Syllabus = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const {
-    classLabel: studentClassLabel,
-    activeStudent,
-    isParent,
-  } = useRoleData();
+  const {isParent} = useRoleData();
   const {selectedChildId: homeChildId, children} = useSelector(state => state.parentHome);
+  const homeStudent = useSelector(state => state.studentHome.student);
   const [pickedChildId, setPickedChildId] = useState(null);
   const [parentSyllabus, setParentSyllabus] = useState(null);
-  const [loading, setLoading] = useState(isParent);
-  const dummySubjects = useMemo(
-    () => getSyllabusListForClass(activeStudent?.className),
-    [activeStudent?.className],
-  );
-  const subjects = isParent ? parentSyllabus?.subjects || [] : dummySubjects;
+  const [studentSyllabus, setStudentSyllabus] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const subjects = isParent ? parentSyllabus?.subjects || [] : studentSyllabus?.subjects || [];
   const activeChildId = pickedChildId || homeChildId || children[0]?.value || null;
   const parentChild =
     parentSyllabus?.child?.label
       ? parentSyllabus.child
       : children.find(item => item.value === String(activeChildId)) || null;
-  const classLabel = isParent ? parentChild?.className || '' : studentClassLabel;
+  const classLabel = isParent ? parentChild?.className || '' : homeStudent?.className || '';
   const [syllabus, setSyllabus] = useState(subjects[0]);
   const [openChapterId, setOpenChapterId] = useState(null);
   const [switchVisible, setSwitchVisible] = useState(false);
@@ -137,10 +131,43 @@ const Syllabus = () => {
   }, [activeChildId, dispatch, isParent]);
 
   useEffect(() => {
-    const next = isParent ? parentSyllabus?.subjects || [] : dummySubjects;
+    if (isParent) {
+      return undefined;
+    }
+    let active = true;
+    setLoading(true);
+    dispatch(fetchStudentSyllabus())
+      .unwrap()
+      .then(payload => {
+        if (active) {
+          setStudentSyllabus(payload);
+        }
+      })
+      .catch(error => {
+        if (!active) {
+          return;
+        }
+        setStudentSyllabus(null);
+        showToast({
+          type: 'error',
+          text1: error?.message || 'Unable to load syllabus.',
+        });
+      })
+      .finally(() => {
+        if (active) {
+          setLoading(false);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [dispatch, isParent]);
+
+  useEffect(() => {
+    const next = isParent ? parentSyllabus?.subjects || [] : studentSyllabus?.subjects || [];
     setSyllabus(next[0]);
     setOpenChapterId(null);
-  }, [dummySubjects, isParent, parentSyllabus]);
+  }, [isParent, parentSyllabus, studentSyllabus]);
 
   const openSwitch = useCallback(() => {
     setSwitchVisible(true);
@@ -150,7 +177,7 @@ const Syllabus = () => {
   const publishedCount = subjects.filter(item => item.status === 'published' || item.progress >= 0.5).length;
   const draftCount = subjects.filter(item => item.status === 'draft' || (item.progress > 0 && item.progress < 0.5)).length;
   const updateCount = subjects.filter(item => item.status === 'needs_update' || item.progress < 0.55).length;
-  const apiStats = isParent ? parentSyllabus?.stats : null;
+  const apiStats = isParent ? parentSyllabus?.stats : studentSyllabus?.stats;
   const shownCount = (value, fallback) => value === undefined || value === null || value === '' ? fallback : value;
   const statValues = {
     total: {value: shownCount(apiStats?.total, subjects.length), hint: classLabel || Strings.thisClass},
@@ -171,7 +198,7 @@ const Syllabus = () => {
       />
 
       <ScrollEnterFlatList
-        data={isParent && loading ? [] : syllabus?.chapters}
+        data={loading ? [] : syllabus?.chapters}
         keyExtractor={item => `${syllabus?.value}-${item.id}`}
         extraData={openChapterId}
         renderItem={({item, index}) => (
@@ -236,7 +263,7 @@ const Syllabus = () => {
             />
 
             <Text style={styles.sectionTitle}>{Strings.syllabusUnits}</Text>
-            {isParent && loading ? (
+            {loading ? (
               <ActivityIndicator style={styles.loader} size="large" color={Colors.primary} />
             ) : null}
           </View>

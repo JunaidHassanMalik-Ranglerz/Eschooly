@@ -678,3 +678,92 @@ export const getStudentAnnouncements = (params = {}) =>
 
 export const getStudentAnnouncement = announcementId =>
   axiosInstance.get(`/student/announcements/${announcementId}`);
+
+const mapSyllabusTopic = (item, index) => {
+  const slot = asObject(item) || {};
+  return {
+    id: text(slot.id) || String(index),
+    title: text(slot.title),
+    duration: '',
+    status: slot.is_completed === true ? 'completed' : 'pending',
+  };
+};
+
+const mapSyllabusUnit = (unit, index) => {
+  const slot = asObject(unit) || {};
+  const topics = (Array.isArray(slot.topics) ? slot.topics : [])
+    .map(mapSyllabusTopic)
+    .filter(topic => topic.title);
+  const progress = asObject(slot.progress) || {};
+  const percentage = Number(progress.percentage);
+  const completed = Number(progress.completed_topics);
+  const total = Number(progress.total_topics);
+  const number = text(slot.sort_order) || String(index + 1);
+  return {
+    id: text(slot.id) || String(index),
+    number: number.padStart(2, '0'),
+    title: text(slot.title),
+    meta: Number.isFinite(total)
+      ? `${Number.isFinite(completed) ? completed : 0}/${total} topics`
+      : `${topics.length} topics`,
+    progress: Number.isFinite(percentage) ? percentage / 100 : 0,
+    percentText: Number.isFinite(percentage) ? `${Math.round(percentage)}%` : '0%',
+    topics,
+    completedTopics: Number.isFinite(completed) ? completed : 0,
+    totalTopics: Number.isFinite(total) ? total : topics.length,
+  };
+};
+
+export const mapStudentSyllabus = body => {
+  const root = asObject(body) || {};
+  const data = asObject(root.data) || {};
+  const units = Array.isArray(data.units) ? data.units : [];
+  const groups = new Map();
+
+  units.forEach(unit => {
+    const slot = asObject(unit) || {};
+    const subject = asObject(slot.subject) || {};
+    const key = text(subject.id) || text(subject.name);
+    if (!key) {
+      return;
+    }
+    if (!groups.has(key)) {
+      groups.set(key, {value: key, label: text(subject.name), chapters: []});
+    }
+    const group = groups.get(key);
+    const chapter = mapSyllabusUnit(slot, group.chapters.length);
+    if (chapter.title) {
+      group.chapters.push(chapter);
+    }
+  });
+
+  const subjects = [...groups.values()]
+    .map(group => {
+      const completedTopics = group.chapters.reduce((sum, chapter) => sum + chapter.completedTopics, 0);
+      const totalTopics = group.chapters.reduce((sum, chapter) => sum + chapter.totalTopics, 0);
+      const progress = totalTopics > 0 ? completedTopics / totalTopics : 0;
+      return {
+        value: group.value,
+        label: group.label,
+        status: '',
+        progress,
+        percentText: `${Math.round(progress * 100)}%`,
+        completedTopics,
+        totalTopics,
+        chapters: group.chapters,
+      };
+    })
+    .filter(item => item.label);
+
+  const stats = asObject(data.stats) || {};
+  return {
+    subjects,
+    stats: {
+      total: text(stats.total_syllabus),
+      published: text(stats.published),
+      draft: text(stats.draft),
+    },
+  };
+};
+
+export const getStudentSyllabus = () => axiosInstance.get('/student/syllabus');
