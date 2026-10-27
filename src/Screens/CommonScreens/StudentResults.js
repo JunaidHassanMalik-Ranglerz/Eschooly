@@ -6,6 +6,7 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
 import DepthIcon from '../../Component/DepthIcon';
+import AttendanceStudentDropdown from '../../Component/AttendanceStudentDropdown';
 import MainHeaderComponent from '../../Component/MainHeaderComponent';
 import SelectedChildBanner from '../../Component/SelectedChildBanner';
 import ChildSwitchModal from '../../Component/Parent/ChildSwitchModal';
@@ -26,6 +27,7 @@ import {getHomeScreenEnter} from '../../utils/cardAnimation';
 import {useDispatch, useSelector} from 'react-redux';
 import {showToast} from '../../utils/toast';
 import {fetchChildResultCard, fetchParentHome} from '../../store/slices/parentHomeSlice';
+import {fetchStudentResults} from '../../store/slices/studentHomeSlice';
 import {downloadChildResultCard} from '../../services/parentService';
 
 const EMPTY_CARD = {overall: '—', hint: '', subjects: []};
@@ -59,15 +61,13 @@ const gradeTone = grade => {
 const StudentResults = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const {
-    activeStudent,
-    getResultsForTerm,
-    isParent,
-  } = useRoleData();
+  const {isParent, studentLabel} = useRoleData();
   const {selectedChildId: homeChildId, children} = useSelector(state => state.parentHome);
+  const homeStudent = useSelector(state => state.studentHome.student);
   const [pickedChildId, setPickedChildId] = useState(null);
   const [resultCard, setResultCard] = useState(null);
-  const [loading, setLoading] = useState(isParent);
+  const [studentResults, setStudentResults] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [activeTerm, setActiveTerm] = useState(Strings.monthly);
   const [termReplay, setTermReplay] = useState(0);
   const [downloaded, setDownloaded] = useState(false);
@@ -81,11 +81,20 @@ const StudentResults = () => {
     ? resultCard?.child?.label
       ? resultCard.child
       : parentChild
-    : activeStudent;
+    : {
+        label: homeStudent?.label || '',
+        classInfo: homeStudent?.className || homeStudent?.classLabel || '',
+        classLabel: homeStudent?.classLabel || homeStudent?.className || '',
+        className: homeStudent?.className || '',
+        photoUrl: homeStudent?.photoUrl || '',
+        rollNo: homeStudent?.rollNo || '',
+      };
   const parentResult =
     activeTerm === Strings.year ? resultCard?.year : resultCard?.monthly;
-  const result = isParent ? parentResult || EMPTY_CARD : getResultsForTerm(activeTerm);
-  const shownChild = isParent ? bannerChild : activeStudent;
+  const studentResult =
+    activeTerm === Strings.year ? studentResults?.year : studentResults?.monthly;
+  const result = isParent ? parentResult || EMPTY_CARD : studentResult || EMPTY_CARD;
+  const shownChild = bannerChild;
   const classLine = [shownChild?.classLabel, shownChild?.rollNo ? `Roll ${shownChild.rollNo}` : '']
     .filter(Boolean)
     .join(' · ');
@@ -133,6 +142,39 @@ const StudentResults = () => {
       active = false;
     };
   }, [activeChildId, dispatch, isParent]);
+
+  useEffect(() => {
+    if (isParent) {
+      return undefined;
+    }
+    let active = true;
+    setLoading(true);
+    dispatch(fetchStudentResults())
+      .unwrap()
+      .then(payload => {
+        if (active) {
+          setStudentResults(payload);
+        }
+      })
+      .catch(error => {
+        if (!active) {
+          return;
+        }
+        setStudentResults(null);
+        showToast({
+          type: 'error',
+          text1: error?.message || 'Unable to load results.',
+        });
+      })
+      .finally(() => {
+        if (active) {
+          setLoading(false);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [dispatch, isParent]);
 
   const selectTerm = useCallback(term => {
     if (term === activeTerm) {
@@ -188,8 +230,8 @@ const StudentResults = () => {
         overScrollMode="never"
         removeClippedSubviews={false}
         keyboardShouldPersistTaps="handled">
-        {isParent ? (
-          <AnimatedCard index={1} entering={getHomeScreenEnter(1)} style={styles.childWrap}>
+        <AnimatedCard index={1} entering={getHomeScreenEnter(1)} style={styles.childWrap}>
+          {isParent ? (
             <SelectedChildBanner
               child={bannerChild}
               variant="large"
@@ -199,8 +241,16 @@ const StudentResults = () => {
               canSwitch={parentCanSwitch}
               onSwitchPress={parentCanSwitch ? openSwitch : undefined}
             />
-          </AnimatedCard>
-        ) : null}
+          ) : (
+            <AttendanceStudentDropdown
+              student={bannerChild}
+              premium
+              embedded
+              readOnly
+              label={studentLabel}
+            />
+          )}
+        </AnimatedCard>
 
         <AnimatedCard
           index={1}
@@ -227,7 +277,7 @@ const StudentResults = () => {
               <View style={styles.cardGradeBox}>
                 <Text style={styles.cardGradeLabel}>{Strings.overallGrade}</Text>
                 <Text style={styles.cardGrade}>
-                  {isParent && loading ? '—' : result.overall}
+                  {loading ? '—' : result.overall}
                 </Text>
               </View>
             </View>
@@ -276,10 +326,10 @@ const StudentResults = () => {
         </AnimatedCard>
 
         <View style={styles.listWrap}>
-          {isParent && loading ? (
+          {loading ? (
             <ActivityIndicator style={styles.loader} size="large" color={Colors.primary} />
           ) : null}
-          {!(isParent && loading) && result.subjects.map((item, index) => {
+          {!loading && result.subjects.map((item, index) => {
             const slot = index + 2;
             const meta = SUBJECT_ICONS[item.name] || {
               name: 'school-outline',
@@ -306,7 +356,9 @@ const StudentResults = () => {
                     <Text style={styles.subjectName} numberOfLines={1}>
                       {item.name}
                     </Text>
+                    {item.score ? (
                     <Text style={styles.subjectScore}>{item.score}%</Text>
+                    ) : null}
                   </View>
                   <View style={[styles.gradeBadge, {backgroundColor: tone.bg}]}>
                     <Text style={[styles.gradeText, {color: tone.text}]}>
@@ -317,7 +369,7 @@ const StudentResults = () => {
               </AnimatedCard>
             );
           })}
-          {isParent && !loading && result.subjects.length === 0 ? (
+          {!loading && result.subjects.length === 0 ? (
             <Text style={styles.emptyText}>No results yet.</Text>
           ) : null}
         </View>
@@ -329,8 +381,14 @@ const StudentResults = () => {
           replayToken={termReplay}
           style={styles.gradeCardWrap}>
           <OverallGradeCard
-            grade={isParent && loading ? '—' : result.overall}
-            hint={isParent && loading ? '' : result.hint || Strings.greatProgress}
+            grade={loading ? '—' : result.overall}
+            hint={
+              loading
+                ? ''
+                : isParent
+                  ? result.hint || Strings.greatProgress
+                  : result.hint
+            }
           />
         </AnimatedCard>
       </ScrollEnterScrollView>

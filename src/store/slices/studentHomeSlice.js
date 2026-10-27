@@ -5,18 +5,33 @@ import {
   getStudentAnnouncements,
   getStudentAssignmentOverview,
   getStudentAssignments,
+  combineStudentResults,
+  getStudentAttendance,
+  getStudentHolidays,
   getStudentHome,
   getStudentLibrary,
+  getStudentResultCard,
+  getStudentResults,
+  getStudentResultsSummary,
   getStudentSyllabus,
+  getStudentTeacher,
+  getStudentTeachers,
   getStudentTimetable,
   mapStudentAnnouncement,
   mapStudentAssignments,
+  mapStudentAttendance,
+  mapStudentHolidays,
   mapStudentHome,
+  mapStudentResultCard,
+  mapStudentResultsSummary,
   mapStudentSyllabus,
+  mapStudentTeacher,
+  mapStudentTeachers,
   mapStudentTimetable,
   readAnnouncementPage,
   readAssignmentPage,
   readLibraryPage,
+  readResultsPage,
 } from '../../services/studentService';
 
 const initialState = {
@@ -215,6 +230,168 @@ export const fetchStudentAnnouncement = createAsyncThunk(
         });
       }
       return mapStudentAnnouncement(body);
+    } catch (error) {
+      return rejectWithValue({
+        message: getApiErrorMessage(error),
+        status: error?.response?.status ?? null,
+      });
+    }
+  },
+);
+
+const loadStudentResultList = async () => {
+  const response = await getStudentResults({per_page: 20});
+  const body = response?.data;
+  if (body && body.success === false) {
+    throw {message: body.message || 'Unable to load results.', status: response?.status ?? null};
+  }
+  const firstPage = readResultsPage(body);
+  const items = [...firstPage.items];
+  const lastPage = Math.min(firstPage.lastPage || 1, 10);
+  for (let page = 2; page <= lastPage; page += 1) {
+    const nextResponse = await getStudentResults({per_page: 20, page});
+    const nextBody = nextResponse?.data;
+    if (nextBody && nextBody.success === false) {
+      break;
+    }
+    items.push(...readResultsPage(nextBody).items);
+  }
+  return items;
+};
+
+const loadMappedResult = async (request, mapFn, fallbackMessage) => {
+  const response = await request();
+  const body = response?.data;
+  if (body && body.success === false) {
+    throw {
+      message:
+        typeof body.message === 'string' && body.message ? body.message : fallbackMessage,
+      status: response?.status ?? null,
+    };
+  }
+  return mapFn(body);
+};
+
+export const fetchStudentResults = createAsyncThunk(
+  'studentHome/fetchStudentResults',
+  async (_, {rejectWithValue}) => {
+    const settled = await Promise.allSettled([
+      loadMappedResult(getStudentResultCard, mapStudentResultCard, 'Unable to load results.'),
+      loadMappedResult(
+        getStudentResultsSummary,
+        mapStudentResultsSummary,
+        'Unable to load results.',
+      ),
+      loadStudentResultList(),
+    ]);
+    const card = settled[0].status === 'fulfilled' ? settled[0].value : null;
+    const summary = settled[1].status === 'fulfilled' ? settled[1].value : null;
+    const list = settled[2].status === 'fulfilled' ? settled[2].value : [];
+    if (!card && !summary && !list.length) {
+      const failed = settled.find(item => item.status === 'rejected');
+      return rejectWithValue({
+        message:
+          failed?.reason?.message ||
+          getApiErrorMessage(failed?.reason) ||
+          'Unable to load results.',
+        status: failed?.reason?.status ?? failed?.reason?.response?.status ?? null,
+      });
+    }
+    return combineStudentResults({card, summary, list});
+  },
+);
+
+export const fetchStudentTeachers = createAsyncThunk(
+  'studentHome/fetchStudentTeachers',
+  async (_, {rejectWithValue}) => {
+    try {
+      const response = await getStudentTeachers();
+      const body = response?.data;
+      if (body && body.success === false) {
+        return rejectWithValue({
+          message:
+            typeof body.message === 'string' && body.message
+              ? body.message
+              : 'Unable to load teachers.',
+          status: response?.status ?? null,
+        });
+      }
+      return mapStudentTeachers(body);
+    } catch (error) {
+      return rejectWithValue({
+        message: getApiErrorMessage(error),
+        status: error?.response?.status ?? null,
+      });
+    }
+  },
+);
+
+export const fetchStudentTeacher = createAsyncThunk(
+  'studentHome/fetchStudentTeacher',
+  async (teacherId, {rejectWithValue}) => {
+    try {
+      const response = await getStudentTeacher(teacherId);
+      const body = response?.data;
+      if (body && body.success === false) {
+        return rejectWithValue({
+          message:
+            typeof body.message === 'string' && body.message
+              ? body.message
+              : 'Unable to load teacher.',
+          status: response?.status ?? null,
+        });
+      }
+      return mapStudentTeacher(body);
+    } catch (error) {
+      return rejectWithValue({
+        message: getApiErrorMessage(error),
+        status: error?.response?.status ?? null,
+      });
+    }
+  },
+);
+
+export const fetchStudentAttendance = createAsyncThunk(
+  'studentHome/fetchStudentAttendance',
+  async (month, {rejectWithValue}) => {
+    try {
+      const response = await getStudentAttendance(month ? {month} : {});
+      const body = response?.data;
+      if (body && body.success === false) {
+        return rejectWithValue({
+          message:
+            typeof body.message === 'string' && body.message
+              ? body.message
+              : 'Unable to load attendance.',
+          status: response?.status ?? null,
+        });
+      }
+      return mapStudentAttendance(body);
+    } catch (error) {
+      return rejectWithValue({
+        message: getApiErrorMessage(error),
+        status: error?.response?.status ?? null,
+      });
+    }
+  },
+);
+
+export const fetchStudentHolidays = createAsyncThunk(
+  'studentHome/fetchStudentHolidays',
+  async (_, {rejectWithValue}) => {
+    try {
+      const response = await getStudentHolidays();
+      const body = response?.data;
+      if (body && body.success === false) {
+        return rejectWithValue({
+          message:
+            typeof body.message === 'string' && body.message
+              ? body.message
+              : 'Unable to load holidays.',
+          status: response?.status ?? null,
+        });
+      }
+      return mapStudentHolidays(body);
     } catch (error) {
       return rejectWithValue({
         message: getApiErrorMessage(error),

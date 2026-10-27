@@ -82,7 +82,7 @@ const OverallGradeCard = ({grade, hint}) => {
 
         <Text style={styles.grade}>{grade}</Text>
 
-        <Text style={styles.hint}>{hint || Strings.greatProgress}</Text>
+        {hint ? <Text style={styles.hint}>{hint}</Text> : null}
 
       </View>
 

@@ -4,13 +4,15 @@ import {useNavigation} from '@react-navigation/native';
 import {Images} from '../Assets';
 import {Colors} from '../Constants/Colors';
 import {wp} from '../Constants/Responsive';
+import {useSelector} from 'react-redux';
 import {navigateToNotification} from '../Navigations/navigationHelpers';
-import {useRoleData} from '../hooks/useRoleData';
 
 const NotificationBell = ({count, onPress, style, onDark = false}) => {
   const navigation = useNavigation();
-  const {unreadNotificationCount} = useRoleData();
-  const badgeCount = count == null ? unreadNotificationCount : count;
+  const unreadNotifications = useSelector(
+    state => state.studentHome?.unreadNotifications || 0,
+  );
+  const badgeCount = count == null ? unreadNotifications : count;
 
   return (
     <TouchableOpacity

@@ -15,12 +15,13 @@ import {Fontsize} from '../Constants/Fontsize';
 import {Strings} from '../Constants/Strings';
 import {wp, hp} from '../Constants/Responsive';
 
-const ClassTeacherCard = ({teacher, onMessage, premium = false, animationIndex = 0}) => {
+const ClassTeacherCard = ({teacher, onMessage, onPress, premium = false, animationIndex = 0}) => {
   const subjectIcon = getSubjectIconTheme(teacher?.subject);
   const teacherPerson = {
     label: teacher?.name,
     name: teacher?.name,
     gender: teacher?.gender,
+    photoUrl: teacher?.photoUrl,
   };
 
   const content = (
@@ -43,6 +44,7 @@ const ClassTeacherCard = ({teacher, onMessage, premium = false, animationIndex =
         <Text style={[styles.name, premium && styles.namePremium]} numberOfLines={1}>
           {teacher?.name}
         </Text>
+        {teacher?.subject ? (
         <View style={styles.subjectRow}>
           <DepthIcon
             name={subjectIcon.icon}
@@ -55,6 +57,7 @@ const ClassTeacherCard = ({teacher, onMessage, premium = false, animationIndex =
             {teacher?.subject}
           </Text>
         </View>
+        ) : null}
       </View>
 
       <Btn
@@ -82,7 +85,8 @@ const ClassTeacherCard = ({teacher, onMessage, premium = false, animationIndex =
           innerStyle={styles.premiumInner}
           animationIndex={animationIndex}
           colors={[Colors.parentHeader, Colors.parentHeader]}
-          waveVariant={SCREEN_WAVES.teachers}>
+          waveVariant={SCREEN_WAVES.teachers}
+          onPress={onPress}>
           {content}
         </ProfileGradientCard>
       ) : (

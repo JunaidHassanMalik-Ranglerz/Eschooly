@@ -1,5 +1,6 @@
-import React, {useState} from 'react';
-import {StatusBar, StyleSheet, Text, View} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {ActivityIndicator, StatusBar, StyleSheet, Text, View} from 'react-native';
+import {useDispatch, useSelector} from 'react-redux';
 import ScrollEnterScrollView from '../../Component/ScrollEnterScrollView';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import DepthIcon from '../../Component/DepthIcon';
@@ -15,14 +16,16 @@ import {Colors} from '../../Constants/Colors';
 import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
-import {ATTENDANCE_STUDENTS, HOLIDAY_LIST} from '../../Constants/dummydata';
+import {HOLIDAY_LIST} from '../../Constants/dummydata';
 import {wp, hp} from '../../Constants/Responsive';
-import {useRoleData} from '../../hooks/useRoleData';
 import {ScreenEnterProvider} from '../../hooks/useScreenEnterGate';
 import {
   ACADEMICS_PROFILE_ENTERING,
   getHomeScreenEnter,
 } from '../../utils/cardAnimation';
+import {showToast} from '../../utils/toast';
+import {fetchChildDashboard, fetchParentHome} from '../../store/slices/parentHomeSlice';
+import {fetchStudentHolidays} from '../../store/slices/studentHomeSlice';
 
 const TYPE_THEMES = {
   National: {
@@ -69,36 +72,84 @@ const HolidayCard = ({item, animationIndex, showWave}) => {
       waveVariant={showWave ? SCREEN_WAVES.holidays : null}>
       <View style={styles.topRow}>
         <DepthIcon name={theme.icon} size={wp(6)} color={theme.iconColor} />
+        {item.type ? (
         <View style={[styles.badge, {backgroundColor: theme.badgeBg}]}>
           <Text style={[styles.badgeText, {color: theme.badgeText}]}>{item.type}</Text>
         </View>
+        ) : null}
       </View>
 
       <Text style={styles.title}>{item.title}</Text>
+      {dateParts.dateLine || item.date ? (
       <Text style={styles.date}>{dateParts.dateLine || item.date}</Text>
+      ) : null}
       {dateParts.dayLine ? <Text style={styles.day}>{dateParts.dayLine}</Text> : null}
-      <Text style={styles.duration}>{item.duration}</Text>
+      {item.duration ? <Text style={styles.duration}>{item.duration}</Text> : null}
     </ProfileGradientCard>
   );
 };
 
 const Holidays = () => {
-  const {
-    isParent,
-    studentLabel,
-    selectedChildId,
-    setSelectedChildId,
-    activeStudent,
-    childList,
-    attendanceStudents,
-    canSwitchChild,
-  } = useRoleData();
+  const dispatch = useDispatch();
+  const role = useSelector(state => state.auth.role);
+  const isParent = role === 'parent';
+  const {children, selectedChildId: homeChildId} = useSelector(state => state.parentHome);
+  const homeStudent = useSelector(state => state.studentHome.student);
+  const [studentHolidays, setStudentHolidays] = useState([]);
+  const [loading, setLoading] = useState(!isParent);
   const [switchVisible, setSwitchVisible] = useState(false);
-  const studentOptions = isParent ? childList : attendanceStudents;
-  const attendanceMeta =
-    ATTENDANCE_STUDENTS.find(item => item.value === selectedChildId) ||
-    ATTENDANCE_STUDENTS[0];
-  const dropdownStudent = {...activeStudent, ...attendanceMeta};
+  const activeChildId = homeChildId || children[0]?.value || null;
+  const parentChild =
+    children.find(item => item.value === String(activeChildId)) || children[0] || null;
+  const parentCanSwitch = children.length > 1;
+  const holidays = isParent ? HOLIDAY_LIST : studentHolidays;
+  const bannerStudent = {
+    label: homeStudent?.label || '',
+    classInfo: homeStudent?.className || homeStudent?.classLabel || '',
+    classLabel: homeStudent?.classLabel || homeStudent?.className || '',
+    className: homeStudent?.className || '',
+    photoUrl: homeStudent?.photoUrl || '',
+  };
+
+  useEffect(() => {
+    if (!isParent || homeChildId || children.length) {
+      return undefined;
+    }
+    dispatch(fetchParentHome());
+  }, [children.length, dispatch, homeChildId, isParent]);
+
+  useEffect(() => {
+    if (isParent) {
+      return undefined;
+    }
+    let active = true;
+    setLoading(true);
+    dispatch(fetchStudentHolidays())
+      .unwrap()
+      .then(items => {
+        if (active) {
+          setStudentHolidays(items);
+        }
+      })
+      .catch(error => {
+        if (!active) {
+          return;
+        }
+        setStudentHolidays([]);
+        showToast({
+          type: 'error',
+          text1: error?.message || 'Unable to load holidays.',
+        });
+      })
+      .finally(() => {
+        if (active) {
+          setLoading(false);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [dispatch, isParent]);
 
   return (
     <ScreenEnterProvider motion="holidays">
@@ -117,14 +168,14 @@ const Holidays = () => {
               entering={ACADEMICS_PROFILE_ENTERING}
               style={styles.childCard}>
               <ParentChildCard
-                child={activeStudent}
-                chevron={canSwitchChild ? 'chevron-down' : undefined}
+                child={parentChild}
+                chevron={parentCanSwitch ? 'chevron-down' : undefined}
                 accented
                 solid
                 prominent
                 showWave
                 waveVariant={SCREEN_WAVES.academics}
-                onPress={canSwitchChild ? () => setSwitchVisible(true) : undefined}
+                onPress={parentCanSwitch ? () => setSwitchVisible(true) : undefined}
               />
             </AnimatedCard>
           </View>
@@ -135,13 +186,11 @@ const Holidays = () => {
               entering={ACADEMICS_PROFILE_ENTERING}
               style={styles.childCard}>
               <AttendanceStudentDropdown
-                student={dropdownStudent}
-                students={studentOptions}
-                selectedId={selectedChildId}
+                student={bannerStudent}
                 premium
-                onSelect={item => setSelectedChildId(item.value)}
-                readOnly={studentOptions.length <= 1}
-                label={studentLabel}
+                embedded
+                readOnly
+                label={Strings.student}
               />
             </AnimatedCard>
           </View>
@@ -159,25 +208,35 @@ const Holidays = () => {
             {Strings.upcomingHolidays}
           </ProfileSectionTitle>
 
-          {HOLIDAY_LIST.map((item, index) => {
-            const slot = index + 3;
-            return (
-              <HolidayCard
-                key={item.id}
-                item={item}
-                animationIndex={slot}
-                showWave={index === 0}
-              />
-            );
-          })}
+          {loading ? (
+            <ActivityIndicator style={styles.loader} size="large" color={Colors.primary} />
+          ) : holidays.length === 0 ? (
+            <Text style={styles.empty}>No holidays yet.</Text>
+          ) : (
+            holidays.map((item, index) => {
+              const slot = index + 3;
+              return (
+                <HolidayCard
+                  key={item.id}
+                  item={item}
+                  animationIndex={slot}
+                  showWave={index === 0}
+                />
+              );
+            })
+          )}
         </ScrollEnterScrollView>
 
-        {canSwitchChild ? (
+        {isParent && parentCanSwitch ? (
           <ChildSwitchModal
             visible={switchVisible}
-            childrenList={childList}
-            selectedId={selectedChildId}
-            onSelect={setSelectedChildId}
+            childrenList={children}
+            selectedId={String(activeChildId || '')}
+            onSelect={nextId => {
+              if (String(nextId) !== String(activeChildId)) {
+                dispatch(fetchChildDashboard(nextId));
+              }
+            }}
             onClose={() => setSwitchVisible(false)}
           />
         ) : null}
@@ -260,5 +319,15 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.regular,
     fontSize: Fontsize.xs0,
     marginTop: hp(0.8),
+  },
+  loader: {
+    marginTop: hp(6),
+  },
+  empty: {
+    textAlign: 'center',
+    color: Colors.grayText,
+    fontFamily: Fonts.medium,
+    fontSize: Fontsize.xs1,
+    marginTop: hp(6),
   },
 });

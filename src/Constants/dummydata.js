@@ -210,16 +210,14 @@ export const MENU_LIST = [
     value: 'teachers',
     label: Strings.teachers,
     icon: Images.multiplePerson,
-    screen: 'Teachers',
-    tab: true,
+    screen: 'ParentTeachers',
     parentScreen: 'ParentTeachers',
   },
   {
     value: 'attendance',
     label: Strings.attendance,
     icon: Images.calendarClock,
-    screen: 'Attends',
-    tab: true,
+    screen: 'ParentAttendance',
     parentScreen: 'ParentAttendance',
   },
   {

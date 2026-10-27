@@ -27,12 +27,12 @@ const App = () => {
     <GestureHandlerRootView style={{flex: 1, backgroundColor: Colors.parentBg}}>
       <SafeAreaProvider>
         <Provider store={store}>
-          <PersistGate loading={null} persistor={persistor}>
-            <RoleProvider>
+          <RoleProvider>
+            <PersistGate loading={null} persistor={persistor}>
               <SessionRestore />
               <MainNavigation />
-            </RoleProvider>
-          </PersistGate>
+            </PersistGate>
+          </RoleProvider>
           <Toast />
         </Provider>
       </SafeAreaProvider>

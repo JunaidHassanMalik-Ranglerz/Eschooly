@@ -767,3 +767,402 @@ export const mapStudentSyllabus = body => {
 };
 
 export const getStudentSyllabus = () => axiosInstance.get('/student/syllabus');
+
+const resultScore = slot => {
+  const percentage = slot.percentage ?? slot.percent ?? slot.score;
+  if (percentage !== undefined && percentage !== null && percentage !== '') {
+    return text(percentage).replace('%', '');
+  }
+  const obtained = Number(slot.obtained_marks ?? slot.obtained ?? slot.marks);
+  const total = Number(slot.total_marks ?? slot.total ?? slot.max_marks);
+  if (Number.isFinite(obtained) && Number.isFinite(total) && total > 0) {
+    return String(Math.round((obtained / total) * 100));
+  }
+  return text(slot.obtained_marks ?? slot.marks);
+};
+
+const resultPeriod = slot => {
+  const raw = text(
+    slot.period || slot.term || slot.type || slot.assessment_period || slot.exam_type,
+  ).toLowerCase();
+  if (!raw) {
+    return '';
+  }
+  if (raw.includes('year') || raw.includes('annual')) {
+    return 'year';
+  }
+  if (raw.includes('month')) {
+    return 'monthly';
+  }
+  return '';
+};
+
+const resultSubjects = record => {
+  const source = asObject(record) || {};
+  const list = Array.isArray(source.subjects)
+    ? source.subjects
+    : Array.isArray(source.results)
+      ? source.results
+      : Array.isArray(source.marks)
+        ? source.marks
+        : [];
+  return list
+    .map((item, index) => {
+      const slot = asObject(item) || {};
+      return {
+        id: text(slot.id) || String(index),
+        name: named(slot.subject) || text(slot.subject_name || slot.name || slot.title),
+        grade: text(slot.grade || slot.grade_name),
+        score: resultScore(slot),
+        period: resultPeriod(slot),
+      };
+    })
+    .filter(item => item.name);
+};
+
+const mapResultBlock = record => {
+  const source = asObject(record) || {};
+  return {
+    overall: text(source.overall_grade || source.overall || source.grade) || '—',
+    hint: text(source.remark || source.hint || source.comment),
+    subjects: resultSubjects(source),
+  };
+};
+
+const emptyResultBlock = () => ({overall: '—', hint: '', subjects: []});
+
+const mergeResultBlock = (base, extra) => {
+  const left = base || emptyResultBlock();
+  const right = extra || emptyResultBlock();
+  return {
+    overall: left.overall !== '—' ? left.overall : right.overall,
+    hint: left.hint || right.hint,
+    subjects: left.subjects.length ? left.subjects : right.subjects,
+  };
+};
+
+export const mapStudentResultCard = body => {
+  const root = asObject(body) || {};
+  const data = asObject(root.data) || root;
+  const monthly = asObject(data.monthly) || asObject(data.month);
+  const year = asObject(data.yearly) || asObject(data.year) || asObject(data.annual);
+  if (monthly || year) {
+    return {
+      monthly: mapResultBlock(monthly || {}),
+      year: mapResultBlock(year || {}),
+    };
+  }
+  const card = mapResultBlock(data);
+  return {monthly: card, year: card};
+};
+
+export const mapStudentResultsSummary = body => {
+  const root = asObject(body) || {};
+  const data = asObject(root.data) || root;
+  const monthly = asObject(data.monthly) || asObject(data.month);
+  const year = asObject(data.yearly) || asObject(data.year) || asObject(data.annual);
+  if (monthly || year) {
+    return {
+      monthly: mapResultBlock(monthly || {}),
+      year: mapResultBlock(year || {}),
+    };
+  }
+  const summary = mapResultBlock(data);
+  return {monthly: summary, year: summary};
+};
+
+export const readResultsPage = body => {
+  const root = asObject(body) || {};
+  const data = root.data;
+  const page = asObject(data) || {};
+  const list = Array.isArray(data)
+    ? data
+    : Array.isArray(page.data)
+      ? page.data
+      : Array.isArray(page.results)
+        ? page.results
+        : Array.isArray(page.entries)
+          ? page.entries
+          : Array.isArray(page.subjects)
+            ? page.subjects
+            : [];
+  return {
+    items: list
+      .map((item, index) => {
+        const slot = asObject(item) || {};
+        return {
+          id: text(slot.id) || String(index),
+          name: named(slot.subject) || text(slot.subject_name || slot.name || slot.title),
+          grade: text(slot.grade || slot.grade_name),
+          score: resultScore(slot),
+          period: resultPeriod(slot),
+        };
+      })
+      .filter(item => item.name),
+    lastPage: Number(page.meta?.last_page || page.last_page || root.meta?.last_page) || 1,
+  };
+};
+
+const subjectsForPeriod = (items, period) =>
+  items.filter(item => !item.period || item.period === period);
+
+export const combineStudentResults = ({card, summary, list}) => {
+  const cardMap = card || {monthly: emptyResultBlock(), year: emptyResultBlock()};
+  const summaryMap = summary || {monthly: emptyResultBlock(), year: emptyResultBlock()};
+  const items = Array.isArray(list) ? list : [];
+  const monthlyList = {
+    overall: '—',
+    hint: '',
+    subjects: subjectsForPeriod(items, 'monthly'),
+  };
+  const yearList = {
+    overall: '—',
+    hint: '',
+    subjects: subjectsForPeriod(items, 'year'),
+  };
+  return {
+    monthly: mergeResultBlock(mergeResultBlock(cardMap.monthly, summaryMap.monthly), monthlyList),
+    year: mergeResultBlock(mergeResultBlock(cardMap.year, summaryMap.year), yearList),
+  };
+};
+
+export const getStudentResults = (params = {}) =>
+  axiosInstance.get('/student/results', {
+    params,
+  });
+
+export const getStudentResultsSummary = () => axiosInstance.get('/student/results/summary');
+
+export const getStudentResultCard = () => axiosInstance.get('/student/results/card');
+
+const mapTeacher = (item, index) => {
+  const slot = asObject(item) || {};
+  const firstSubject = Array.isArray(slot.subjects) ? slot.subjects[0] : null;
+  const name = text(slot.name || slot.full_name) || named(slot.teacher);
+  const role = text(slot.role || slot.type || slot.designation).toLowerCase();
+  return {
+    id: text(slot.id) || String(index),
+    name,
+    initials: initialsFromName(name),
+    subject: named(slot.subject) || text(slot.subject_name) || named(firstSubject),
+    gender: text(slot.gender),
+    photoUrl: text(slot.photo_url || slot.profile_image || slot.image),
+    isClassTeacher:
+      slot.is_class_teacher === true ||
+      slot.is_class_teacher === 1 ||
+      slot.is_class_teacher === '1' ||
+      role.includes('class'),
+  };
+};
+
+export const mapStudentTeachers = body => {
+  const root = asObject(body) || {};
+  const data = asObject(root.data) || root;
+  const classSlot = asObject(data.class_teacher) || asObject(data.classTeacher);
+  const list = Array.isArray(root.data)
+    ? root.data
+    : Array.isArray(data.data)
+      ? data.data
+      : Array.isArray(data.teachers)
+        ? data.teachers
+        : Array.isArray(data.subject_teachers)
+          ? data.subject_teachers
+          : Array.isArray(data.entries)
+            ? data.entries
+            : [];
+  const mapped = list.map(mapTeacher).filter(item => item.name);
+  const classTeacher = classSlot ? mapTeacher(classSlot, 0) : mapped.find(item => item.isClassTeacher) || null;
+  const classId = classTeacher?.name ? classTeacher.id : '';
+  return {
+    classTeacher: classTeacher?.name ? classTeacher : null,
+    subjectTeachers: mapped.filter(item => item.id !== classId),
+  };
+};
+
+export const mapStudentTeacher = body => {
+  const root = asObject(body) || {};
+  const data = asObject(root.data) || root;
+  const slot = asObject(data.teacher) || data;
+  return mapTeacher(slot, 0);
+};
+
+export const getStudentTeachers = () => axiosInstance.get('/student/teachers');
+
+export const getStudentTeacher = teacherId =>
+  axiosInstance.get(`/student/teachers/${teacherId}`);
+
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const FULL_WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const FULL_MONTHS = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
+const ATTENDANCE_STATUS = {
+  present: 'Present',
+  absent: 'Absent',
+  late: 'Late',
+  leave: 'Leave',
+};
+
+const attendanceDate = value => {
+  const raw = text(value);
+  const match = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!match) {
+    return null;
+  }
+  const parsed = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+  return parsed;
+};
+
+const mapAttendanceRecord = (item, index) => {
+  const slot = asObject(item) || {};
+  const parsed = attendanceDate(slot.date);
+  const statusKey = text(slot.status).toLowerCase();
+  return {
+    id: text(slot.id) || String(index),
+    day: parsed ? String(parsed.getDate()) : '',
+    shortDay: parsed ? WEEKDAYS[parsed.getDay()] : '',
+    dateLabel: parsed ? `${FULL_MONTHS[parsed.getMonth()]} ${parsed.getDate()}` : '',
+    fullDay: parsed ? FULL_WEEKDAYS[parsed.getDay()] : '',
+    iso: parsed
+      ? `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}-${String(parsed.getDate()).padStart(2, '0')}`
+      : '',
+    status: ATTENDANCE_STATUS[statusKey] || '',
+  };
+};
+
+export const mapStudentAttendance = body => {
+  const root = asObject(body) || {};
+  const data = asObject(root.data) || root;
+  const summary = asObject(data.summary) || {};
+  const percentage = Number(summary.percentage);
+  const from = attendanceDate(data.from);
+  const records = (Array.isArray(data.records) ? data.records : [])
+    .map(mapAttendanceRecord)
+    .filter(item => item.dateLabel);
+  return {
+    month: from ? `${FULL_MONTHS[from.getMonth()]} ${from.getFullYear()}` : '',
+    present: text(summary.present),
+    absent: text(summary.absent),
+    late: text(summary.late),
+    leave: text(summary.leave),
+    rate: Number.isFinite(percentage) ? percentage / 100 : 0,
+    rateText: Number.isFinite(percentage) ? `${percentage}%` : '',
+    history: records,
+  };
+};
+
+export const getStudentAttendance = (params = {}) =>
+  axiosInstance.get('/student/attendance', {
+    params,
+  });
+
+const SHORT_MONTHS_HOLIDAY = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
+
+const holidayType = slot => {
+  const name = text(slot.type || slot.category || slot.kind);
+  const lower = name.toLowerCase();
+  if (!name) {
+    return '';
+  }
+  if (lower.includes('national') || lower.includes('public')) {
+    return 'National';
+  }
+  if (lower.includes('relig') || lower.includes('eid') || lower.includes('islam')) {
+    return 'Religious';
+  }
+  if (lower.includes('school') || lower.includes('break') || lower.includes('academic')) {
+    return 'School';
+  }
+  return name.charAt(0).toUpperCase() + name.slice(1);
+};
+
+const holidayDateText = (start, end) => {
+  const first = attendanceDate(start);
+  const last = attendanceDate(end);
+  if (first && last && first.getTime() !== last.getTime()) {
+    return `${first.getDate()} ${SHORT_MONTHS_HOLIDAY[first.getMonth()]} - ${last.getDate()} ${SHORT_MONTHS_HOLIDAY[last.getMonth()]} ${last.getFullYear()}`;
+  }
+  const single = first || last;
+  if (single) {
+    return `${WEEKDAYS[single.getDay()]}, ${single.getDate()} ${SHORT_MONTHS_HOLIDAY[single.getMonth()]} ${single.getFullYear()}`;
+  }
+  return text(start || end);
+};
+
+const holidayDuration = (slot, start, end) => {
+  const labeled = text(slot.duration || slot.duration_label);
+  if (labeled) {
+    return labeled;
+  }
+  const days = Number(slot.duration_days || slot.days);
+  if (Number.isFinite(days) && days > 0) {
+    return `${days} ${days === 1 ? 'day' : 'days'}`;
+  }
+  const first = attendanceDate(start);
+  const last = attendanceDate(end);
+  if (first && last) {
+    const count = Math.round((last.getTime() - first.getTime()) / 86400000) + 1;
+    if (count > 0) {
+      return `${count} ${count === 1 ? 'day' : 'days'}`;
+    }
+  }
+  return '';
+};
+
+const mapHoliday = (item, index) => {
+  const slot = asObject(item) || {};
+  const start = slot.start_date || slot.starts_at || slot.from || slot.date;
+  const end = slot.end_date || slot.ends_at || slot.to;
+  return {
+    id: text(slot.id) || String(index),
+    title: text(slot.title || slot.name),
+    date: holidayDateText(start, end),
+    type: holidayType(slot),
+    duration: holidayDuration(slot, start, end),
+  };
+};
+
+export const mapStudentHolidays = body => {
+  const root = asObject(body) || {};
+  const data = root.data;
+  const page = asObject(data) || {};
+  const list = Array.isArray(data)
+    ? data
+    : Array.isArray(page.data)
+      ? page.data
+      : Array.isArray(page.holidays)
+        ? page.holidays
+        : Array.isArray(page.entries)
+          ? page.entries
+          : [];
+  return list.map(mapHoliday).filter(item => item.title);
+};
+
+export const getStudentHolidays = () => axiosInstance.get('/student/holidays');

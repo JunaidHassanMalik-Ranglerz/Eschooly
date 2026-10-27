@@ -14,11 +14,12 @@ import {Fontsize} from '../Constants/Fontsize';
 import {Strings} from '../Constants/Strings';
 import {wp, hp} from '../Constants/Responsive';
 
-const SubjectTeacherItem = ({item, onMessage, premium = false, animationIndex = 0}) => {
+const SubjectTeacherItem = ({item, onMessage, onPress, premium = false, animationIndex = 0}) => {
   const teacherPerson = {
     label: item?.name,
     name: item?.name,
     gender: item?.gender,
+    photoUrl: item?.photoUrl,
   };
   const subjectIcon = getSubjectIconTheme(item?.subject);
 
@@ -30,6 +31,7 @@ const SubjectTeacherItem = ({item, onMessage, premium = false, animationIndex = 
         <Text style={[styles.name, premium && styles.namePremium]} numberOfLines={1}>
           {item?.name}
         </Text>
+        {item?.subject ? (
         <View style={styles.subjectRow}>
           <DepthIcon name={subjectIcon.icon} size={wp(4.8)} color={subjectIcon.color} />
           <Text
@@ -38,6 +40,7 @@ const SubjectTeacherItem = ({item, onMessage, premium = false, animationIndex = 
             {item?.subject}
           </Text>
         </View>
+        ) : null}
       </View>
 
       <Btn
@@ -57,7 +60,8 @@ const SubjectTeacherItem = ({item, onMessage, premium = false, animationIndex = 
         innerStyle={styles.premiumInner}
         animationIndex={animationIndex}
         colors={[Colors.parentHeader, Colors.parentHeader]}
-        waveVariant={SCREEN_WAVES.teachers}>
+        waveVariant={SCREEN_WAVES.teachers}
+        onPress={onPress}>
         {content}
       </ProfileGradientCard>
     );

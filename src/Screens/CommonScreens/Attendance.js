@@ -22,18 +22,13 @@ import {Colors} from '../../Constants/Colors';
 import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
-import {
-  ATTENDANCE_STUDENTS,
-  ATTENDANCE_DATE_RANGES,
-  ATTENDANCE_HISTORY,
-} from '../../Constants/dummydata';
 import {wp, hp} from '../../Constants/Responsive';
-import {useRoleData} from '../../hooks/useRoleData';
 import {withScreenEnter} from '../../hooks/useScreenEnterGate';
 import {CARD_RADIUS} from '../../Component/Profile/ProfileTheme';
 import {getAttendanceCardEnter} from '../../utils/cardAnimation';
 import {showToast} from '../../utils/toast';
 import {fetchChildAttendance, fetchChildDashboard, fetchParentHome} from '../../store/slices/parentHomeSlice';
+import {fetchStudentAttendance} from '../../store/slices/studentHomeSlice';
 
 const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -57,19 +52,14 @@ const buildMonthRanges = () =>
 const AttendanceContent = () => {
   const insets = useSafeAreaInsets();
   const dispatch = useDispatch();
-  const {
-    studentLabel,
-    isParent,
-    selectedChildId,
-    setSelectedChildId,
-    activeStudent,
-    attendanceStudents,
-  } = useRoleData();
+  const role = useSelector(state => state.auth.role);
+  const isParent = role === 'parent';
   const {children, selectedChildId: homeChildId} = useSelector(state => state.parentHome);
+  const homeStudent = useSelector(state => state.studentHome.student);
   const [parentAttendance, setParentAttendance] = useState(null);
-  const [loading, setLoading] = useState(isParent);
+  const [studentAttendance, setStudentAttendance] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [showHistory, setShowHistory] = useState(false);
-  const [dateRangeId, setDateRangeId] = useState('1');
   const [monthId, setMonthId] = useState(currentMonthKey);
   const [viewMode, setViewMode] = useState(Strings.monthly);
   const [contentReplay, setContentReplay] = useState(0);
@@ -79,7 +69,8 @@ const AttendanceContent = () => {
   const activeChildId = homeChildId || children[0]?.value || null;
   const parentChild =
     children.find(item => item.value === String(activeChildId)) || parentAttendance?.child || null;
-  const childKey = isParent ? String(activeChildId || '') : String(selectedChildId ?? activeStudent?.value ?? '');
+  const childKey = isParent ? String(activeChildId || '') : monthId;
+  const studentLabel = isParent ? Strings.child : Strings.student;
 
   useEffect(() => {
     if (!isParent || homeChildId || children.length) {
@@ -127,12 +118,45 @@ const AttendanceContent = () => {
   }, [activeChildId, dispatch, isParent, monthId, viewMode]);
 
   useEffect(() => {
+    if (isParent) {
+      return undefined;
+    }
+    let active = true;
+    setLoading(true);
+    dispatch(fetchStudentAttendance(monthId))
+      .unwrap()
+      .then(payload => {
+        if (active) {
+          setStudentAttendance(payload);
+        }
+      })
+      .catch(error => {
+        if (!active) {
+          return;
+        }
+        setStudentAttendance(null);
+        showToast({
+          type: 'error',
+          text1: error?.message || 'Unable to load attendance.',
+        });
+      })
+      .finally(() => {
+        if (active) {
+          setLoading(false);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [dispatch, isParent, monthId]);
+
+  useEffect(() => {
     if (skipContentReplayRef.current) {
       skipContentReplayRef.current = false;
       return;
     }
     setContentReplay(value => value + 1);
-  }, [childKey, dateRangeId, monthId, viewMode]);
+  }, [childKey, monthId, viewMode]);
 
   const statsSlot = isParent ? 3 : 2;
   const dateSlot = isParent ? 4 : 3;
@@ -140,28 +164,41 @@ const AttendanceContent = () => {
   const historyHeaderSlot = isParent ? 5 : 5;
   const historyListStart = isParent ? 6 : 6;
 
-  const attendanceMeta =
-    ATTENDANCE_STUDENTS.find(item => item.value === activeStudent?.value) ||
-    ATTENDANCE_STUDENTS[0];
   const parentStats = parentAttendance || {};
+  const studentStats = studentAttendance || {};
+  const stats = isParent ? parentStats : studentStats;
   const student = isParent
     ? {
         ...parentChild,
-        month: loading ? '—' : parentStats.month || '',
-        present: loading ? '—' : parentStats.present ?? '',
-        absent: loading ? '—' : parentStats.absent ?? '',
-        late: loading ? '—' : parentStats.late ?? '',
-        rate: loading ? 0 : parentStats.rate || 0,
-        rateText: loading ? '—' : parentStats.rateText || '',
-        todayStatus: loading ? '—' : parentStats.todayStatus || '',
-        todayDate: loading ? '—' : parentStats.todayDate || '',
+        month: loading ? '—' : stats.month || '',
+        present: loading ? '—' : stats.present ?? '',
+        absent: loading ? '—' : stats.absent ?? '',
+        late: loading ? '—' : stats.late ?? '',
+        leave: loading ? '—' : stats.leave ?? '',
+        rate: loading ? 0 : stats.rate || 0,
+        rateText: loading ? '—' : stats.rateText || '',
+        todayStatus: loading ? '—' : stats.todayStatus || '',
+        todayDate: loading ? '—' : stats.todayDate || '',
       }
-    : {...activeStudent, ...attendanceMeta};
-  const history = isParent ? (loading ? [] : parentStats.history || []) : ATTENDANCE_HISTORY;
-  const students = isParent ? children : attendanceStudents;
+    : {
+        label: homeStudent?.label || '',
+        classInfo: homeStudent?.className || homeStudent?.classLabel || '',
+        classLabel: homeStudent?.classLabel || homeStudent?.className || '',
+        className: homeStudent?.className || '',
+        photoUrl: homeStudent?.photoUrl || '',
+        month: loading ? '—' : stats.month || '',
+        present: loading ? '—' : stats.present ?? '',
+        absent: loading ? '—' : stats.absent ?? '',
+        late: loading ? '—' : stats.late ?? '',
+        leave: loading ? '—' : stats.leave ?? '',
+        rate: loading ? 0 : stats.rate || 0,
+        rateText: loading ? '—' : stats.rateText || '',
+      };
+  const history = loading ? [] : stats.history || [];
+  const students = isParent ? children : [];
   const showDaily = isParent && viewMode === Strings.daily;
-  const dropdownReadOnly = students.length <= 1;
-  const useExternalSwitch = !dropdownReadOnly && students.length > 1;
+  const dropdownReadOnly = !isParent || students.length <= 1;
+  const useExternalSwitch = isParent && students.length > 1;
   const showHistoryList = showHistory || isParent;
   const todayStatusStyle =
     student.todayStatus === 'Absent'
@@ -265,17 +302,13 @@ const AttendanceContent = () => {
             <AttendanceStudentDropdown
               student={student}
               students={students}
-              selectedId={isParent ? String(activeChildId || '') : selectedChildId}
+              selectedId={isParent ? String(activeChildId || '') : undefined}
               premium
               embedded
               onSelect={item => {
-                if (isParent) {
-                  if (String(item.value) !== String(activeChildId)) {
-                    dispatch(fetchChildDashboard(item.value));
-                  }
-                  return;
+                if (isParent && String(item.value) !== String(activeChildId)) {
+                  dispatch(fetchChildDashboard(item.value));
                 }
-                setSelectedChildId(item.value);
               }}
               readOnly={dropdownReadOnly}
               label={studentLabel}
@@ -300,16 +333,16 @@ const AttendanceContent = () => {
           </AnimatedCard>
         ) : null}
 
-        {isParent && loading ? (
+        {loading ? (
           <ActivityIndicator style={styles.loader} size="large" color={Colors.primary} />
         ) : (
           statsBlock
         )}
 
         <AttendanceDateDropdown
-          ranges={isParent ? monthRanges : ATTENDANCE_DATE_RANGES}
-          selectedId={isParent ? monthId : dateRangeId}
-          onSelect={isParent ? setMonthId : setDateRangeId}
+          ranges={monthRanges}
+          selectedId={monthId}
+          onSelect={setMonthId}
           animationIndex={dateSlot}
           entering={getAttendanceCardEnter(dateSlot)}
           replayToken={contentReplay}
@@ -369,21 +402,20 @@ const AttendanceContent = () => {
               />
             ))
           : null}
+        {showHistoryList && !loading && history.length === 0 ? (
+          <Text style={styles.empty}>No attendance records yet.</Text>
+        ) : null}
       </ScrollEnterScrollView>
 
       {useExternalSwitch ? (
         <ChildSwitchModal
           visible={switchVisible}
           childrenList={students}
-          selectedId={isParent ? String(activeChildId || '') : selectedChildId}
+          selectedId={String(activeChildId || '')}
           onSelect={nextId => {
-            if (isParent) {
-              if (String(nextId) !== String(activeChildId)) {
-                dispatch(fetchChildDashboard(nextId));
-              }
-              return;
+            if (String(nextId) !== String(activeChildId)) {
+              dispatch(fetchChildDashboard(nextId));
             }
-            setSelectedChildId(nextId);
           }}
           onClose={() => setSwitchVisible(false)}
         />
@@ -515,5 +547,12 @@ const styles = StyleSheet.create({
   },
   loader: {
     marginVertical: hp(3),
+  },
+  empty: {
+    textAlign: 'center',
+    color: Colors.grayText,
+    fontFamily: Fonts.medium,
+    fontSize: Fontsize.xs1,
+    marginTop: hp(2),
   },
 });
