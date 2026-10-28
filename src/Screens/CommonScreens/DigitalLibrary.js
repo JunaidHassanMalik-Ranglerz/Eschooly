@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useRef, useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 
 import {ActivityIndicator, StatusBar, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import ScrollEnterScrollView from '../../Component/ScrollEnterScrollView';
@@ -59,7 +59,7 @@ const DigitalLibrary = () => {
   const [parentLibrary, setParentLibrary] = useState(null);
   const [studentItems, setStudentItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const downloadLock = useRef(false);
+  const [downloadingId, setDownloadingId] = useState(null);
 
   const [search, setSearch] = useState('');
 
@@ -97,7 +97,6 @@ const DigitalLibrary = () => {
     dispatch(fetchChildLibrary(activeChildId))
       .unwrap()
       .then(payload => {
-        console.log('payload', payload);
         if (active) {
           setParentLibrary(payload);
         }
@@ -181,25 +180,43 @@ const DigitalLibrary = () => {
 
 
   const openStudentFile = async item => {
-    if (!item?.id || downloadLock.current) {
+    console.log('item', item);
+    console.log('downloadingId', downloadingId);
+    if (!item?.id || downloadingId) {
       return;
     }
-    downloadLock.current = true;
+    setDownloadingId(item.id);
     try {
-      const fileUrl = await downloadStudentLibraryFile(item.id, item.title);
-      console.log('fileUrl', fileUrl);
+      const downloaded = await downloadStudentLibraryFile(
+        item.id,
+        item.title,
+        item.pdfUrl,
+      );
+      if (downloaded.savedToDevice) {
+        showToast({
+          type: 'success',
+          text1: Strings.libraryDownloadSuccess,
+        });
+      }
       navigation.navigate('PdfViewer', {
-        pdfUrl: fileUrl,
+        pdfUrl: downloaded.uri,
         title: item.title,
       });
     } catch (error) {
-      console.log('error', error);
-      showToast({
-        type: 'error',
-        text1: error?.message || 'Unable to download this file.',
-      });
+      console.log('error', error?.message);
+      if (error?.message === 'File already exists') {
+        showToast({
+          type: 'info',
+          text1: 'File already exists',
+        });
+      } else {
+        showToast({
+          type: 'error',
+          text1: error?.message || 'Unable to download this file.',
+        });
+      }
     } finally {
-      downloadLock.current = false;
+      setDownloadingId(null);
     }
   };
 
@@ -323,6 +340,8 @@ const DigitalLibrary = () => {
                 onPress={handleOpen}
 
                 onDownload={isParent ? undefined : handleDownload}
+
+                downloading={downloadingId === item.id}
 
                 animationIndex={index + 5}
               />

@@ -1,5 +1,5 @@
 import React from 'react';
-import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {ActivityIndicator, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import DepthIcon from '../DepthIcon';
 import ProfileGradientCard from '../Profile/ProfileGradientCard';
@@ -11,7 +11,13 @@ import {Fontsize} from '../../Constants/Fontsize';
 import {getSubjectGradient} from '../../Constants/CardTheme';
 import {wp, hp} from '../../Constants/Responsive';
 
-const LibraryResourceCard = ({item, onPress, onDownload, animationIndex = 0}) => {
+const LibraryResourceCard = ({
+  item,
+  onPress,
+  onDownload,
+  downloading = false,
+  animationIndex = 0,
+}) => {
   const gradientIndex = Number(String(item?.id || '0').replace(/\D/g, '')) || animationIndex;
 
   const subjectIcon = getSubjectIconTheme(item.subtitle?.split('-')[0]?.trim() || item.title);
@@ -47,13 +53,18 @@ const LibraryResourceCard = ({item, onPress, onDownload, animationIndex = 0}) =>
           {[item.fileType, item.fileSize].filter(Boolean).join(' - ')}
         </Text>
         <TouchableOpacity
-          activeOpacity={1}
+          activeOpacity={0.85}
+          disabled={downloading}
           hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
           onPress={event => {
             event?.stopPropagation?.();
             onDownload?.(item);
           }}>
-          <Icon name="download-outline" size={wp(4.5)} color={Colors.whiteMuted85} />
+          {downloading ? (
+            <ActivityIndicator size="small" color={Colors.white} />
+          ) : (
+            <Icon name="download-outline" size={wp(4.5)} color={Colors.whiteMuted85} />
+          )}
         </TouchableOpacity>
       </View>
     </ProfileGradientCard>
