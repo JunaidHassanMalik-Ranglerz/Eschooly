@@ -12,7 +12,7 @@ import AttendanceStudentDropdown from '../../Component/AttendanceStudentDropdown
 import AnimatedCard from '../../Component/AnimatedCard';
 import {Colors} from '../../Constants/Colors';
 import {Strings} from '../../Constants/Strings';
-import {MENU_LIST, ATTENDANCE_STUDENTS} from '../../Constants/dummydata';
+import {MENU_LIST} from '../../Constants/dummydata';
 import {SCREEN_WAVES} from '../../Component/CardWave';
 import {FEATURE_ICON_META} from '../../Constants/IconTheme';
 import {wp, hp} from '../../Constants/Responsive';
@@ -28,24 +28,21 @@ import {fetchChildDashboard, fetchParentHome} from '../../store/slices/parentHom
 const Menu = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const {
-    isParent,
-    activeStudent,
-    attendanceStudents,
-    selectedChildId,
-    setSelectedChildId,
-    studentLabel,
-  } = useRoleData();
+  const {isParent, studentLabel} = useRoleData();
   const {children, selectedChildId: homeChildId} = useSelector(state => state.parentHome);
+  const homeStudent = useSelector(state => state.studentHome.student);
   const [switchVisible, setSwitchVisible] = useState(false);
   const parentChild =
     children.find(item => item.value === String(homeChildId)) || children[0] || null;
   const parentCanSwitch = children.length > 1;
-  const studentOptions = attendanceStudents;
-  const attendanceMeta =
-    ATTENDANCE_STUDENTS.find(item => item.value === selectedChildId) ||
-    ATTENDANCE_STUDENTS[0];
-  const dropdownStudent = {...activeStudent, ...attendanceMeta};
+  const bannerStudent = {
+    label: homeStudent?.label || '',
+    classInfo: homeStudent?.className || homeStudent?.classLabel || '',
+    classLabel: homeStudent?.classLabel || homeStudent?.className || '',
+    className: homeStudent?.className || '',
+    photoUrl: homeStudent?.photoUrl || '',
+    rollNo: homeStudent?.rollNo || '',
+  };
 
   useEffect(() => {
     if (!isParent || homeChildId || children.length) {
@@ -122,12 +119,10 @@ const Menu = () => {
               entering={ACADEMICS_PROFILE_ENTERING}
               style={styles.childCard}>
               <AttendanceStudentDropdown
-                student={dropdownStudent}
-                students={studentOptions}
-                selectedId={selectedChildId}
+                student={bannerStudent}
                 premium
-                onSelect={item => setSelectedChildId(item.value)}
-                readOnly={studentOptions.length <= 1}
+                embedded
+                readOnly
                 label={studentLabel}
               />
             </AnimatedCard>
