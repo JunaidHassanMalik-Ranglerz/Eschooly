@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View} from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {Colors} from '../../Constants/Colors';
@@ -43,6 +43,11 @@ const AssignmentItem = props => {
   const assignment = props?.assignment;
   const premium = props?.premium;
   const expanded = props?.expanded;
+  const [notes, setNotes] = useState(props?.notes || '');
+
+  useEffect(() => {
+    setNotes(props?.notes || '');
+  }, [props?.notes]);
   const type = assignment?.type || 'homework';
   const status = assignment?.status || 'pending';
   const statusStyle = STATUS_STYLES[status] || STATUS_STYLES.pending;
@@ -133,39 +138,52 @@ const AssignmentItem = props => {
               {assignment.score ? `  ${assignment.score}` : ''}
             </Text>
           ) : null}
-          {assignment?.attachments?.map(file => (
-            <TouchableOpacity
-              key={file.id}
-              style={styles.fileRow}
-              activeOpacity={0.85}
-              onPress={() => props?.onAttachmentPress?.(file)}>
-              <Icon
-                name="download-outline"
-                size={wp(4)}
-                color={premium ? Colors.white : Colors.primary}
-              />
-              <Text
-                style={[styles.fileText, premium && styles.detailTextPremium]}
-                numberOfLines={1}>
-                {file.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
+          {assignment?.attachments?.map(file => {
+            const downloading = props?.downloadingFileId === file.id;
+            return (
+              <TouchableOpacity
+                key={file.id}
+                style={styles.fileRow}
+                activeOpacity={0.85}
+                disabled={Boolean(props?.downloadingFileId)}
+                onPress={() => props?.onAttachmentPress?.(file)}>
+                {downloading ? (
+                  <ActivityIndicator
+                    size="small"
+                    color={premium ? Colors.white : Colors.primary}
+                  />
+                ) : (
+                  <Icon
+                    name="download-outline"
+                    size={wp(4)}
+                    color={premium ? Colors.white : Colors.primary}
+                  />
+                )}
+                <Text
+                  style={[styles.fileText, premium && styles.detailTextPremium]}
+                  numberOfLines={1}>
+                  {file.name}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
           {props?.canSubmit ? (
             <>
               <TextInput
                 style={[styles.notesInput, premium && styles.notesInputPremium]}
                 placeholder={Strings.assignmentNotes}
                 placeholderTextColor={premium ? Colors.whiteMuted75 : Colors.grayText}
-                value={props?.notes}
-                onChangeText={props?.onNotesChange}
+                value={notes}
+                onChangeText={setNotes}
                 multiline
+                blurOnSubmit={false}
+                onFocus={props?.onNotesFocus}
               />
               <TouchableOpacity
                 style={styles.submitBtn}
                 activeOpacity={0.85}
                 disabled={props?.submitting}
-                onPress={props?.onSubmit}>
+                onPress={() => props?.onSubmit?.(notes)}>
                 {props?.submitting ? (
                   <ActivityIndicator size="small" color={Colors.white} />
                 ) : (
@@ -302,6 +320,7 @@ const styles = StyleSheet.create({
   notesInputPremium: {
     borderColor: Colors.whiteOverlay22,
     color: Colors.white,
+    zIndex: 1,
   },
   submitBtn: {
     alignSelf: 'flex-start',

@@ -1,5 +1,14 @@
-import React, {useCallback, useEffect, useState} from 'react';
-import {ActivityIndicator, RefreshControl, StatusBar, StyleSheet, Text} from 'react-native';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
+import {
+  ActivityIndicator,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  RefreshControl,
+  StatusBar,
+  StyleSheet,
+  Text,
+} from 'react-native';
 import ScrollEnterFlatList from '../../Component/ScrollEnterFlatList';
 import {useNavigation} from '@react-navigation/native';
 import {SafeAreaView} from 'react-native-safe-area-context';
@@ -45,8 +54,11 @@ const Assignment = () => {
   const [notesById, setNotesById] = useState({});
   const [loadingAssignmentId, setLoadingAssignmentId] = useState(null);
   const [submittingId, setSubmittingId] = useState(null);
+  const [downloadingFileId, setDownloadingFileId] = useState(null);
   const [loading, setLoading] = useState(!isParent);
   const [refreshing, setRefreshing] = useState(false);
+  const [keyboardInset, setKeyboardInset] = useState(0);
+  const listRef = useRef(null);
   const overview = isParent ? assignmentOverview : studentOverview;
   const subjects = isParent ? assignmentSubjects : studentSubjects;
   const bannerChild = {
@@ -113,6 +125,39 @@ const Assignment = () => {
 
   useEffect(() => loadAssignments(false), [loadAssignments]);
 
+  useEffect(() => {
+    const show = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      event => setKeyboardInset(event.endCoordinates.height),
+    );
+    const hide = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setKeyboardInset(0),
+    );
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
+
+  const scrollNotesIntoView = useCallback(() => {
+    const subjectIndex = subjects.findIndex(
+      item =>
+        item.id === openSubjectId ||
+        (item.assignments || []).some(row => row.id === openAssignmentId),
+    );
+    if (subjectIndex < 0) {
+      return;
+    }
+    setTimeout(() => {
+      listRef.current?.scrollToIndex({
+        index: subjectIndex,
+        animated: true,
+        viewPosition: 0,
+      });
+    }, Platform.OS === 'ios' ? 80 : 220);
+  }, [openAssignmentId, openSubjectId, subjects]);
+
   const mergeAssignment = (assignmentId, extra) => {
     setStudentSubjects(current =>
       current.map(subject => ({
@@ -166,14 +211,24 @@ const Assignment = () => {
   };
 
   const handleAttachment = async (assignment, file) => {
+    if (downloadingFileId || !file?.id) {
+      return;
+    }
+    setDownloadingFileId(file.id);
     try {
-      const pdfUrl = await downloadStudentAssignmentAttachment(
+      const downloaded = await downloadStudentAssignmentAttachment(
         assignment.id,
         file.id,
         file.name,
       );
+      if (downloaded.savedToDevice) {
+        showToast({
+          type: 'success',
+          text1: Strings.libraryDownloadSuccess,
+        });
+      }
       navigation.navigate('PdfViewer', {
-        pdfUrl,
+        pdfUrl: downloaded.uri,
         title: file.name || Strings.assignment,
       });
     } catch (error) {
@@ -181,18 +236,21 @@ const Assignment = () => {
         type: 'error',
         text1: error?.message || 'Unable to download this file.',
       });
+    } finally {
+      setDownloadingFileId(null);
     }
   };
 
-  const handleSubmit = assignment => {
+  const handleSubmit = (assignment, notes) => {
     if (submittingId) {
       return;
     }
     setSubmittingId(assignment.id);
+    setNotesById(current => ({...current, [assignment.id]: notes || ''}));
     dispatch(
       sendStudentAssignmentSubmission({
         assignmentId: assignment.id,
-        notes: notesById[assignment.id] || '',
+        notes: notes || '',
         update: assignment.status === 'submitted',
       }),
     )
@@ -227,14 +285,33 @@ const Assignment = () => {
         navyBack
       />
 
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollEnterFlatList
+        ref={listRef}
         data={loading && !isParent ? [] : subjects}
         keyExtractor={item => item.id}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="none"
+        automaticallyAdjustKeyboardInsets
         bounces
         overScrollMode="auto"
         removeClippedSubviews={false}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[
+          styles.content,
+          keyboardInset ? {paddingBottom: keyboardInset + hp(2)} : null,
+        ]}
+        onScrollToIndexFailed={({index}) => {
+          setTimeout(() => {
+            listRef.current?.scrollToIndex({
+              index,
+              animated: true,
+              viewPosition: 0,
+            });
+          }, 250);
+        }}
         refreshControl={
           isParent ? undefined : (
             <RefreshControl
@@ -293,18 +370,18 @@ const Assignment = () => {
             canSubmit={!isParent}
             notesById={notesById}
             submittingId={submittingId}
+            downloadingFileId={downloadingFileId}
             onAssignmentPress={isParent ? undefined : openAssignment}
             onAttachmentPress={isParent ? undefined : handleAttachment}
-            onNotesChange={(id, value) =>
-              setNotesById(current => ({...current, [id]: value}))
-            }
             onSubmit={isParent ? undefined : handleSubmit}
+            onNotesFocus={isParent ? undefined : scrollNotesIntoView}
             onToggle={() =>
               setOpenSubjectId(openSubjectId === item.id ? null : item.id)
             }
           />
         )}
       />
+      </KeyboardAvoidingView>
       </SafeAreaView>
   );
 };
@@ -315,6 +392,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.parentBg,
+  },
+  flex: {
+    flex: 1,
   },
   content: {
     paddingHorizontal: wp(4),

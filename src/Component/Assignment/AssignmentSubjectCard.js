@@ -82,14 +82,17 @@ const AssignmentSubjectCard = props => {
             canSubmit={props?.canSubmit}
             notes={props?.notesById?.[item.id] || ''}
             submitting={props?.submittingId === item.id}
+            downloadingFileId={props?.downloadingFileId}
             onPress={props?.onAssignmentPress ? () => props.onAssignmentPress(item) : undefined}
             onAttachmentPress={file => props?.onAttachmentPress?.(item, file)}
-            onNotesChange={value => props?.onNotesChange?.(item.id, value)}
-            onSubmit={() => props?.onSubmit?.(item)}
+            onSubmit={value => props?.onSubmit?.(item, value)}
+            onNotesFocus={props?.onNotesFocus}
           />
         )}
         scrollEnabled={false}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        removeClippedSubviews={false}
         style={[styles.list, premium && styles.listPremium]}
       />
     ) : null;
@@ -99,6 +102,9 @@ const AssignmentSubjectCard = props => {
       <ProfileGradientCard
         innerStyle={styles.premiumInner}
         animationIndex={animationIndex}
+        disableAnimation={(subject?.assignments || []).some(
+          item => item.id === props?.openAssignmentId,
+        )}
         colors={mathTheme.gradient}
         waveVariant={animationIndex === 2 || animationIndex === 3 ? SCREEN_WAVES.assignment : null}>
         {header}
