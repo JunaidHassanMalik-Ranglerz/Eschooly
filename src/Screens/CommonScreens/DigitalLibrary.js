@@ -180,8 +180,7 @@ const DigitalLibrary = () => {
 
 
   const openStudentFile = async item => {
-    console.log('item', item);
-    console.log('downloadingId', downloadingId);
+
     if (!item?.id || downloadingId) {
       return;
     }

@@ -52,6 +52,7 @@ export const getCardElevation = (index = 0) =>
 
 export const ACTION_ICON_COLOR = {
   moreInfo: Colors.iconSky,
+  idCard: Colors.iconBlue,
   updatePassword: Colors.iconPurple,
   logout: Colors.red,
 };

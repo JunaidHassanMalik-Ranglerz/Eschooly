@@ -241,17 +241,27 @@ const Assignment = () => {
     }
   };
 
-  const handleSubmit = (assignment, notes) => {
-    if (submittingId) {
+  const handleSubmit = (assignment, notes, files = []) => {
+    if (
+      submittingId ||
+      !assignment?.id ||
+      assignment.status === 'submitted'
+    ) {
+      return;
+    }
+    const trimmed = String(notes || '').trim();
+    const attachments = Array.isArray(files) ? files.filter(file => file?.uri || file?.fileCopyUri) : [];
+    if (!trimmed && !attachments.length) {
+      showToast({type: 'error', text1: Strings.assignmentSubmitRequired});
       return;
     }
     setSubmittingId(assignment.id);
-    setNotesById(current => ({...current, [assignment.id]: notes || ''}));
+    setNotesById(current => ({...current, [assignment.id]: trimmed}));
     dispatch(
       sendStudentAssignmentSubmission({
         assignmentId: assignment.id,
-        notes: notes || '',
-        update: assignment.status === 'submitted',
+        notes: trimmed,
+        files: attachments,
       }),
     )
       .unwrap()
@@ -259,10 +269,7 @@ const Assignment = () => {
         mergeAssignment(assignment.id, payload);
         showToast({
           type: 'success',
-          text1:
-            assignment.status === 'submitted'
-              ? Strings.updateSubmission
-              : Strings.submitted,
+          text1: Strings.submitted,
         });
       })
       .catch(error => {

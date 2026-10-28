@@ -1,6 +1,14 @@
 import React, {useEffect, useState} from 'react';
 import {ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View} from 'react-native';
+import {
+  errorCodes,
+  isErrorWithCode,
+  keepLocalCopy,
+  pick,
+  types,
+} from '@react-native-documents/picker';
 import Icon from 'react-native-vector-icons/Ionicons';
+import {showToast} from '../../utils/toast';
 import {Colors} from '../../Constants/Colors';
 import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
@@ -44,10 +52,59 @@ const AssignmentItem = props => {
   const premium = props?.premium;
   const expanded = props?.expanded;
   const [notes, setNotes] = useState(props?.notes || '');
+  const [files, setFiles] = useState([]);
 
   useEffect(() => {
     setNotes(props?.notes || '');
   }, [props?.notes]);
+
+  const pickFiles = async () => {
+    try {
+      const picked = await pick({
+        allowMultiSelection: true,
+        type: [types.allFiles],
+      });
+      const copies = await keepLocalCopy({
+        destination: 'cachesDirectory',
+        files: picked.map(file => ({
+          uri: file.uri,
+          fileName: file.name || 'attachment',
+        })),
+      });
+      const bySource = new Map(
+        copies.map(copy => [copy.sourceUri, copy]),
+      );
+      const next = picked
+        .map(file => {
+          const copy = bySource.get(file.uri);
+          const uri =
+            copy?.status === 'success' ? copy.localUri : file.uri;
+          if (!uri) {
+            return null;
+          }
+          return {
+            uri,
+            name: file.name || 'attachment',
+            type: file.type || 'application/octet-stream',
+          };
+        })
+        .filter(Boolean);
+      if (next.length) {
+        setFiles(current => [...current, ...next]);
+      }
+    } catch (error) {
+      if (
+        isErrorWithCode(error) &&
+        error.code === errorCodes.OPERATION_CANCELED
+      ) {
+        return;
+      }
+      showToast({
+        type: 'error',
+        text1: error?.message || 'Unable to attach this file.',
+      });
+    }
+  };
   const type = assignment?.type || 'homework';
   const status = assignment?.status || 'pending';
   const statusStyle = STATUS_STYLES[status] || STATUS_STYLES.pending;
@@ -167,7 +224,12 @@ const AssignmentItem = props => {
               </TouchableOpacity>
             );
           })}
-          {props?.canSubmit ? (
+          {status === 'submitted' && (assignment?.notes || notes) ? (
+            <Text style={[styles.detailText, premium && styles.detailTextPremium]}>
+              {assignment?.notes || notes}
+            </Text>
+          ) : null}
+          {props?.canSubmit && status !== 'submitted' ? (
             <>
               <TextInput
                 style={[styles.notesInput, premium && styles.notesInputPremium]}
@@ -179,19 +241,57 @@ const AssignmentItem = props => {
                 blurOnSubmit={false}
                 onFocus={props?.onNotesFocus}
               />
+              {files.map((file, index) => (
+                <View
+                  key={`${file.uri || file.fileCopyUri || file.name}-${index}`}
+                  style={styles.fileRow}>
+                  <Icon
+                    name="document-attach-outline"
+                    size={wp(4)}
+                    color={premium ? Colors.white : Colors.primary}
+                  />
+                  <Text
+                    style={[styles.fileText, premium && styles.detailTextPremium]}
+                    numberOfLines={1}>
+                    {file.name || Strings.attachFile}
+                  </Text>
+                  <TouchableOpacity
+                    activeOpacity={0.85}
+                    onPress={() =>
+                      setFiles(current => current.filter((_, itemIndex) => itemIndex !== index))
+                    }>
+                    <Icon
+                      name="close"
+                      size={wp(4.2)}
+                      color={premium ? Colors.whiteMuted75 : Colors.grayText}
+                    />
+                  </TouchableOpacity>
+                </View>
+              ))}
+              <TouchableOpacity
+                style={styles.fileRow}
+                activeOpacity={0.85}
+                disabled={props?.submitting}
+                onPress={pickFiles}>
+                <Icon
+                  name="attach-outline"
+                  size={wp(4)}
+                  color={premium ? Colors.white : Colors.primary}
+                />
+                <Text
+                  style={[styles.fileText, premium && styles.detailTextPremium]}>
+                  {Strings.attachFile}
+                </Text>
+              </TouchableOpacity>
               <TouchableOpacity
                 style={styles.submitBtn}
                 activeOpacity={0.85}
                 disabled={props?.submitting}
-                onPress={() => props?.onSubmit?.(notes)}>
+                onPress={() => props?.onSubmit?.(notes, files)}>
                 {props?.submitting ? (
                   <ActivityIndicator size="small" color={Colors.white} />
                 ) : (
-                  <Text style={styles.submitText}>
-                    {assignment?.status === 'submitted'
-                      ? Strings.updateSubmission
-                      : Strings.submitAssignment}
-                  </Text>
+                  <Text style={styles.submitText}>{Strings.submitAssignment}</Text>
                 )}
               </TouchableOpacity>
             </>

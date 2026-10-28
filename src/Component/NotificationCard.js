@@ -1,6 +1,6 @@
 import React from 'react';
 
-import {StyleSheet, Text, View} from 'react-native';
+import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 
 import LinearGradient from 'react-native-linear-gradient';
 
@@ -26,16 +26,16 @@ const CARD_GRADIENT = ['#07346B', '#062653', '#0D5CA8'];
 
 
 
-const NotificationCard = ({item, animationIndex = 0, entering}) => {
+const NotificationCard = ({item, onPress, animationIndex = 0, entering}) => {
 
   const accent = item.iconColor || Colors.iconSky;
 
   const isUnread = !!item.unread;
+  const when = item.date && item.time
+    ? `${item.date}  ·  ${item.time}`
+    : item.date || item.time;
 
-
-
-  return (
-
+  const card = (
     <AnimatedCard
       index={animationIndex}
       entering={entering}
@@ -77,25 +77,33 @@ const NotificationCard = ({item, animationIndex = 0, entering}) => {
 
           </Text>
 
+          {item.message ? (
           <Text style={styles.message} numberOfLines={4}>
 
             {item.message}
 
           </Text>
+          ) : null}
 
+          {when || isUnread ? (
           <View style={styles.metaRow}>
 
+            {when ? (
+              <>
             <Icon name="time-outline" size={wp(3.5)} color="#B9CEF0" />
 
             <Text style={styles.meta}>
 
-              {item.date ? `${item.date}  ·  ${item.time}` : item.time}
+              {when}
 
             </Text>
+              </>
+            ) : null}
 
             {isUnread ? <Text style={styles.unreadLabel}>New</Text> : null}
 
           </View>
+          ) : null}
 
         </View>
 
@@ -103,7 +111,16 @@ const NotificationCard = ({item, animationIndex = 0, entering}) => {
       </View>
 
     </AnimatedCard>
+  );
 
+  if (!onPress) {
+    return card;
+  }
+
+  return (
+    <TouchableOpacity activeOpacity={0.9} onPress={onPress}>
+      {card}
+    </TouchableOpacity>
   );
 
 };

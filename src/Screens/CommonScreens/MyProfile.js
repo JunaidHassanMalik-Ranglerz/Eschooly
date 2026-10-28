@@ -8,6 +8,7 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {useDispatch, useSelector} from 'react-redux';
 import {fetchParentProfile, fetchStudentProfile, logoutParent, logoutStudent} from '../../store/slices/authSlice';
+import {downloadStudentIdCard} from '../../store/slices/studentHomeSlice';
 import {showToast} from '../../utils/toast';
 
 import LinearGradient from 'react-native-linear-gradient';
@@ -91,12 +92,15 @@ const MyProfile = ({isTab = false}) => {
   const apiProfile = useSelector(state => state.auth.profile);
   const profileLoading = useSelector(state => state.auth.profileLoading);
   const loggingOut = useSelector(state => state.auth.logoutLoading);
+  const authRole = useSelector(state => state.auth.role);
   const logoutLock = useRef(false);
 
   const {profilePerson, profileDetails, isParent} = useProfileStudent();
+  const canDownloadIdCard = authRole === 'student' && !isParent;
   const [moreInfoVisible, setMoreInfoVisible] = useState(false);
   const [modalReplay, setModalReplay] = useState(0);
   const [logoutConfirmVisible, setLogoutConfirmVisible] = useState(false);
+  const [downloadingCard, setDownloadingCard] = useState(false);
 
   const parentPerson = useMemo(() => {
     if (!isParent || !apiProfile) {
@@ -153,6 +157,34 @@ const MyProfile = ({isTab = false}) => {
       return;
     }
     navigation.navigate('UpdatePassword');
+  };
+
+  const handleDownloadIdCard = async () => {
+    if (!canDownloadIdCard || downloadingCard) {
+      return;
+    }
+    setDownloadingCard(true);
+    try {
+      const file = await dispatch(downloadStudentIdCard()).unwrap();
+      if (file?.savedToDevice) {
+        showToast({type: 'success', text1: Strings.idCardDownloadSuccess});
+      }
+      if (file?.uri) {
+        const parentNav = navigation.getParent();
+        const nav = parentNav || navigation;
+        nav.navigate('PdfViewer', {
+          pdfUrl: file.uri,
+          title: Strings.studentIdCard,
+        });
+      }
+    } catch (error) {
+      showToast({
+        type: 'error',
+        text1: error?.message || Strings.idCardDownloadFailed,
+      });
+    } finally {
+      setDownloadingCard(false);
+    }
   };
 
   const resetToLogin = () => {
@@ -323,6 +355,16 @@ const MyProfile = ({isTab = false}) => {
             entering={getHomeScreenEnter(4)}
           />
 
+        ) : canDownloadIdCard ? (
+          <ProfileActionCard
+            icon="download-outline"
+            iconColor={ACTION_ICON_COLOR.idCard}
+            title={Strings.downloadIdCard}
+            onPress={handleDownloadIdCard}
+            loading={downloadingCard}
+            animationIndex={4}
+            entering={getHomeScreenEnter(4)}
+          />
         ) : null}
 
         <ProfileActionCard
@@ -330,8 +372,8 @@ const MyProfile = ({isTab = false}) => {
           iconColor={ACTION_ICON_COLOR.updatePassword}
           title={Strings.updatePassword}
           onPress={openUpdatePassword}
-          animationIndex={isParent ? 5 : 4}
-          entering={getHomeScreenEnter(isParent ? 5 : 4)}
+          animationIndex={5}
+          entering={getHomeScreenEnter(5)}
         />
 
         <ProfileActionCard
@@ -340,8 +382,8 @@ const MyProfile = ({isTab = false}) => {
           title={Strings.logout}
           onPress={onLogoutPress}
           loading={loggingOut}
-          animationIndex={isParent ? 6 : 5}
-          entering={getHomeScreenEnter(isParent ? 6 : 5)}
+          animationIndex={6}
+          entering={getHomeScreenEnter(6)}
         />
 
       </ScrollEnterScrollView>

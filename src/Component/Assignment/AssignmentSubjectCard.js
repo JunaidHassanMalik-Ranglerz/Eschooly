@@ -79,13 +79,15 @@ const AssignmentSubjectCard = props => {
             premium={premium}
             expanded={props?.openAssignmentId === item.id}
             loading={props?.loadingAssignmentId === item.id}
-            canSubmit={props?.canSubmit}
+            canSubmit={
+              props?.canSubmit && item.status !== 'submitted'
+            }
             notes={props?.notesById?.[item.id] || ''}
             submitting={props?.submittingId === item.id}
             downloadingFileId={props?.downloadingFileId}
             onPress={props?.onAssignmentPress ? () => props.onAssignmentPress(item) : undefined}
             onAttachmentPress={file => props?.onAttachmentPress?.(item, file)}
-            onSubmit={value => props?.onSubmit?.(item, value)}
+            onSubmit={(value, files) => props?.onSubmit?.(item, value, files)}
             onNotesFocus={props?.onNotesFocus}
           />
         )}
