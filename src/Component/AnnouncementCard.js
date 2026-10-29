@@ -28,6 +28,11 @@ const CATEGORY_STYLES = {
     icon: 'megaphone-outline',
     accent: '#2563EB',
   },
+  General: {
+    ...NOTICE_BLUE,
+    icon: 'megaphone-outline',
+    accent: '#38BDF8',
+  },
   Update: {
     ...NOTICE_BLUE,
     icon: 'refresh-circle-outline',
@@ -97,6 +102,12 @@ const AnnouncementCard = ({
           <View style={styles.timeRow}>
             <Icon name="time-outline" size={wp(3.5)} color="#B9CEF0" />
             <Text style={styles.time}>{item.time}</Text>
+          </View>
+          ) : null}
+          {item.targeting ? (
+          <View style={styles.timeRow}>
+            <Icon name="people-outline" size={wp(3.5)} color="#B9CEF0" />
+            <Text style={styles.time}>{item.targeting}</Text>
           </View>
           ) : null}
         </View>

@@ -70,7 +70,6 @@ export const fetchStudentHome = createAsyncThunk(
   async (_, {rejectWithValue}) => {
     try {
       const response = await getStudentHome();
-      console.log('response', response);
       const body = response?.data;
       if (body && body.success === false) {
         return rejectWithValue({
@@ -640,7 +639,7 @@ export const fetchStudentNotifications = createAsyncThunk(
     try {
       const params = {per_page: 50};
       if (unreadOnly) {
-        params.unread_only = 1;
+        params.unread_only = true;
       }
       const response = await getStudentNotifications(params);
       const body = response?.data;
@@ -715,7 +714,7 @@ export const markStudentNotificationRead = createAsyncThunk(
         });
       }
       dispatch(fetchStudentUnreadCount());
-      return {id: String(notificationId)};
+      return {id: String(notificationId), unread: false};
     } catch (error) {
       return rejectWithValue({
         message: getApiErrorMessage(error),
@@ -804,6 +803,10 @@ const studentHomeSlice = createSlice({
   initialState,
   reducers: {
     resetStudentHome: () => initialState,
+    setUnreadNotifications: (state, action) => {
+      const count = Number(action.payload);
+      state.unreadNotifications = Number.isFinite(count) ? Math.max(0, count) : 0;
+    },
   },
   extraReducers: builder => {
     builder
@@ -818,7 +821,6 @@ const studentHomeSlice = createSlice({
         state.student = null;
         state.modules = null;
         state.upcomingClass = null;
-        state.unreadNotifications = 0;
         state.error = action.payload?.message || 'Unable to load home.';
       })
       .addCase(fetchStudentUnreadCount.fulfilled, (state, action) => {
@@ -830,5 +832,5 @@ const studentHomeSlice = createSlice({
   },
 });
 
-export const {resetStudentHome} = studentHomeSlice.actions;
+export const {resetStudentHome, setUnreadNotifications} = studentHomeSlice.actions;
 export default studentHomeSlice.reducer;

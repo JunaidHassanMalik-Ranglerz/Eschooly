@@ -1274,12 +1274,14 @@ const announcementWhen = value => {
   if (!raw) {
     return {date: '', time: ''};
   }
-  const dateOnly = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (dateOnly) {
-    const month = SHORT_MONTHS[Number(dateOnly[2]) - 1];
+  const match = raw.match(
+    /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{1,2}):(\d{2})(?::(\d{2}))?)?/,
+  );
+  if (match) {
+    const month = SHORT_MONTHS[Number(match[2]) - 1];
     return {
-      date: month ? `${Number(dateOnly[3])} ${month} ${dateOnly[1]}` : raw,
-      time: '',
+      date: month ? `${Number(match[3])} ${month} ${match[1]}` : raw,
+      time: match[4] != null ? clockLabel(`${match[4]}:${match[5]}`) : '',
     };
   }
   const parsed = new Date(raw);
@@ -1309,16 +1311,22 @@ const announcementCategory = slot => {
 
 const mapAnnouncement = (item, index) => {
   const slot = asObject(item) || {};
-  const published = slot.published_at || slot.created_at || slot.date;
+  const target = asObject(slot.target) || {};
+  const published =
+    slot.sent_at || slot.published_at || slot.created_at || slot.date;
   const when = announcementWhen(published);
   const clock = text(slot.time) ? clockLabel(slot.time) : when.time;
+  const targeting = text(slot.targeting || target.audience_type);
   return {
     id: text(slot.id) || String(index),
     category: announcementCategory(slot),
     title: text(slot.title) || named(slot.subject),
-    message: text(slot.message || slot.body || slot.description || slot.content),
+    message: text(slot.body || slot.message || slot.description || slot.content),
     date: text(slot.date_label) || when.date,
     time: clock,
+    targeting: targeting
+      ? targeting.charAt(0).toUpperCase() + targeting.slice(1)
+      : '',
   };
 };
 
@@ -1381,33 +1389,35 @@ const notificationList = value => {
   return [];
 };
 
+const flagValue = value => {
+  if (value === true || value === 1 || value === '1' || value === 'true') {
+    return true;
+  }
+  if (value === false || value === 0 || value === '0' || value === 'false') {
+    return false;
+  }
+  return null;
+};
+
 const notificationUnread = (slot, nested) => {
-  if (typeof slot.unread === 'boolean') {
-    return slot.unread;
+  const unreadFlag = flagValue(
+    slot.unread ?? slot.is_unread ?? nested.unread ?? nested.is_unread,
+  );
+  if (unreadFlag !== null) {
+    return unreadFlag;
   }
-  if (typeof slot.is_unread === 'boolean') {
-    return slot.is_unread;
+  const readFlag = flagValue(slot.is_read ?? nested.is_read ?? slot.read ?? nested.read);
+  if (readFlag !== null) {
+    return !readFlag;
   }
-  if (typeof nested.unread === 'boolean') {
-    return nested.unread;
-  }
-  if (typeof slot.is_read === 'boolean') {
-    return !slot.is_read;
-  }
-  if (typeof nested.is_read === 'boolean') {
-    return !nested.is_read;
-  }
-  if (typeof slot.read === 'boolean') {
-    return !slot.read;
-  }
-  if (Object.prototype.hasOwnProperty.call(slot, 'read_at')) {
-    return !slot.read_at;
-  }
-  if (Object.prototype.hasOwnProperty.call(nested, 'read_at')) {
-    return !nested.read_at;
+  if (
+    Object.prototype.hasOwnProperty.call(slot, 'read_at') ||
+    Object.prototype.hasOwnProperty.call(nested, 'read_at')
+  ) {
+    return !(slot.read_at || nested.read_at);
   }
   const status = text(slot.status || nested.status).toLowerCase();
-  if (status === 'unread') {
+  if (status === 'unread' || status === 'new') {
     return true;
   }
   if (status === 'read') {
@@ -1445,25 +1455,37 @@ const notificationTheme = rawType => {
   return FEATURE_ICON_META.notification;
 };
 
+const nestedNotification = slot => {
+  const raw = slot.data;
+  if (typeof raw === 'string') {
+    try {
+      return asObject(JSON.parse(raw)) || {};
+    } catch (error) {
+      return {};
+    }
+  }
+  return asObject(raw) || asObject(slot.notification) || {};
+};
+
 const mapNotification = (item, index) => {
   const slot = asObject(item) || {};
-  const nested = asObject(slot.data) || asObject(slot.notification) || {};
-  const id = text(slot.id || slot.notification_id || nested.id);
+  const nested = nestedNotification(slot);
+  const id = text(slot.id || slot.notification_id || nested.id) || String(index);
   const title = text(
     slot.title || nested.title || slot.subject || nested.subject,
   );
   const message = text(
-    slot.message ||
-      nested.message ||
-      slot.body ||
+    slot.body ||
       nested.body ||
+      slot.message ||
+      nested.message ||
       slot.description ||
       nested.description ||
       slot.content ||
       nested.content,
   );
   const heading = title || message;
-  if (!id || !heading) {
+  if (!heading) {
     return null;
   }
   const when = announcementWhen(
@@ -1473,7 +1495,9 @@ const mapNotification = (item, index) => {
       nested.created_at ||
       slot.date,
   );
-  const theme = notificationTheme(slot.type || nested.type || slot.category || nested.category);
+  const theme = notificationTheme(
+    slot.type || nested.type || slot.category || nested.category,
+  );
   return {
     id,
     title: heading,
@@ -1492,12 +1516,15 @@ export const readNotificationPage = body => {
   const page = asObject(data) || {};
   const list = Array.isArray(data)
     ? data
-    : notificationList(page).length
-      ? notificationList(page)
-      : notificationList(root);
+    : Array.isArray(page.notifications)
+      ? page.notifications
+      : notificationList(page).length
+        ? notificationList(page)
+        : notificationList(root);
+  const meta = asObject(page.meta) || asObject(root.meta) || {};
   return {
     items: list.map(mapNotification).filter(Boolean),
-    lastPage: Number(page.meta?.last_page || page.last_page || root.meta?.last_page) || 1,
+    lastPage: Number(meta.last_page || page.last_page || root.last_page) || 1,
   };
 };
 
@@ -1507,7 +1534,7 @@ export const mapStudentUnreadCount = body => {
   if (typeof data === 'number') {
     return Math.max(0, data);
   }
-  const record = asObject(data) || root;
+  const record = asObject(data) || {};
   const count = Number(
     record.unread_count ??
       record.unread_notifications ??
@@ -1521,17 +1548,17 @@ export const mapStudentUnreadCount = body => {
 
 export const getStudentNotifications = (params = {}) =>
   axiosInstance.get('/student/notifications', {
-    params,
+    params: {per_page: 50, ...params},
   });
 
 export const getStudentUnreadCount = () =>
   axiosInstance.get('/student/notifications/unread-count');
 
 export const readStudentNotification = notificationId =>
-  axiosInstance.post(`/student/notifications/${notificationId}/read`);
+  axiosInstance.post(`/student/notifications/${notificationId}/read`, {});
 
 export const readAllStudentNotifications = () =>
-  axiosInstance.post('/student/notifications/read-all');
+  axiosInstance.post('/student/notifications/read-all', {});
 
 const mapSyllabusTopic = (item, index) => {
   const slot = asObject(item) || {};

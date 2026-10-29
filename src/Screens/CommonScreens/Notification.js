@@ -1,4 +1,4 @@
-import React, {useCallback, useMemo, useState} from 'react';
+import React, {useCallback, useRef, useState} from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -23,15 +23,14 @@ import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
 import {wp, hp} from '../../Constants/Responsive';
-import {useRoleData} from '../../hooks/useRoleData';
 import {ScreenEnterProvider} from '../../hooks/useScreenEnterGate';
 import {getHomeScreenEnter} from '../../utils/cardAnimation';
 import {showToast} from '../../utils/toast';
 import {
   fetchStudentNotifications,
-  fetchStudentUnreadCount,
   markStudentNotificationRead,
   markStudentNotificationsReadAll,
+  setUnreadNotifications,
 } from '../../store/slices/studentHomeSlice';
 
 const NAVY = '#071A3D';
@@ -49,26 +48,29 @@ const NotificationContent = () => {
   const reduxUnread = useSelector(
     state => state.studentHome?.unreadNotifications || 0,
   );
-  const {notifications: dummyNotifications} = useRoleData();
   const [activeTab, setActiveTab] = useState(Strings.tabAll);
-  const [studentItems, setStudentItems] = useState([]);
+  const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(!isParent);
   const [refreshing, setRefreshing] = useState(false);
   const [readingId, setReadingId] = useState(null);
   const [markingAll, setMarkingAll] = useState(false);
   const unreadOnly = activeTab === Strings.tabUnread;
+  const requestRef = useRef(0);
+  const listUnread = unreadOnly
+    ? items.length
+    : items.filter(item => item.unread).length;
+  const unreadCount =
+    loading && items.length === 0 ? reduxUnread : listUnread;
 
-  const parentItems = useMemo(() => {
-    if (!unreadOnly) {
-      return dummyNotifications;
-    }
-    return dummyNotifications.filter(item => item.unread);
-  }, [dummyNotifications, unreadOnly]);
-
-  const items = isParent ? parentItems : studentItems;
-  const unreadCount = isParent
-    ? dummyNotifications.filter(item => item.unread).length
-    : reduxUnread;
+  const syncUnreadCount = useCallback(
+    nextItems => {
+      const count = unreadOnly
+        ? nextItems.length
+        : nextItems.filter(item => item.unread).length;
+      dispatch(setUnreadNotifications(count));
+    },
+    [dispatch, unreadOnly],
+  );
 
   const loadStudentNotifications = useCallback(
     (isRefresh = false) => {
@@ -76,28 +78,31 @@ const NotificationContent = () => {
         return undefined;
       }
 
-      let active = true;
+      const requestId = requestRef.current + 1;
+      requestRef.current = requestId;
       if (isRefresh) {
         setRefreshing(true);
       } else {
         setLoading(true);
       }
 
-      Promise.all([
-        dispatch(fetchStudentNotifications(unreadOnly)).unwrap(),
-        dispatch(fetchStudentUnreadCount()).unwrap().catch(() => null),
-      ])
-        .then(([list]) => {
-          if (active) {
-            setStudentItems(list);
+      dispatch(fetchStudentNotifications(unreadOnly))
+        .unwrap()
+        .then(list => {
+          if (requestRef.current !== requestId) {
+            return;
           }
+          const rows = Array.isArray(list) ? list : [];
+          setItems(rows);
+          syncUnreadCount(rows);
         })
         .catch(error => {
-          if (!active) {
+          if (requestRef.current !== requestId) {
             return;
           }
           if (!isRefresh) {
-            setStudentItems([]);
+            setItems([]);
+            dispatch(setUnreadNotifications(0));
           }
           showToast({
             type: 'error',
@@ -105,7 +110,7 @@ const NotificationContent = () => {
           });
         })
         .finally(() => {
-          if (!active) {
+          if (requestRef.current !== requestId) {
             return;
           }
           setLoading(false);
@@ -113,10 +118,10 @@ const NotificationContent = () => {
         });
 
       return () => {
-        active = false;
+        requestRef.current += 1;
       };
     },
-    [dispatch, isParent, unreadOnly],
+    [dispatch, isParent, syncUnreadCount, unreadOnly],
   );
 
   useFocusEffect(
@@ -126,22 +131,26 @@ const NotificationContent = () => {
   );
 
   const handleReadOne = item => {
-    if (isParent || !item?.id || !item.unread || readingId || markingAll) {
+    if (isParent || !item?.id || readingId || markingAll) {
+      return;
+    }
+    if (!item.unread && !unreadOnly) {
       return;
     }
     setReadingId(item.id);
-    const previous = studentItems;
-    setStudentItems(current =>
-      unreadOnly
-        ? current.filter(entry => entry.id !== item.id)
-        : current.map(entry =>
-            entry.id === item.id ? {...entry, unread: false} : entry,
-          ),
-    );
+    const previous = items;
+    const nextItems = unreadOnly
+      ? items.filter(entry => entry.id !== item.id)
+      : items.map(entry =>
+          entry.id === item.id ? {...entry, unread: false} : entry,
+        );
+    setItems(nextItems);
+    syncUnreadCount(nextItems);
     dispatch(markStudentNotificationRead(item.id))
       .unwrap()
       .catch(error => {
-        setStudentItems(previous);
+        setItems(previous);
+        syncUnreadCount(previous);
         showToast({
           type: 'error',
           text1: error?.message || 'Unable to mark notification as read.',
@@ -162,16 +171,18 @@ const NotificationContent = () => {
         text: Strings.markAllRead,
         onPress: () => {
           setMarkingAll(true);
-          const previous = studentItems;
-          setStudentItems(current =>
-            unreadOnly
-              ? []
-              : current.map(entry => ({...entry, unread: false})),
-          );
+          const previous = items;
+          const nextItems = unreadOnly
+            ? []
+            : items.map(entry => ({...entry, unread: false}));
+          setItems(nextItems);
+          dispatch(setUnreadNotifications(0));
           dispatch(markStudentNotificationsReadAll())
             .unwrap()
+            .then(() => loadStudentNotifications(true))
             .catch(error => {
-              setStudentItems(previous);
+              setItems(previous);
+              syncUnreadCount(previous);
               showToast({
                 type: 'error',
                 text1: error?.message || 'Unable to mark notifications as read.',
@@ -272,9 +283,7 @@ const NotificationContent = () => {
               <NotificationCard
                 key={item.id}
                 item={item}
-                onPress={
-                  isParent ? undefined : () => handleReadOne(item)
-                }
+                onPress={isParent ? undefined : () => handleReadOne(item)}
                 animationIndex={slot}
                 entering={getHomeScreenEnter(slot)}
               />

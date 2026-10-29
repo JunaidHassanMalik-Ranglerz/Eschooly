@@ -239,7 +239,18 @@ const AnnouncementsScreen = () => {
           announcements.map((item, index) => {
             const slot = index + 2;
             const detail = !isParent ? detailById[item.id] : null;
-            const shown = detail ? {...item, ...detail} : item;
+            const shown = detail
+              ? {
+                  ...item,
+                  ...detail,
+                  title: detail.title || item.title,
+                  message: detail.message || item.message,
+                  date: detail.date || item.date,
+                  time: detail.time || item.time,
+                  category: detail.category || item.category,
+                  targeting: detail.targeting || item.targeting,
+                }
+              : item;
             return (
               <AnnouncementCard
                 key={item.id}

@@ -460,7 +460,8 @@ export const mapChildAnnouncements = body => {
     child: data.child ? mapHomeChild(data.child) : null,
     items: firstList(data, ['announcements', 'entries', 'notices']).map((item, index) => {
       const slot = asObject(item) || {};
-      const published = slot.published_at || slot.created_at || slot.date;
+      const published =
+        slot.sent_at || slot.published_at || slot.created_at || slot.date;
       return {
         id: text(slot.id) || String(index),
         category: categoryLabel(slot.category || slot.type),
