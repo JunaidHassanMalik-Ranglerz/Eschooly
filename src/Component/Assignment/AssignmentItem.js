@@ -47,6 +47,24 @@ const STATUS_STYLES = {
   },
 };
 
+const MetaLine = ({icon, value, premium}) => {
+  if (!value) {
+    return null;
+  }
+  return (
+    <View style={styles.metaRow}>
+      <Icon
+        name={icon}
+        size={wp(3.2)}
+        color={premium ? Colors.whiteMuted75 : Colors.grayText}
+      />
+      <Text style={[styles.metaText, premium && styles.metaTextPremium]}>
+        {value}
+      </Text>
+    </View>
+  );
+};
+
 const AssignmentItem = props => {
   const assignment = props?.assignment;
   const premium = props?.premium;
@@ -108,6 +126,28 @@ const AssignmentItem = props => {
   const type = assignment?.type || 'homework';
   const status = assignment?.status || 'pending';
   const statusStyle = STATUS_STYLES[status] || STATUS_STYLES.pending;
+  const obtained = assignment?.obtained;
+  const total = assignment?.total;
+  const marksPreview =
+    obtained && total
+      ? `${obtained}/${total}`
+      : obtained || total || assignment?.score || '';
+  const marksHeading =
+    obtained && total
+      ? Strings.marksLabel
+      : obtained
+        ? Strings.obtainedMarks
+        : total
+          ? Strings.totalMarks
+          : Strings.marksLabel;
+  const classLine = assignment?.className
+    ? assignment?.sectionName
+      ? `${Strings.classLabel}: ${assignment.className}  ${Strings.section}: ${assignment.sectionName}`
+      : `${Strings.classLabel}: ${assignment.className}`
+    : assignment?.sectionName
+      ? `${Strings.section}: ${assignment.sectionName}`
+      : '';
+  const hasResult = Boolean(assignment?.grade || marksPreview);
   return (
     <View style={[styles.card, premium && styles.cardPremium]}>
       <TouchableOpacity
@@ -130,34 +170,30 @@ const AssignmentItem = props => {
             {assignment?.title}
           </Text>
 
-          {assignment?.teacher ? (
-            <View style={styles.metaRow}>
-              <Icon
-                name="person-outline"
-                size={wp(3.2)}
-                color={premium ? Colors.whiteMuted75 : Colors.grayText}
-              />
-              <Text
-                style={[styles.metaText, premium && styles.metaTextPremium]}
-                numberOfLines={1}>
-                {assignment.teacher}
-              </Text>
-            </View>
-          ) : null}
-
-          {assignment?.dueDate ? (
-            <View style={styles.metaRow}>
-              <Icon
-                name="calendar-outline"
-                size={wp(3.2)}
-                color={premium ? Colors.whiteMuted75 : Colors.grayText}
-              />
-              <Text
-                style={[styles.metaText, premium && styles.metaTextPremium]}
-                numberOfLines={1}>
-                {Strings.dueDate}: {assignment.dueDate}
-              </Text>
-            </View>
+          <MetaLine
+            icon="person-outline"
+            value={assignment?.teacher}
+            premium={premium}
+          />
+          <MetaLine
+            icon="calendar-outline"
+            value={
+              assignment?.dueDate
+                ? `${Strings.dueDate}: ${assignment.dueDate}`
+                : ''
+            }
+            premium={premium}
+          />
+          {hasResult ? (
+            <MetaLine
+              icon="ribbon-outline"
+              value={`${marksPreview ? `${marksHeading}: ${marksPreview}` : ''}${
+                assignment?.grade
+                  ? `${marksPreview ? '  ' : ''}${Strings.gradeLabel}: ${assignment.grade}`
+                  : ''
+              }`}
+              premium={premium}
+            />
           ) : null}
 
           <View style={styles.bottomRow}>
@@ -188,11 +224,43 @@ const AssignmentItem = props => {
               {assignment.description}
             </Text>
           ) : null}
-          {assignment?.grade || assignment?.score ? (
+          {assignment?.instructions ? (
             <Text style={[styles.detailText, premium && styles.detailTextPremium]}>
-              {Strings.gradeLabel}
-              {assignment.grade ? `: ${assignment.grade}` : ''}
-              {assignment.score ? `  ${assignment.score}` : ''}
+              {assignment.instructions}
+            </Text>
+          ) : null}
+          <MetaLine
+            icon="time-outline"
+            value={
+              assignment?.assignedAt
+                ? `${Strings.assignedDate}: ${assignment.assignedAt}`
+                : ''
+            }
+            premium={premium}
+          />
+          <MetaLine
+            icon="school-outline"
+            value={classLine}
+            premium={premium}
+          />
+          {obtained ? (
+            <Text style={[styles.detailText, premium && styles.detailTextPremium]}>
+              {Strings.obtainedMarks}: {obtained}
+            </Text>
+          ) : null}
+          {total ? (
+            <Text style={[styles.detailText, premium && styles.detailTextPremium]}>
+              {Strings.totalMarks}: {total}
+            </Text>
+          ) : null}
+          {assignment?.grade ? (
+            <Text style={[styles.detailText, premium && styles.detailTextPremium]}>
+              {Strings.gradeLabel}: {assignment.grade}
+            </Text>
+          ) : null}
+          {assignment?.feedback ? (
+            <Text style={[styles.detailText, premium && styles.detailTextPremium]}>
+              {Strings.feedbackLabel}: {assignment.feedback}
             </Text>
           ) : null}
           {assignment?.attachments?.map(file => {
@@ -226,7 +294,7 @@ const AssignmentItem = props => {
           })}
           {status === 'submitted' && (assignment?.notes || notes) ? (
             <Text style={[styles.detailText, premium && styles.detailTextPremium]}>
-              {assignment?.notes || notes}
+              {Strings.assignmentNotes}: {assignment?.notes || notes}
             </Text>
           ) : null}
           {props?.canSubmit && status !== 'submitted' ? (

@@ -163,7 +163,19 @@ const Assignment = () => {
       current.map(subject => ({
         ...subject,
         assignments: (subject.assignments || []).map(item =>
-          item.id === assignmentId ? {...item, ...extra} : item,
+          item.id === assignmentId
+            ? {
+                ...item,
+                ...extra,
+                grade: extra.grade || item.grade,
+                score: extra.score || item.score,
+                obtained: extra.obtained || item.obtained,
+                total: extra.total || item.total,
+                feedback: extra.feedback || item.feedback,
+                assignedAt: extra.assignedAt || item.assignedAt,
+                instructions: extra.instructions || item.instructions,
+              }
+            : item,
         ),
         pendingCount: (subject.assignments || []).filter(item =>
           item.id === assignmentId

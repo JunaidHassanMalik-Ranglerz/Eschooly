@@ -9,7 +9,6 @@ import {
   getStudentAssignmentsGraded,
   getStudentAssignmentSubmission,
   submitStudentAssignment,
-  updateStudentAssignmentSubmission,
   combineStudentResults,
   combineStudentExams,
   getStudentAttendance,
@@ -19,6 +18,11 @@ import {
   getStudentExamsOverview,
   getStudentHolidays,
   getStudentHome,
+  getStudentNotifications,
+  getStudentUnreadCount,
+  readAllStudentNotifications,
+  readStudentNotification,
+  downloadStudentIdCardFile,
   getStudentLibrary,
   getStudentResultCard,
   getStudentResults,
@@ -37,6 +41,7 @@ import {
   mapStudentExamsOverview,
   mapStudentHolidays,
   mapStudentHome,
+  mapStudentUnreadCount,
   mapStudentResultCard,
   mapStudentResultsSummary,
   mapStudentSyllabus,
@@ -48,6 +53,7 @@ import {
   readExamHistoryPage,
   readExamPage,
   readLibraryPage,
+  readNotificationPage,
   readResultsPage,
 } from '../../services/studentService';
 
@@ -218,12 +224,9 @@ export const fetchStudentAssignmentDetail = createAsyncThunk(
 
 export const sendStudentAssignmentSubmission = createAsyncThunk(
   'studentHome/sendStudentAssignmentSubmission',
-  async ({assignmentId, notes, update}, {rejectWithValue}) => {
+  async ({assignmentId, notes, files}, {rejectWithValue}) => {
     try {
-      const request = update
-        ? updateStudentAssignmentSubmission
-        : submitStudentAssignment;
-      const response = await request(assignmentId, notes);
+      const response = await submitStudentAssignment(assignmentId, {notes, files});
       const body = response?.data;
       if (body && body.success === false) {
         return rejectWithValue({
@@ -233,7 +236,7 @@ export const sendStudentAssignmentSubmission = createAsyncThunk(
       return {
         id: String(assignmentId),
         ...mapStudentAssignmentSubmission(body),
-        notes,
+        notes: notes || mapStudentAssignmentSubmission(body).notes,
         status: 'submitted',
       };
     } catch (error) {
@@ -385,8 +388,13 @@ export const fetchStudentResults = createAsyncThunk(
   async (_, {rejectWithValue}) => {
     const settled = await Promise.allSettled([
       loadMappedResult(
+        () => getStudentResultCard({result_mode: 'monthly'}),
+        body => mapStudentResultCard(body, 'monthly'),
+        'Unable to load results.',
+      ),
+      loadMappedResult(
         () => getStudentResultCard({result_mode: 'final'}),
-        mapStudentResultCard,
+        body => mapStudentResultCard(body, 'final'),
         'Unable to load results.',
       ),
       loadMappedResult(
@@ -396,10 +404,16 @@ export const fetchStudentResults = createAsyncThunk(
       ),
       loadStudentResultList(),
     ]);
-    const card = settled[0].status === 'fulfilled' ? settled[0].value : null;
-    const summary = settled[1].status === 'fulfilled' ? settled[1].value : null;
-    const list = settled[2].status === 'fulfilled' ? settled[2].value : [];
-    if (!card && !summary && !list.length) {
+    const monthlyCard = settled[0].status === 'fulfilled' ? settled[0].value : null;
+    const yearCard = settled[1].status === 'fulfilled' ? settled[1].value : null;
+    const summary = settled[2].status === 'fulfilled' ? settled[2].value : null;
+    const list = settled[3].status === 'fulfilled' ? settled[3].value : [];
+    const card = {
+      child: monthlyCard?.child || yearCard?.child || null,
+      monthly: monthlyCard?.monthly,
+      year: yearCard?.year,
+    };
+    if (!monthlyCard && !yearCard && !summary && !list.length) {
       const failed = settled.find(item => item.status === 'rejected');
       return rejectWithValue({
         message:
@@ -620,6 +634,146 @@ export const fetchStudentHolidays = createAsyncThunk(
   },
 );
 
+export const fetchStudentNotifications = createAsyncThunk(
+  'studentHome/fetchStudentNotifications',
+  async (unreadOnly, {rejectWithValue}) => {
+    try {
+      const params = {per_page: 50};
+      if (unreadOnly) {
+        params.unread_only = 1;
+      }
+      const response = await getStudentNotifications(params);
+      const body = response?.data;
+      if (body && body.success === false) {
+        return rejectWithValue({
+          message:
+            typeof body.message === 'string' && body.message
+              ? body.message
+              : 'Unable to load notifications.',
+          status: response?.status ?? null,
+        });
+      }
+      const firstPage = readNotificationPage(body);
+      const items = [...firstPage.items];
+      const lastPage = Math.min(firstPage.lastPage || 1, 10);
+      for (let page = 2; page <= lastPage; page += 1) {
+        const nextResponse = await getStudentNotifications({...params, page});
+        const nextBody = nextResponse?.data;
+        if (nextBody && nextBody.success === false) {
+          break;
+        }
+        items.push(...readNotificationPage(nextBody).items);
+      }
+      return items;
+    } catch (error) {
+      return rejectWithValue({
+        message: getApiErrorMessage(error),
+        status: error?.response?.status ?? null,
+      });
+    }
+  },
+);
+
+export const fetchStudentUnreadCount = createAsyncThunk(
+  'studentHome/fetchStudentUnreadCount',
+  async (_, {rejectWithValue}) => {
+    try {
+      const response = await getStudentUnreadCount();
+      const body = response?.data;
+      if (body && body.success === false) {
+        return rejectWithValue({
+          message:
+            typeof body.message === 'string' && body.message
+              ? body.message
+              : 'Unable to load notifications.',
+          status: response?.status ?? null,
+        });
+      }
+      return mapStudentUnreadCount(body);
+    } catch (error) {
+      return rejectWithValue({
+        message: getApiErrorMessage(error),
+        status: error?.response?.status ?? null,
+      });
+    }
+  },
+);
+
+export const markStudentNotificationRead = createAsyncThunk(
+  'studentHome/markStudentNotificationRead',
+  async (notificationId, {dispatch, rejectWithValue}) => {
+    try {
+      const response = await readStudentNotification(notificationId);
+      const body = response?.data;
+      if (body && body.success === false) {
+        return rejectWithValue({
+          message:
+            typeof body.message === 'string' && body.message
+              ? body.message
+              : 'Unable to mark notification as read.',
+          status: response?.status ?? null,
+        });
+      }
+      dispatch(fetchStudentUnreadCount());
+      return {id: String(notificationId)};
+    } catch (error) {
+      return rejectWithValue({
+        message: getApiErrorMessage(error),
+        status: error?.response?.status ?? null,
+      });
+    }
+  },
+);
+
+export const markStudentNotificationsReadAll = createAsyncThunk(
+  'studentHome/markStudentNotificationsReadAll',
+  async (_, {dispatch, rejectWithValue}) => {
+    try {
+      const response = await readAllStudentNotifications();
+      const body = response?.data;
+      if (body && body.success === false) {
+        return rejectWithValue({
+          message:
+            typeof body.message === 'string' && body.message
+              ? body.message
+              : 'Unable to mark notifications as read.',
+          status: response?.status ?? null,
+        });
+      }
+      dispatch(fetchStudentUnreadCount());
+      return true;
+    } catch (error) {
+      return rejectWithValue({
+        message: getApiErrorMessage(error),
+        status: error?.response?.status ?? null,
+      });
+    }
+  },
+);
+
+export const downloadStudentIdCard = createAsyncThunk(
+  'studentHome/downloadStudentIdCard',
+  async (_, {getState, rejectWithValue}) => {
+    if (getState()?.auth?.role !== 'student') {
+      return rejectWithValue({
+        message: 'Could not save ID card PDF.',
+        status: null,
+      });
+    }
+    try {
+      return await downloadStudentIdCardFile();
+    } catch (error) {
+      return rejectWithValue({
+        message:
+          (typeof error?.message === 'string' && error.message) ||
+          getApiErrorMessage(error) ||
+          'Could not save ID card PDF.',
+        status: error?.status ?? error?.response?.status ?? null,
+      });
+    }
+  },
+);
+
 export const fetchStudentSyllabus = createAsyncThunk(
   'studentHome/fetchStudentSyllabus',
   async (_, {rejectWithValue}) => {
@@ -666,6 +820,12 @@ const studentHomeSlice = createSlice({
         state.upcomingClass = null;
         state.unreadNotifications = 0;
         state.error = action.payload?.message || 'Unable to load home.';
+      })
+      .addCase(fetchStudentUnreadCount.fulfilled, (state, action) => {
+        state.unreadNotifications = action.payload;
+      })
+      .addCase(markStudentNotificationsReadAll.fulfilled, state => {
+        state.unreadNotifications = 0;
       });
   },
 });

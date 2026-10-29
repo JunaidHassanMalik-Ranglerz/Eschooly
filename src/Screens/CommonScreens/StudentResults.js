@@ -29,9 +29,8 @@ import {showToast} from '../../utils/toast';
 import {fetchChildResultCard, fetchParentHome} from '../../store/slices/parentHomeSlice';
 import {fetchStudentResults} from '../../store/slices/studentHomeSlice';
 import {downloadChildResultCard} from '../../services/parentService';
-import {downloadStudentResultCard} from '../../services/studentService';
 
-const EMPTY_CARD = {overall: '—', hint: '', subjects: []};
+const EMPTY_CARD = {overall: '—', hint: '', subjects: [], pdfUrl: ''};
 
 const NAVY = '#071A3D';
 const SCREEN_BG = '#DCEBFD';
@@ -224,21 +223,29 @@ const StudentResults = () => {
         return;
       }
 
-      const pdfUrl = await downloadStudentResultCard();
+      if (!result.pdfUrl) {
+        showToast({
+          type: 'error',
+          text1: 'Result card not found.',
+        });
+        return;
+      }
+
       setDownloaded(true);
+      console.log('result.pdfUrl', result.pdfUrl);
       navigation.navigate('PdfViewer', {
-        pdfUrl,
+        pdfUrl: result.pdfUrl,
         title: Strings.resultCard,
       });
     } catch (error) {
       showToast({
         type: 'error',
-        text1: error?.message || 'Unable to download result card.',
+        text1: error?.message || 'Unable to open result card.',
       });
     } finally {
       setDownloading(false);
     }
-  }, [activeChildId, downloading, isParent, navigation]);
+  }, [activeChildId, downloading, isParent, navigation, result.pdfUrl]);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>

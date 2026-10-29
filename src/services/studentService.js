@@ -2,6 +2,7 @@ import {Platform} from 'react-native';
 import ReactNativeBlobUtil from 'react-native-blob-util';
 import axiosInstance, {API_BASE_URL, getAuthToken} from '../api/axiosInstance';
 import {storage, storageKeys} from '../utils/storage';
+import {FEATURE_ICON_META} from '../Constants/IconTheme';
 import {Strings} from '../Constants/Strings';
 
 const asObject = value =>
@@ -235,6 +236,158 @@ export const mapStudentProfile = body => {
 
 export const getStudentProfile = () => axiosInstance.get('/student/profile');
 
+export const getStudentIdCard = () => axiosInstance.get('/student/id-card');
+
+const idCardAuthHeaders = async () => {
+  let token = getAuthToken();
+  if (!token) {
+    try {
+      token = await storage.getItem(storageKeys.token);
+    } catch (error) {
+      token = null;
+    }
+  }
+  return {
+    Accept: 'application/pdf, application/json',
+    ...(token ? {Authorization: `Bearer ${token}`} : {}),
+  };
+};
+
+const idCardFileName = card => {
+  const base = text(card?.name || card?.student_id || 'student-id-card')
+    .replace(/[^\w.-]+/g, '_')
+    .replace(/_+/g, '_')
+    .slice(0, 60);
+  const name = base || 'student-id-card';
+  return name.toLowerCase().endsWith('.pdf') ? name : `${name}-id-card.pdf`;
+};
+
+export const downloadStudentIdCardFile = async () => {
+  const cardResponse = await getStudentIdCard();
+  const cardBody = cardResponse?.data;
+  if (cardBody && cardBody.success === false) {
+    throw new Error(cardBody.message || 'Unable to load ID card.');
+  }
+  const data = asObject(cardBody?.data) || asObject(cardBody) || {};
+  const card = asObject(data.id_card) || data;
+  const fileName = idCardFileName(card);
+  const headers = await idCardAuthHeaders();
+  const path = `${ReactNativeBlobUtil.fs.dirs.CacheDir}/${fileName}`;
+  const url = `${API_BASE_URL}/student/id-card/download`;
+
+  const response = await ReactNativeBlobUtil.config({
+    fileCache: true,
+    path,
+    timeout: 30000,
+  }).fetch('GET', url, headers);
+  const info = response.info();
+  const type = String(
+    info.headers?.['Content-Type'] || info.headers?.['content-type'] || '',
+  ).toLowerCase();
+  const status = Number(info.status) || 0;
+
+  if (status === 401 || status === 403) {
+    throw new Error('You are not allowed to download this ID card.');
+  }
+  if (status === 404) {
+    throw new Error('ID card not found.');
+  }
+
+  let savedPath = response.path();
+  if (status >= 400 || type.includes('json')) {
+    let body = null;
+    try {
+      body = await response.json();
+    } catch (error) {
+      body = null;
+    }
+    if (status >= 400) {
+      throw new Error(body?.message || 'Could not save ID card PDF.');
+    }
+    const nestedData = asObject(body?.data) || {};
+    const nested = text(
+      nestedData.url ||
+        nestedData.pdf_url ||
+        nestedData.file_url ||
+        nestedData.download_url ||
+        body?.url,
+    );
+    if (!nested) {
+      throw new Error(body?.message || 'Could not save ID card PDF.');
+    }
+    const saved = await ReactNativeBlobUtil.config({
+      fileCache: true,
+      path,
+      timeout: 30000,
+    }).fetch('GET', nested, headers);
+    const nestedInfo = saved.info();
+    if (Number(nestedInfo.status) >= 400) {
+      throw new Error('Could not save ID card PDF.');
+    }
+    savedPath = saved.path();
+  }
+
+  if (!type.includes('pdf')) {
+    const sniff = (await ReactNativeBlobUtil.fs.readFile(savedPath, 'utf8')).trim();
+    if (sniff.startsWith('%PDF')) {
+      // already a PDF
+    } else if (sniff.startsWith('<')) {
+      throw new Error(
+        'This ID card is not a PDF. The server returned a web page instead of a PDF file.',
+      );
+    } else if (sniff.startsWith('{')) {
+      let body = null;
+      try {
+        body = JSON.parse(sniff);
+      } catch (error) {
+        body = null;
+      }
+      throw new Error(body?.message || 'Could not save ID card PDF.');
+    } else {
+      throw new Error('Could not save ID card PDF.');
+    }
+  }
+
+  const localPath = savedPath.replace(/^file:\/\//, '');
+  let savedToDevice = false;
+  try {
+    if (Platform.OS === 'android') {
+      await ReactNativeBlobUtil.MediaCollection.copyToMediaStore(
+        {
+          name: fileName,
+          parentFolder: '',
+          mimeType: 'application/pdf',
+        },
+        'Download',
+        localPath,
+      );
+    } else {
+      await ReactNativeBlobUtil.fs.cp(
+        localPath,
+        `${ReactNativeBlobUtil.fs.dirs.DocumentDir}/${fileName}`,
+      );
+    }
+    savedToDevice = true;
+  } catch (error) {
+    try {
+      if (Platform.OS === 'android' && ReactNativeBlobUtil.fs.dirs.DownloadDir) {
+        await ReactNativeBlobUtil.fs.cp(
+          localPath,
+          `${ReactNativeBlobUtil.fs.dirs.DownloadDir}/${fileName}`,
+        );
+        savedToDevice = true;
+      }
+    } catch (fallbackError) {
+      savedToDevice = false;
+    }
+  }
+
+  return {
+    uri: localPath.startsWith('file://') ? localPath : `file://${localPath}`,
+    savedToDevice,
+  };
+};
+
 const SHORT_MONTHS = [
   'Jan',
   'Feb',
@@ -272,6 +425,37 @@ const formatDue = value => {
     }
   }
   return raw;
+};
+
+const formatAssignmentWhen = value => {
+  const raw = text(value);
+  if (!raw) {
+    return '';
+  }
+  const match = raw.match(
+    /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{1,2}):(\d{2})(?::(\d{2}))?)?/,
+  );
+  if (!match) {
+    return formatDue(raw);
+  }
+  const month = SHORT_MONTHS[Number(match[2]) - 1];
+  const datePart = month ? `${Number(match[3])} ${month} ${match[1]}` : raw;
+  if (match[4] == null) {
+    return datePart;
+  }
+  return `${datePart}, ${clockLabel(`${match[4]}:${match[5]}`)}`;
+};
+
+const assignmentDateTime = (dateValue, timeValue) => {
+  const dateRaw = text(dateValue);
+  const timeRaw = text(timeValue);
+  if (!dateRaw) {
+    return timeRaw ? clockLabel(timeRaw) : '';
+  }
+  if (timeRaw && !/[T ]\d{1,2}:\d{2}/.test(dateRaw)) {
+    return formatAssignmentWhen(`${dateRaw} ${timeRaw}`);
+  }
+  return formatAssignmentWhen(dateRaw);
 };
 
 const countFrom = (source, keys) => {
@@ -342,45 +526,158 @@ const assignmentStatus = slot => {
   return 'pending';
 };
 
+const assignmentMarkValue = value => {
+  if (value === undefined || value === null || value === '') {
+    return '';
+  }
+  if (typeof value === 'object') {
+    return '';
+  }
+  return text(value);
+};
+
 const assignmentScore = slot => {
-  const grade = text(slot.grade || slot.grade_name);
-  const percentage = slot.percentage ?? slot.percent ?? slot.score;
-  if (percentage !== undefined && percentage !== null && percentage !== '') {
-    return {grade, score: text(percentage).replace('%', '')};
-  }
-  const obtained = text(slot.obtained_marks ?? slot.obtained ?? slot.marks);
-  const total = text(slot.total_marks ?? slot.total ?? slot.max_marks);
+  const record = asObject(slot) || {};
+  const grade = assignmentMarkValue(
+    record.grade ||
+      record.grade_name ||
+      record.letter_grade ||
+      record.result_status ||
+      (typeof record.result === 'object' ? '' : record.result),
+  );
+  const obtained = assignmentMarkValue(
+    record.obtained_marks ??
+      record.obtained ??
+      record.marks_obtained ??
+      record.obtainedMarks ??
+      record.scored,
+  );
+  const total = assignmentMarkValue(
+    record.total_marks ??
+      record.max_marks ??
+      record.totalMarks ??
+      record.max_score ??
+      record.out_of ??
+      record.total,
+  );
+  const percentage = assignmentMarkValue(
+    record.percentage ?? record.percent,
+  );
+  let score = '';
   if (obtained && total) {
-    return {grade, score: `${obtained}/${total}`};
+    score = `${obtained}/${total}`;
+  } else if (obtained) {
+    score = obtained;
+  } else if (percentage) {
+    score = `${percentage.replace('%', '')}%`;
+  } else if (record.score && typeof record.score !== 'object') {
+    score = text(record.score);
   }
-  return {grade, score: obtained};
+  return {grade, score, obtained, total};
+};
+
+const assignmentFeedback = (...records) => {
+  for (let index = 0; index < records.length; index += 1) {
+    const record = asObject(records[index]) || {};
+    const value = assignmentMarkValue(
+      record.feedback ||
+        record.teacher_feedback ||
+        record.teacher_comment ||
+        record.remarks ||
+        record.remark ||
+        record.grader_comment,
+    );
+    if (value) {
+      return value;
+    }
+  }
+  return '';
 };
 
 const mapAssignment = (item, index) => {
   const slot = asObject(item) || {};
+  const nested = asObject(slot.assignment) || {};
   const submission = asObject(slot.submission) || {};
-  const type = text(slot.type || slot.assignment_type).toLowerCase();
-  const marks = assignmentScore({...submission, ...slot});
+  const result =
+    asObject(slot.result) ||
+    asObject(slot.marks) ||
+    asObject(submission.result) ||
+    asObject(nested.result) ||
+    {};
+  const type = text(slot.type || slot.assignment_type || nested.type).toLowerCase();
+  const marks = assignmentScore({...nested, ...slot, ...submission, ...result});
+  const subject =
+    asObject(slot.subject) ||
+    asObject(nested.subject) ||
+    asObject(result.subject) ||
+    {};
+  const classRecord = asObject(slot.class) || asObject(nested.class) || {};
+  const sectionRecord = asObject(slot.section) || asObject(nested.section) || {};
+  const description = text(
+    slot.description || slot.body || slot.message || nested.description,
+  );
+  const instructions = text(
+    slot.instructions || slot.details || nested.instructions || nested.details,
+  );
+  const files = assignmentAttachments(slot);
   return {
-    id: text(slot.id) || String(index),
-    title: text(slot.title || slot.name),
-    teacher: namedRecord(slot.teacher) || text(slot.teacher_name),
-    dueDate: formatDue(
-      slot.due_at || slot.due_date || slot.deadline || slot.due_on || slot.due || slot.dueDate,
+    id: text(slot.assignment_id || nested.id || slot.id) || String(index),
+    title: text(
+      slot.title ||
+        slot.name ||
+        nested.title ||
+        nested.name ||
+        slot.assignment_title ||
+        slot.assignment_name,
     ),
-    status: assignmentStatus({...slot, ...submission}),
+    teacher:
+      namedRecord(slot.teacher) ||
+      namedRecord(nested.teacher) ||
+      text(slot.teacher_name || nested.teacher_name),
+    dueDate: assignmentDateTime(
+      slot.due_at ||
+        slot.due_date ||
+        slot.deadline ||
+        slot.due_on ||
+        slot.due ||
+        slot.dueDate ||
+        nested.due_at ||
+        nested.due_date,
+      slot.due_time || nested.due_time,
+    ),
+    assignedAt: assignmentDateTime(
+      slot.assigned_at ||
+        slot.assigned_on ||
+        slot.published_at ||
+        nested.assigned_at ||
+        nested.published_at,
+      slot.assigned_time || nested.assigned_time,
+    ),
+    status: assignmentStatus({...nested, ...slot, ...submission, ...result}),
     type: ['homework', 'project', 'quiz', 'lab'].includes(type) ? type : 'homework',
-    subjectId: text(asObject(slot.subject)?.id ?? slot.subject_id),
-    subjectName: namedRecord(slot.subject) || text(slot.subject_name),
-    description: text(
-      slot.description || slot.instructions || slot.details || slot.body || slot.message,
-    ),
-    attachments: assignmentAttachments(slot),
+    subjectId: text(subject.id ?? slot.subject_id ?? nested.subject_id),
+    subjectName: namedRecord(subject) || text(slot.subject_name || nested.subject_name),
+    className:
+      namedRecord(classRecord) || text(slot.class_name || nested.class_name),
+    sectionName:
+      namedRecord(sectionRecord) || text(slot.section_name || nested.section_name),
+    description: description || instructions,
+    instructions:
+      description && instructions && instructions !== description ? instructions : '',
+    attachments: files.length ? files : assignmentAttachments(nested),
     grade: marks.grade,
     score: marks.score,
-    notes: text(slot.notes || submission.notes || slot.submission_notes),
-    submittedAt: formatDue(
+    obtained: marks.obtained,
+    total: marks.total,
+    feedback: assignmentFeedback(result, submission, slot, nested),
+    notes: text(
+      slot.notes || submission.notes || slot.submission_notes || nested.notes,
+    ),
+    submittedAt: assignmentDateTime(
       slot.submitted_at || submission.submitted_at || slot.submitted_on,
+    ),
+    gradedAt: assignmentDateTime(
+      result.graded_at || slot.graded_at || submission.graded_at,
     ),
   };
 };
@@ -389,7 +686,7 @@ const mapSubjectGroup = (subject, index) => {
   const record = asObject(subject) || {};
   const assignments = (Array.isArray(record.assignments) ? record.assignments : [])
     .map(mapAssignment)
-    .filter(item => item.title);
+    .filter(item => item.id || item.title);
   const name = text(record.name || record.subject_name) || namedRecord(record.subject);
   return {
     id: text(record.id ?? record.subject_id) || name || String(index),
@@ -422,7 +719,15 @@ export const readAssignmentPage = body => {
     ? page.data
     : Array.isArray(page.assignments)
       ? page.assignments
-      : [];
+      : Array.isArray(page.graded)
+        ? page.graded
+        : Array.isArray(page.results)
+          ? page.results
+          : Array.isArray(page.submissions)
+            ? page.submissions
+            : Array.isArray(page.items)
+              ? page.items
+              : [];
   const grouped = Array.isArray(asObject(list[0])?.assignments);
   return {
     grouped,
@@ -464,8 +769,16 @@ const mergeAssignmentRows = (left, right) => {
       description: item.description || prev.description,
       grade: item.grade || prev.grade,
       score: item.score || prev.score,
+      obtained: item.obtained || prev.obtained,
+      total: item.total || prev.total,
+      feedback: item.feedback || prev.feedback,
+      assignedAt: item.assignedAt || prev.assignedAt,
+      instructions: item.instructions || prev.instructions,
+      className: item.className || prev.className,
+      sectionName: item.sectionName || prev.sectionName,
       notes: item.notes || prev.notes,
       submittedAt: item.submittedAt || prev.submittedAt,
+      gradedAt: item.gradedAt || prev.gradedAt,
       attachments: item.attachments?.length ? item.attachments : prev.attachments || [],
       status:
         item.status === 'overdue' || prev.status === 'overdue'
@@ -480,18 +793,19 @@ const mergeAssignmentRows = (left, right) => {
 
 export const mapStudentAssignments = (pages, overviewBody, gradedPages = []) => {
   const collected = collectAssignmentPages(pages);
-  const listSubjects = collected.grouped.length
-    ? collected.grouped.map(mapSubjectGroup).filter(item => item.name)
-    : groupFlatAssignments(collected.flat);
+  const listRows = collected.grouped.length
+    ? flattenAssignmentSubjects(
+        collected.grouped.map(mapSubjectGroup).filter(item => item.name),
+      )
+    : collected.flat.map(mapAssignment);
   const gradedCollected = collectAssignmentPages(gradedPages);
-  const gradedSubjects = gradedCollected.grouped.length
-    ? gradedCollected.grouped.map(mapSubjectGroup).filter(item => item.name)
-    : groupFlatAssignments(gradedCollected.flat);
-  const subjects = groupFlatAssignments(
-    mergeAssignmentRows(
-      flattenAssignmentSubjects(listSubjects),
-      flattenAssignmentSubjects(gradedSubjects),
-    ),
+  const gradedRows = gradedCollected.grouped.length
+    ? flattenAssignmentSubjects(
+        gradedCollected.grouped.map(mapSubjectGroup).filter(item => item.name),
+      )
+    : gradedCollected.flat.map(mapAssignment);
+  const subjects = groupMappedAssignments(
+    mergeAssignmentRows(listRows, gradedRows).filter(item => item.title),
   );
 
   const overviewData = overviewSource(asObject(overviewBody)?.data);
@@ -523,9 +837,9 @@ export const mapStudentAssignments = (pages, overviewBody, gradedPages = []) => 
   };
 };
 
-const groupFlatAssignments = items => {
+const groupMappedAssignments = items => {
   const groups = new Map();
-  items.map(mapAssignment).filter(item => item.title).forEach(item => {
+  items.filter(item => item?.title).forEach(item => {
     const key = item.subjectId || item.subjectName || 'assignments';
     const current = groups.get(key) || {
       id: key,
@@ -564,21 +878,37 @@ export const getStudentAssignmentSubmission = assignmentId =>
 export const getStudentAssignmentAttachment = (assignmentId, fileId) =>
   axiosInstance.get(`/student/assignments/${assignmentId}/attachments/${fileId}`);
 
-const assignmentNotesForm = notes => {
+const assignmentSubmitForm = ({notes, files} = {}) => {
   const form = new FormData();
-  if (notes) {
-    form.append('notes', notes);
+  const trimmed = text(notes).trim();
+  if (trimmed) {
+    form.append('notes', trimmed);
   }
+  (Array.isArray(files) ? files : []).forEach(file => {
+    const slot = asObject(file) || {};
+    const path = text(slot.fileCopyUri || slot.uri);
+    if (!path) {
+      return;
+    }
+    form.append('files[]', {
+      uri: path,
+      name: text(slot.name) || 'attachment',
+      type: text(slot.type) || 'application/octet-stream',
+    });
+  });
   return form;
 };
 
-export const submitStudentAssignment = (assignmentId, notes) =>
-  axiosInstance.post(`/student/assignments/${assignmentId}/submit`, assignmentNotesForm(notes));
+export const submitStudentAssignment = (assignmentId, payload = {}) =>
+  axiosInstance.post(
+    `/student/assignments/${assignmentId}/submit`,
+    assignmentSubmitForm(payload),
+  );
 
 export const updateStudentAssignmentSubmission = (assignmentId, notes) =>
   axiosInstance.put(
     `/student/assignments/${assignmentId}/submission`,
-    assignmentNotesForm(notes),
+    assignmentSubmitForm({notes}),
   );
 
 export const mapStudentAssignmentDetail = body => {
@@ -589,13 +919,20 @@ export const mapStudentAssignmentDetail = body => {
 export const mapStudentAssignmentSubmission = body => {
   const root = asObject(body) || {};
   const data = asObject(root.data) || root;
-  const marks = assignmentScore(data);
+  const result = asObject(data.result) || asObject(data.marks) || {};
+  const marks = assignmentScore({...data, ...result});
   return {
-    notes: text(data.notes || data.submission_notes || data.remark),
+    notes: text(data.notes || data.submission_notes),
     grade: marks.grade,
     score: marks.score,
-    status: assignmentStatus(data),
-    submittedAt: formatDue(data.submitted_at || data.submitted_on || data.updated_at),
+    obtained: marks.obtained,
+    total: marks.total,
+    feedback: assignmentFeedback(result, data),
+    status: assignmentStatus({...data, ...result}),
+    submittedAt: assignmentDateTime(
+      data.submitted_at || data.submitted_on || data.updated_at,
+    ),
+    gradedAt: assignmentDateTime(result.graded_at || data.graded_at),
     attachments: assignmentAttachments(data),
   };
 };
@@ -605,11 +942,17 @@ export const mergeStudentAssignmentDetail = (detail, submission) => {
   const extra = submission || {};
   return {
     ...card,
-    description: card.description,
+    description: extra.description || card.description,
+    instructions: extra.instructions || card.instructions,
     notes: extra.notes || card.notes,
     grade: extra.grade || card.grade,
     score: extra.score || card.score,
+    obtained: extra.obtained || card.obtained,
+    total: extra.total || card.total,
+    feedback: extra.feedback || card.feedback,
+    assignedAt: extra.assignedAt || card.assignedAt,
     submittedAt: extra.submittedAt || card.submittedAt,
+    gradedAt: extra.gradedAt || card.gradedAt,
     attachments: card.attachments?.length ? card.attachments : extra.attachments || [],
     status:
       extra.status === 'submitted' || card.status === 'submitted'
@@ -675,8 +1018,10 @@ export const downloadStudentAssignmentAttachment = async (assignmentId, fileId, 
     savedPath = saved.path();
   }
 
-  if (Platform.OS === 'android') {
-    try {
+  const localPath = savedPath.replace(/^file:\/\//, '');
+  let savedToDevice = false;
+  try {
+    if (Platform.OS === 'android') {
       await ReactNativeBlobUtil.MediaCollection.copyToMediaStore(
         {
           name: fileName,
@@ -684,14 +1029,33 @@ export const downloadStudentAssignmentAttachment = async (assignmentId, fileId, 
           mimeType: 'application/pdf',
         },
         'Download',
-        savedPath,
+        localPath,
       );
-    } catch (error) {
-      // The viewer still opens the cached copy.
+    } else {
+      await ReactNativeBlobUtil.fs.cp(
+        localPath,
+        `${ReactNativeBlobUtil.fs.dirs.DocumentDir}/${fileName}`,
+      );
+    }
+    savedToDevice = true;
+  } catch (error) {
+    try {
+      if (Platform.OS === 'android' && ReactNativeBlobUtil.fs.dirs.DownloadDir) {
+        await ReactNativeBlobUtil.fs.cp(
+          localPath,
+          `${ReactNativeBlobUtil.fs.dirs.DownloadDir}/${fileName}`,
+        );
+        savedToDevice = true;
+      }
+    } catch (fallbackError) {
+      savedToDevice = false;
     }
   }
 
-  return savedPath.startsWith('file://') ? savedPath : `file://${savedPath}`;
+  return {
+    uri: fileUri(localPath),
+    savedToDevice,
+  };
 };
 
 const fileSizeLabel = value => {
@@ -729,7 +1093,7 @@ const mapLibraryItem = (item, index) => {
   const subjectName = namedRecord(slot.subject) || text(slot.subject_name);
   const className = namedRecord(slot.class) || text(slot.class_name);
   return {
-    id: text(slot.id) || String(index),
+    id: text(slot.id ?? slot.library_id ?? slot.resource_id ?? slot.file_id),
     title: text(slot.title || slot.name) || subjectName,
     subtitle: text(slot.subtitle) || [subjectName, className ? `Class ${className}` : ''].filter(Boolean).join(' - '),
     fileType: text(slot.file_type || slot.type || slot.extension).replace(/^\./, '').toUpperCase(),
@@ -758,7 +1122,7 @@ export const readLibraryPage = body => {
               ? page.entries
               : [];
   return {
-    items: list.map(mapLibraryItem).filter(item => item.title),
+    items: list.map(mapLibraryItem).filter(item => item.id && item.title),
     lastPage: Number(page.meta?.last_page || page.last_page || root.meta?.last_page) || 1,
   };
 };
@@ -779,7 +1143,32 @@ const libraryFileName = (title, resourceId) => {
   return name.toLowerCase().endsWith('.pdf') ? name : `${name}.pdf`;
 };
 
-export const downloadStudentLibraryFile = async (resourceId, title) => {
+const libraryBlobType = response =>
+  String(
+    response.info().headers?.['Content-Type'] ||
+      response.info().headers?.['content-type'] ||
+      '',
+  ).toLowerCase();
+
+const libraryJsonBody = async response => {
+  try {
+    return await response.json();
+  } catch (error) {
+    return null;
+  }
+};
+
+const libraryFileFromJson = body => {
+  const data = asObject(body?.data) || body || {};
+  return text(data.url || data.file_url || data.pdf_url || data.download_url || body?.url);
+};
+
+export const downloadStudentLibraryFile = async (resourceId, title, fileUrl = '') => {
+  const id = text(resourceId);
+  if (!id) {
+    throw new Error('Unable to download this file.');
+  }
+
   let token = getAuthToken();
   if (!token) {
     try {
@@ -793,42 +1182,55 @@ export const downloadStudentLibraryFile = async (resourceId, title) => {
     Accept: 'application/pdf, application/json',
     ...(token ? {Authorization: `Bearer ${token}`} : {}),
   };
-  const fileName = libraryFileName(title, resourceId);
+  const fileName = libraryFileName(title, id);
   const path = `${ReactNativeBlobUtil.fs.dirs.CacheDir}/${fileName}`;
-  const url = `${API_BASE_URL}/student/library/${resourceId}/download`;
+  const downloadUrl = `${API_BASE_URL}/student/library/${id}/download`;
+  const fallbackUrl = text(fileUrl);
+
   const response = await ReactNativeBlobUtil.config({
     fileCache: true,
     path,
-  }).fetch('GET', url, headers);
+    timeout: 30000,
+  }).fetch('GET', downloadUrl, headers);
   const info = response.info();
-  const type = String(info.headers?.['Content-Type'] || info.headers?.['content-type'] || '');
-
-  if (info.status >= 400) {
-    throw new Error('Unable to download this file.');
-  }
-
+  const type = libraryBlobType(response);
   let savedPath = response.path();
-  if (type.includes('json')) {
-    const body = await response.json();
-    if (body?.success === false) {
-      throw new Error(body?.message || 'Unable to download this file.');
-    }
-    const fileUrl = body?.data?.url || body?.data?.file_url || body?.data?.pdf_url || body?.url;
-    if (!fileUrl) {
-      throw new Error(body?.message || 'Unable to download this file.');
+  let apiMessage = '';
+
+  if (info.status >= 400 || type.includes('json')) {
+    const body = await libraryJsonBody(response);
+    apiMessage = text(body?.message);
+    const nestedUrl = libraryFileFromJson(body);
+    const nextUrl =
+      nestedUrl && nestedUrl !== downloadUrl
+        ? nestedUrl
+        : fallbackUrl && fallbackUrl !== downloadUrl
+          ? fallbackUrl
+          : '';
+    if (!nextUrl) {
+      throw new Error(apiMessage || 'Unable to download this file.');
     }
     const saved = await ReactNativeBlobUtil.config({
       fileCache: true,
       path,
-    }).fetch('GET', fileUrl, headers);
-    if (saved.info().status >= 400) {
-      throw new Error('Unable to download this file.');
+      timeout: 30000,
+    }).fetch('GET', nextUrl, headers);
+    const savedType = libraryBlobType(saved);
+    if (saved.info().status >= 400 || savedType.includes('json') || savedType.includes('html')) {
+      const nestedBody = await libraryJsonBody(saved);
+      throw new Error(
+        text(nestedBody?.message) || apiMessage || 'Unable to download this file.',
+      );
     }
     savedPath = saved.path();
+  } else if (type.includes('html')) {
+    throw new Error(apiMessage || 'Unable to download this file.');
   }
 
-  if (Platform.OS === 'android') {
-    try {
+  const localPath = savedPath.replace(/^file:\/\//, '');
+  let savedToDevice = false;
+  try {
+    if (Platform.OS === 'android') {
       await ReactNativeBlobUtil.MediaCollection.copyToMediaStore(
         {
           name: fileName,
@@ -836,14 +1238,33 @@ export const downloadStudentLibraryFile = async (resourceId, title) => {
           mimeType: 'application/pdf',
         },
         'Download',
-        savedPath,
+        localPath,
       );
-    } catch (error) {
-      // The viewer still opens the cached copy.
+    } else {
+      await ReactNativeBlobUtil.fs.cp(
+        localPath,
+        `${ReactNativeBlobUtil.fs.dirs.DocumentDir}/${fileName}`,
+      );
+    }
+    savedToDevice = true;
+  } catch (error) {
+    try {
+      if (Platform.OS === 'android' && ReactNativeBlobUtil.fs.dirs.DownloadDir) {
+        await ReactNativeBlobUtil.fs.cp(
+          localPath,
+          `${ReactNativeBlobUtil.fs.dirs.DownloadDir}/${fileName}`,
+        );
+        savedToDevice = true;
+      }
+    } catch (fallbackError) {
+      savedToDevice = false;
     }
   }
 
-  return fileUri(savedPath);
+  return {
+    uri: fileUri(localPath),
+    savedToDevice,
+  };
 };
 
 const announcementWhen = value => {
@@ -934,6 +1355,181 @@ export const getStudentAnnouncements = (params = {}) =>
 
 export const getStudentAnnouncement = announcementId =>
   axiosInstance.get(`/student/announcements/${announcementId}`);
+
+const notificationList = value => {
+  if (Array.isArray(value)) {
+    return value;
+  }
+  const record = asObject(value);
+  if (!record) {
+    return [];
+  }
+  if (Array.isArray(record.data)) {
+    return record.data;
+  }
+  if (Array.isArray(record.notifications)) {
+    return record.notifications;
+  }
+  if (Array.isArray(record.items)) {
+    return record.items;
+  }
+  if (Array.isArray(record.entries)) {
+    return record.entries;
+  }
+  return [];
+};
+
+const notificationUnread = (slot, nested) => {
+  if (typeof slot.unread === 'boolean') {
+    return slot.unread;
+  }
+  if (typeof slot.is_unread === 'boolean') {
+    return slot.is_unread;
+  }
+  if (typeof nested.unread === 'boolean') {
+    return nested.unread;
+  }
+  if (typeof slot.is_read === 'boolean') {
+    return !slot.is_read;
+  }
+  if (typeof nested.is_read === 'boolean') {
+    return !nested.is_read;
+  }
+  if (typeof slot.read === 'boolean') {
+    return !slot.read;
+  }
+  if (Object.prototype.hasOwnProperty.call(slot, 'read_at')) {
+    return !slot.read_at;
+  }
+  if (Object.prototype.hasOwnProperty.call(nested, 'read_at')) {
+    return !nested.read_at;
+  }
+  const status = text(slot.status || nested.status).toLowerCase();
+  if (status === 'unread') {
+    return true;
+  }
+  if (status === 'read') {
+    return false;
+  }
+  return false;
+};
+
+const notificationTheme = rawType => {
+  const value = text(rawType).toLowerCase();
+  const key = value.split('\\').pop().split('/').pop().split('.').pop();
+  if (FEATURE_ICON_META[key]) {
+    return FEATURE_ICON_META[key];
+  }
+  const pairs = [
+    ['assign', 'assignments'],
+    ['exam', 'exams'],
+    ['result', 'results'],
+    ['attend', 'attendance'],
+    ['holiday', 'holidays'],
+    ['announc', 'announcements'],
+    ['timetable', 'timetable'],
+    ['library', 'library'],
+    ['fee', 'fee'],
+    ['online', 'onlineClass'],
+    ['message', 'diary'],
+    ['chat', 'diary'],
+  ];
+  for (let i = 0; i < pairs.length; i += 1) {
+    const [needle, metaKey] = pairs[i];
+    if (key.includes(needle) || value.includes(needle)) {
+      return FEATURE_ICON_META[metaKey];
+    }
+  }
+  return FEATURE_ICON_META.notification;
+};
+
+const mapNotification = (item, index) => {
+  const slot = asObject(item) || {};
+  const nested = asObject(slot.data) || asObject(slot.notification) || {};
+  const id = text(slot.id || slot.notification_id || nested.id);
+  const title = text(
+    slot.title || nested.title || slot.subject || nested.subject,
+  );
+  const message = text(
+    slot.message ||
+      nested.message ||
+      slot.body ||
+      nested.body ||
+      slot.description ||
+      nested.description ||
+      slot.content ||
+      nested.content,
+  );
+  const heading = title || message;
+  if (!id || !heading) {
+    return null;
+  }
+  const when = announcementWhen(
+    slot.created_at ||
+      slot.published_at ||
+      slot.sent_at ||
+      nested.created_at ||
+      slot.date,
+  );
+  const theme = notificationTheme(slot.type || nested.type || slot.category || nested.category);
+  return {
+    id,
+    title: heading,
+    message: title ? message : '',
+    date: text(slot.date_label) || when.date,
+    time: text(slot.time) || when.time,
+    unread: notificationUnread(slot, nested),
+    icon: `${theme.icon}-outline`,
+    iconColor: theme.color,
+  };
+};
+
+export const readNotificationPage = body => {
+  const root = asObject(body) || {};
+  const data = root.data;
+  const page = asObject(data) || {};
+  const list = Array.isArray(data)
+    ? data
+    : notificationList(page).length
+      ? notificationList(page)
+      : notificationList(root);
+  return {
+    items: list.map(mapNotification).filter(Boolean),
+    lastPage: Number(page.meta?.last_page || page.last_page || root.meta?.last_page) || 1,
+  };
+};
+
+export const mapStudentUnreadCount = body => {
+  const root = asObject(body) || {};
+  const data = root.data;
+  if (typeof data === 'number') {
+    return Math.max(0, data);
+  }
+  const record = asObject(data) || root;
+  const count = Number(
+    record.unread_count ??
+      record.unread_notifications ??
+      record.count ??
+      record.unread ??
+      root.unread_count ??
+      root.unread_notifications,
+  );
+  return Number.isFinite(count) ? Math.max(0, count) : 0;
+};
+
+export const getStudentNotifications = (params = {}) =>
+  axiosInstance.get('/student/notifications', {
+    params,
+  });
+
+export const getStudentUnreadCount = () =>
+  axiosInstance.get('/student/notifications/unread-count');
+
+export const readStudentNotification = notificationId =>
+  axiosInstance.post(`/student/notifications/${notificationId}/read`);
+
+export const readAllStudentNotifications = () =>
+  axiosInstance.post('/student/notifications/read-all');
 
 const mapSyllabusTopic = (item, index) => {
   const slot = asObject(item) || {};
@@ -1119,28 +1715,44 @@ const mapResultChild = record => {
   };
 };
 
+const resultCardUrlFrom = record => {
+  const source = asObject(record) || {};
+  const document = asObject(source.document) || {};
+  return text(
+    source.pdf_url ||
+      document.pdf_url ||
+      source.file_url ||
+      source.download_url,
+  );
+};
+
 const mapResultBlock = record => {
   const source = asObject(record) || {};
+  const summary = asObject(source.summary) || {};
   return {
     overall:
       text(
-        source.overall_grade ||
+        summary.grade ||
+          source.overall_grade ||
           source.overall ||
           source.grade ||
-          asObject(source.summary)?.overall_grade ||
-          asObject(source.summary)?.overall,
+          summary.overall_grade ||
+          summary.overall,
       ) || '—',
     hint: text(
       source.remark ||
         source.hint ||
         source.comment ||
-        asObject(source.summary)?.remark,
+        summary.remark ||
+        summary.result ||
+        summary.percentage,
     ),
     subjects: resultSubjects(source),
+    pdfUrl: resultCardUrlFrom(source),
   };
 };
 
-const emptyResultBlock = () => ({overall: '—', hint: '', subjects: []});
+const emptyResultBlock = () => ({overall: '—', hint: '', subjects: [], pdfUrl: ''});
 
 const mergeSubjects = (left, right) => {
   const rows = new Map();
@@ -1170,6 +1782,7 @@ const mergeResultBlock = (base, extra) => {
     overall: left.overall !== '—' ? left.overall : right.overall,
     hint: left.hint || right.hint,
     subjects: mergeSubjects(left.subjects, right.subjects),
+    pdfUrl: left.pdfUrl || right.pdfUrl || '',
   };
 };
 
@@ -1195,10 +1808,19 @@ const splitResultBlocks = (data, child) => {
   return {child, monthly: fallback, year: fallback};
 };
 
-export const mapStudentResultCard = body => {
+export const mapStudentResultCard = (body, resultMode = '') => {
   const root = asObject(body) || {};
   const data = asObject(root.data) || root;
-  return splitResultBlocks(data, mapResultChild(data.child || data.student));
+  const child = mapResultChild(data.child || data.student);
+  const mode = text(resultMode || data.result_mode).toLowerCase();
+  const card = mapResultBlock(data);
+  if (mode.includes('month')) {
+    return {child, monthly: card, year: emptyResultBlock()};
+  }
+  if (mode.includes('final') || mode.includes('year') || mode.includes('annual')) {
+    return {child, monthly: emptyResultBlock(), year: card};
+  }
+  return splitResultBlocks(data, child);
 };
 
 export const mapStudentResultsSummary = body => {
@@ -1252,12 +1874,14 @@ export const combineStudentResults = ({card, summary, list}) => {
         overall: '—',
         hint: '',
         subjects: monthlyItems.length ? monthlyItems : items,
+        pdfUrl: '',
       },
     ),
     year: mergeResultBlock(mergeResultBlock(cardMap.year, summaryMap.year), {
       overall: '—',
       hint: '',
       subjects: yearItems.length ? yearItems : items,
+      pdfUrl: '',
     }),
   };
 };
@@ -1273,100 +1897,6 @@ export const getStudentResultCard = (params = {}) =>
   axiosInstance.get('/student/results/card', {
     params,
   });
-
-const resultCardAuthHeaders = async () => {
-  let token = getAuthToken();
-  if (!token) {
-    try {
-      token = await storage.getItem(storageKeys.token);
-    } catch (error) {
-      token = null;
-    }
-  }
-  return {
-    Accept: 'application/pdf, application/json',
-    ...(token ? {Authorization: `Bearer ${token}`} : {}),
-  };
-};
-
-const resultCardFileUrl = body => {
-  const root = asObject(body) || {};
-  const data = asObject(root.data) || root;
-  const document = asObject(data.document) || asObject(root.document) || {};
-  return text(document.pdf_url || data.pdf_url || root.pdf_url);
-};
-
-const resolveFileUrl = value => {
-  const raw = text(value);
-  if (!raw) {
-    return '';
-  }
-  if (/^https?:\/\//i.test(raw)) {
-    return raw;
-  }
-  if (raw.startsWith('//')) {
-    return `https:${raw}`;
-  }
-  const origin = API_BASE_URL.replace(/\/api\/?$/, '');
-  return raw.startsWith('/') ? `${origin}${raw}` : raw;
-};
-
-const saveStudentResultPdf = async (sourcePath, fileName) => {
-  if (Platform.OS === 'android') {
-    try {
-      await ReactNativeBlobUtil.MediaCollection.copyToMediaStore(
-        {
-          name: fileName,
-          parentFolder: '',
-          mimeType: 'application/pdf',
-        },
-        'Download',
-        sourcePath,
-      );
-    } catch (error) {
-      // The viewer still opens the cached copy.
-    }
-  }
-  return fileUri(sourcePath);
-};
-
-const downloadResultFile = async (fileUrl, path, headers) => {
-  const saved = await ReactNativeBlobUtil.config({
-    fileCache: true,
-    path,
-  }).fetch('GET', fileUrl, headers);
-  if (saved.info().status >= 400) {
-    throw new Error('Unable to download result card.');
-  }
-  return saved.path();
-};
-
-export const downloadStudentResultCard = async () => {
-  const headers = await resultCardAuthHeaders();
-  const cardResponse = await getStudentResultCard({result_mode: 'final'});
-  const cardBody = cardResponse?.data;
-  if (cardBody && cardBody.success === false) {
-    throw new Error(cardBody.message || 'Unable to download result card.');
-  }
-
-  const root = asObject(cardBody) || {};
-  const data = asObject(root.data) || root;
-  const document = asObject(data.document) || asObject(root.document) || {};
-  const fileUrl = resolveFileUrl(resultCardFileUrl(cardBody));
-  if (!fileUrl) {
-    throw new Error(cardBody?.message || 'Unable to download result card.');
-  }
-
-  const rawName = text(document.filename).replace(/\.html?$/i, '.pdf');
-  const fileName = rawName
-    ? rawName.toLowerCase().endsWith('.pdf')
-      ? rawName
-      : `${rawName}.pdf`
-    : 'student-result-card.pdf';
-  const path = `${ReactNativeBlobUtil.fs.dirs.CacheDir}/${fileName}`;
-  const savedPath = await downloadResultFile(fileUrl, path, headers);
-  return saveStudentResultPdf(savedPath, fileName);
-};
 
 const mapTeacher = (item, index) => {
   const slot = asObject(item) || {};
