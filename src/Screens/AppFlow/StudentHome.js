@@ -25,7 +25,7 @@ import {
 } from '../../hooks/useScreenEnterGate';
 import {showToast} from '../../utils/toast';
 import {fetchStudentHome} from '../../store/slices/studentHomeSlice';
-import {getGreeting} from '../../utils/getGreeting';
+import {useGreeting} from '../../utils/getGreeting';
 import {
   ACADEMICS_HEADER_ENTERING,
   ACADEMICS_PROFILE_ENTERING,
@@ -46,6 +46,7 @@ const HUB_ITEMS = [
 const StudentHome = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
+  const greeting = useGreeting();
   const {student, modules, upcomingClass, unreadNotifications} = useSelector(
     state => state.studentHome,
   );
@@ -112,7 +113,7 @@ const StudentHome = () => {
             <View style={styles.headerRow}>
               <View style={styles.headerText}>
                 <Text style={styles.greeting} numberOfLines={1}>
-                  {getGreeting()},
+                  {greeting},
                 </Text>
                 <Text style={styles.studentName} numberOfLines={1}>
                   {student?.label}

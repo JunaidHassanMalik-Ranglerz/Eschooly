@@ -15,7 +15,7 @@ import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
 import {wp, hp} from '../../Constants/Responsive';
-import {getGreeting} from '../../utils/getGreeting';
+import {useGreeting} from '../../utils/getGreeting';
 import {CARD_GRADIENTS} from '../../Constants/CardTheme';
 import {SCREEN_WAVES} from '../../Component/CardWave';
 import {
@@ -37,6 +37,7 @@ import {
 const ParentHome = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
+  const greeting = useGreeting();
   const {parent, children, selectedChildId, dashboard, dashboardLoading} =
     useSelector(state => state.parentHome);
   const [homeLoading, setHomeLoading] = useState(true);
@@ -134,7 +135,7 @@ const ParentHome = () => {
             <View style={styles.headerRow}>
               <View style={styles.headerText}>
                 <Text style={styles.greeting} numberOfLines={1}>
-                  {getGreeting()}
+                  {greeting}
                 </Text>
                 <Text style={styles.parentName} numberOfLines={1}>
                   {parentName}
