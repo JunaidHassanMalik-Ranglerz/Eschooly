@@ -238,6 +238,8 @@ export const getStudentProfile = () => axiosInstance.get('/student/profile');
 
 export const getStudentIdCard = () => axiosInstance.get('/student/id-card');
 
+export const studentIdCardDownloadUrl = `${API_BASE_URL}/student/id-card/download`;
+
 const idCardAuthHeaders = async () => {
   let token = getAuthToken();
   if (!token) {
