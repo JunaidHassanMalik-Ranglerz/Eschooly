@@ -16,6 +16,8 @@ const UpcomingClassCard = ({
   gradientIndex,
   entering,
   replayToken = 0,
+  reminding = false,
+  onReminder,
 }) => {
   const paletteIndex = gradientIndex ?? animationIndex;
   return (
@@ -27,53 +29,80 @@ const UpcomingClassCard = ({
     colors={getSubjectGradient(paletteIndex)}
     waveVariant={paletteIndex === 0 ? SCREEN_WAVES.onlineClass : null}>
     <View style={styles.topRow}>
-      <View style={[styles.monthBadge, {backgroundColor: Colors.whiteOverlay22}]}>
-        <Text style={styles.month} numberOfLines={1}>
-          {item?.month}
-        </Text>
-      </View>
+      {item?.month ? (
+        <View style={[styles.monthBadge, {backgroundColor: Colors.whiteOverlay22}]}>
+          <Text style={styles.month} numberOfLines={1}>
+            {item.month}
+          </Text>
+        </View>
+      ) : (
+        <View />
+      )}
 
-      <View style={[styles.badge, {backgroundColor: Colors.whiteOverlay18}]}>
-        <Text style={styles.badgeText} numberOfLines={1}>
-          {item?.badge}
-        </Text>
-      </View>
+      {item?.badge ? (
+        <View style={[styles.badge, {backgroundColor: Colors.whiteOverlay18}]}>
+          <Text style={styles.badgeText} numberOfLines={1}>
+            {item.badge}
+          </Text>
+        </View>
+      ) : null}
     </View>
 
-    <Text style={styles.title} numberOfLines={2}>
-      {item?.title}
-    </Text>
-    <Text style={styles.classInfo} numberOfLines={1}>
-      {item?.classInfo}
-    </Text>
+    {item?.title ? (
+      <Text style={styles.title} numberOfLines={2}>
+        {item.title}
+      </Text>
+    ) : null}
+    {item?.classInfo ? (
+      <Text style={styles.classInfo} numberOfLines={1}>
+        {item.classInfo}
+      </Text>
+    ) : null}
 
-    <View style={styles.infoRow}>
-      <Icon name="time-outline" size={wp(3.5)} color={Colors.whiteMuted85} />
-      <Text style={styles.infoText} numberOfLines={1}>
-        {item?.time}
-      </Text>
-      <Icon
-        name="hourglass-outline"
-        size={wp(3.5)}
-        color={Colors.whiteMuted85}
-        style={styles.hourIcon}
-      />
-      <Text style={styles.infoText} numberOfLines={1}>
-        {item?.duration}
-      </Text>
-    </View>
+    {item?.time || item?.duration ? (
+      <View style={styles.infoRow}>
+        {item?.time ? (
+          <>
+            <Icon name="time-outline" size={wp(3.5)} color={Colors.whiteMuted85} />
+            <Text style={styles.infoText} numberOfLines={1}>
+              {item.time}
+            </Text>
+          </>
+        ) : null}
+        {item?.duration ? (
+          <>
+            <Icon
+              name="hourglass-outline"
+              size={wp(3.5)}
+              color={Colors.whiteMuted85}
+              style={styles.hourIcon}
+            />
+            <Text style={styles.infoText} numberOfLines={1}>
+              {item.duration}
+            </Text>
+          </>
+        ) : null}
+      </View>
+    ) : null}
 
     {item?.showFooter ? (
       <View style={styles.footer}>
-        <View style={styles.zoomRow}>
-          <Icon name="link-outline" size={wp(3.5)} color={Colors.whiteMuted85} />
-          <Text style={styles.zoomLink} numberOfLines={1}>
-            {item?.zoomLink}
-          </Text>
-        </View>
-        <TouchableOpacity activeOpacity={0.8} onPress={() => {}}>
+        {item?.zoomLink ? (
+          <View style={styles.zoomRow}>
+            <Icon name="link-outline" size={wp(3.5)} color={Colors.whiteMuted85} />
+            <Text style={styles.zoomLink} numberOfLines={1}>
+              {item.zoomLink}
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.zoomRow} />
+        )}
+        <TouchableOpacity
+          activeOpacity={0.8}
+          disabled={reminding || item?.reminderSet}
+          onPress={() => onReminder?.(item)}>
           <Text style={styles.reminderText} numberOfLines={1}>
-            {Strings.setReminder}
+            {item?.reminderSet ? Strings.reminderSet : Strings.setReminder}
           </Text>
         </TouchableOpacity>
       </View>

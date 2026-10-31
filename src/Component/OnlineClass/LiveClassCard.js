@@ -12,7 +12,14 @@ import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
 import {wp, hp} from '../../Constants/Responsive';
 
-const LiveClassCard = ({item, animationIndex = 1, entering, replayToken = 0}) => (
+const LiveClassCard = ({
+  item,
+  animationIndex = 1,
+  entering,
+  replayToken = 0,
+  joining = false,
+  onJoin,
+}) => (
   <AnimatedCard
     index={animationIndex}
     entering={entering}
@@ -26,18 +33,22 @@ const LiveClassCard = ({item, animationIndex = 1, entering, replayToken = 0}) =>
         style={styles.topPart}>
         <CardWave variant={SCREEN_WAVES.onlineClass} />
         <View style={styles.topRow}>
-          <View style={styles.zoomRow}>
-            <View style={styles.zoomIconBox}>
-              <Icon
-                name="videocam-outline"
-                size={wp(4)}
-                color={Colors.whiteMuted85}
-              />
+          {item?.providerLabel !== '' ? (
+            <View style={styles.zoomRow}>
+              <View style={styles.zoomIconBox}>
+                <Icon
+                  name="videocam-outline"
+                  size={wp(4)}
+                  color={Colors.whiteMuted85}
+                />
+              </View>
+              <Text style={styles.zoomText} numberOfLines={1}>
+                {item?.providerLabel || Strings.zoomMeeting}
+              </Text>
             </View>
-            <Text style={styles.zoomText} numberOfLines={1}>
-              {Strings.zoomMeeting}
-            </Text>
-          </View>
+          ) : (
+            <View style={styles.zoomRow} />
+          )}
           <View style={styles.liveBadge}>
             <View style={styles.liveDot} />
             <Text style={styles.liveText} numberOfLines={1}>
@@ -46,34 +57,45 @@ const LiveClassCard = ({item, animationIndex = 1, entering, replayToken = 0}) =>
           </View>
         </View>
 
-        <Text style={styles.title} numberOfLines={2}>
-          {item?.title}
-        </Text>
-        <Text style={styles.classInfo} numberOfLines={1}>
-          {item?.classInfo}
-        </Text>
+        {item?.title ? (
+          <Text style={styles.title} numberOfLines={2}>
+            {item.title}
+          </Text>
+        ) : null}
+        {item?.classInfo ? (
+          <Text style={styles.classInfo} numberOfLines={1}>
+            {item.classInfo}
+          </Text>
+        ) : null}
 
-        <View style={styles.infoRow}>
-          <View style={styles.infoItem}>
-            <Icon name="people-outline" size={wp(4)} color={Colors.whiteMuted85} />
-            <Text style={styles.infoText} numberOfLines={1}>
-              {item?.joined}
-            </Text>
+        {item?.joined || item?.started ? (
+          <View style={styles.infoRow}>
+            {item?.joined ? (
+              <View style={styles.infoItem}>
+                <Icon name="people-outline" size={wp(4)} color={Colors.whiteMuted85} />
+                <Text style={styles.infoText} numberOfLines={1}>
+                  {item.joined}
+                </Text>
+              </View>
+            ) : null}
+            {item?.started ? (
+              <View style={styles.infoItem}>
+                <Icon name="time-outline" size={wp(4)} color={Colors.whiteMuted85} />
+                <Text style={styles.infoText} numberOfLines={1}>
+                  {item.started}
+                </Text>
+              </View>
+            ) : null}
           </View>
-          <View style={styles.infoItem}>
-            <Icon name="time-outline" size={wp(4)} color={Colors.whiteMuted85} />
-            <Text style={styles.infoText} numberOfLines={1}>
-              {item?.started}
-            </Text>
-          </View>
-        </View>
+        ) : null}
       </LinearGradient>
 
       <View style={styles.bottomPart}>
         <TouchableOpacity
           style={styles.joinBtn}
           activeOpacity={0.85}
-          onPress={() => {}}>
+          disabled={joining}
+          onPress={() => onJoin?.(item)}>
           <Icon name="videocam" size={wp(4.5)} color={Colors.white} />
           <Text style={styles.joinText} numberOfLines={1}>
             {Strings.joinClass}

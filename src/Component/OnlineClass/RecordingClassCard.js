@@ -18,6 +18,10 @@ const RecordingClassCard = ({
   gradientIndex,
   entering,
   replayToken = 0,
+  watching = false,
+  downloading = false,
+  onWatch,
+  onDownload,
 }) => {
   const paletteIndex = gradientIndex ?? animationIndex;
   return (
@@ -35,36 +39,58 @@ const RecordingClassCard = ({
 
       <View style={styles.info}>
         <View style={styles.titleRow}>
-          <Text style={styles.title} numberOfLines={1}>
-            {item?.title}
-          </Text>
-          <View style={styles.statusBadge}>
-            <Text style={styles.statusText} numberOfLines={1}>
-              {item?.status}
+          {item?.title ? (
+            <Text style={styles.title} numberOfLines={1}>
+              {item.title}
             </Text>
-          </View>
+          ) : (
+            <View style={styles.title} />
+          )}
+          {item?.status ? (
+            <View style={styles.statusBadge}>
+              <Text style={styles.statusText} numberOfLines={1}>
+                {item.status}
+              </Text>
+            </View>
+          ) : null}
         </View>
-        <Text style={styles.detail} numberOfLines={1}>
-          {item?.detail}
-        </Text>
+        {item?.detail ? (
+          <Text style={styles.detail} numberOfLines={1}>
+            {item.detail}
+          </Text>
+        ) : null}
       </View>
     </View>
 
+    {item?.canWatch !== false || item?.canDownload !== false ? (
     <View style={styles.btnRow}>
-      <TouchableOpacity style={styles.actionBtn} activeOpacity={0.8} onPress={() => {}}>
-        <DepthIcon name={FEATURE_ICON_META.watch.icon} size={wp(3.5)} color={FEATURE_ICON_META.watch.color} />
-        <Text style={styles.actionText} numberOfLines={1}>
-          {Strings.watch}
-        </Text>
-      </TouchableOpacity>
+      {item?.canWatch !== false ? (
+        <TouchableOpacity
+          style={styles.actionBtn}
+          activeOpacity={0.8}
+          disabled={watching}
+          onPress={() => onWatch?.(item)}>
+          <DepthIcon name={FEATURE_ICON_META.watch.icon} size={wp(3.5)} color={FEATURE_ICON_META.watch.color} />
+          <Text style={styles.actionText} numberOfLines={1}>
+            {Strings.watch}
+          </Text>
+        </TouchableOpacity>
+      ) : null}
 
-      <TouchableOpacity style={styles.actionBtn} activeOpacity={0.8} onPress={() => {}}>
-        <DepthIcon name={FEATURE_ICON_META.download.icon} size={wp(3.5)} color={FEATURE_ICON_META.download.color} />
-        <Text style={styles.actionText} numberOfLines={1}>
-          {Strings.download}
-        </Text>
-      </TouchableOpacity>
+      {item?.canDownload !== false ? (
+        <TouchableOpacity
+          style={styles.actionBtn}
+          activeOpacity={0.8}
+          disabled={downloading}
+          onPress={() => onDownload?.(item)}>
+          <DepthIcon name={FEATURE_ICON_META.download.icon} size={wp(3.5)} color={FEATURE_ICON_META.download.color} />
+          <Text style={styles.actionText} numberOfLines={1}>
+            {Strings.download}
+          </Text>
+        </TouchableOpacity>
+      ) : null}
     </View>
+    ) : null}
   </ProfileGradientCard>
   );
 };

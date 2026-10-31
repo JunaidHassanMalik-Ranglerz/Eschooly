@@ -2348,3 +2348,334 @@ export const getStudentExamsHistory = (params = {}) =>
   });
 
 export const getStudentExam = examId => axiosInstance.get(`/student/exams/${examId}`);
+
+const onlineClassSessions = body => {
+  const root = asObject(body) || {};
+  const data = asObject(root.data) || {};
+  if (Array.isArray(data.sessions)) {
+    return data.sessions;
+  }
+  if (Array.isArray(data.data)) {
+    return data.data;
+  }
+  if (Array.isArray(root.sessions)) {
+    return root.sessions;
+  }
+  if (Array.isArray(body)) {
+    return body;
+  }
+  return [];
+};
+
+const parseClassDate = value => {
+  const raw = text(value);
+  if (!raw) {
+    return null;
+  }
+  const date = new Date(raw);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const classDayBadge = date => {
+  if (!date) {
+    return '';
+  }
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const that = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+  const diff = Math.round((that - today) / 86400000);
+  if (diff === 0) {
+    return Strings.todayLabel;
+  }
+  if (diff === 1) {
+    return Strings.tomorrow;
+  }
+  return Strings.scheduledLabel;
+};
+
+const classStartedLabel = (startedAt, scheduledAt) => {
+  const date = parseClassDate(startedAt) || parseClassDate(scheduledAt);
+  if (!date) {
+    return '';
+  }
+  const diffMs = Date.now() - date.getTime();
+  if (diffMs < 0) {
+    return clockFromIso(startedAt || scheduledAt);
+  }
+  const minutes = Math.floor(diffMs / 60000);
+  if (minutes < 1) {
+    return 'Started just now';
+  }
+  if (minutes < 60) {
+    return `Started ${minutes} min ago`;
+  }
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) {
+    return `Started ${hours} hr ago`;
+  }
+  const days = Math.floor(hours / 24);
+  return `Started ${days}d ago`;
+};
+
+const meetingHost = url => {
+  const raw = text(url).replace(/^https?:\/\//i, '');
+  if (!raw) {
+    return '';
+  }
+  return raw.split('?')[0];
+};
+
+const providerFromSession = (provider, url) => {
+  const namedProvider = text(provider).toLowerCase();
+  const href = text(url).toLowerCase();
+  if (namedProvider.includes('zoom') || href.includes('zoom.us')) {
+    return {label: Strings.zoomMeeting, isZoom: true};
+  }
+  if (
+    namedProvider.includes('google') ||
+    namedProvider.includes('meet') ||
+    href.includes('meet.google') ||
+    href.includes('meet.example')
+  ) {
+    return {label: 'GOOGLE MEET', isZoom: false};
+  }
+  if (namedProvider) {
+    return {label: text(provider).toUpperCase(), isZoom: false};
+  }
+  return {label: '', isZoom: false};
+};
+
+const recordingDateLabel = date => {
+  if (!date) {
+    return '';
+  }
+  const month = SHORT_MONTHS[date.getMonth()];
+  if (!month) {
+    return '';
+  }
+  return `${month} ${date.getDate()}`;
+};
+
+export const mapStudentOnlineClass = slot => {
+  const row = asObject(slot) || {};
+  const id = row.id;
+  if (id == null || id === '') {
+    return null;
+  }
+  const scheduled = parseClassDate(row.scheduled_at);
+  const subject = text(row.subject);
+  const teacher = text(row.teacher);
+  const className = text(row.class) ? `Class ${text(row.class)}` : '';
+  const section = text(row.section);
+  const minutes = Number(row.duration_minutes);
+  const duration = Number.isFinite(minutes) && minutes > 0 ? `${minutes} min` : '';
+  const joinedCount = Number(row.participants_count);
+  const reminderMinutes = Number(row.reminder_minutes_before);
+  const meetingUrl = text(row.meeting_url);
+  const provider = providerFromSession(row.meeting_provider, meetingUrl);
+  const status = text(row.status).toLowerCase();
+  const hasRecording = row.has_recording === true;
+  const detail = [
+    recordingDateLabel(scheduled),
+    duration,
+    hasRecording ? 'Recorded' : '',
+  ]
+    .filter(Boolean)
+    .join(' · ');
+
+  return {
+    id,
+    title: text(row.title),
+    classInfo: [className, section, subject, teacher].filter(Boolean).join(' · '),
+    joined: Number.isFinite(joinedCount) ? `${joinedCount} joined` : '',
+    started: classStartedLabel(row.started_at, row.scheduled_at),
+    month: scheduled ? text(SHORT_MONTHS[scheduled.getMonth()]).toUpperCase() : '',
+    badge: classDayBadge(scheduled),
+    time: clockFromIso(row.scheduled_at),
+    duration,
+    zoomLink: meetingHost(meetingUrl),
+    meetingUrl,
+    providerLabel: provider.label,
+    isZoom: provider.isZoom,
+    showFooter: true,
+    reminderSet: Number.isFinite(reminderMinutes),
+    reminderMinutes: Number.isFinite(reminderMinutes) ? reminderMinutes : null,
+    status: status === 'live' ? Strings.liveBadge : Strings.endedLabel,
+    detail,
+    hasRecording,
+    canWatch: hasRecording,
+    canDownload: hasRecording,
+  };
+};
+
+export const readOnlineClassPage = body =>
+  onlineClassSessions(body)
+    .map(mapStudentOnlineClass)
+    .filter(item => item?.id != null && item.title);
+
+export const mapStudentOnlineClassDetail = body => {
+  const root = asObject(body) || {};
+  const data = asObject(root.data) || root;
+  return mapStudentOnlineClass(asObject(data.session) || data);
+};
+
+export const mapStudentOnlineClassRecording = body => {
+  const root = asObject(body) || {};
+  const data = asObject(root.data) || root;
+  return {
+    recordingUrl: text(data.recording_url),
+    allowDownload: data.allow_download !== false,
+    downloadUrl: text(data.download_route),
+  };
+};
+
+export const mapStudentOnlineClassJoin = body => {
+  const root = asObject(body) || {};
+  const data = asObject(root.data) || root;
+  return {
+    meetingUrl: text(data.meeting_url),
+    joinedAt: text(data.joined_at),
+  };
+};
+
+export const getStudentOnlineClasses = (params = {}) =>
+  axiosInstance.get('/student/online-classes', {
+    params,
+  });
+
+export const getStudentOnlineClass = onlineClassId =>
+  axiosInstance.get(`/student/online-classes/${onlineClassId}`);
+
+export const joinStudentOnlineClass = onlineClassId =>
+  axiosInstance.post(`/student/online-classes/${onlineClassId}/join`, {});
+
+export const remindStudentOnlineClass = (onlineClassId, minutesBefore = 15) =>
+  axiosInstance.post(`/student/online-classes/${onlineClassId}/reminder`, {
+    minutes_before: minutesBefore,
+  });
+
+export const getStudentOnlineClassRecording = onlineClassId =>
+  axiosInstance.get(`/student/online-classes/${onlineClassId}/recording`);
+
+const recordingFileName = (title, classId, headerName = '') => {
+  const fromHeader = text(headerName)
+    .replace(/["']/g, '')
+    .split(/[/\\]/)
+    .pop();
+  if (fromHeader) {
+    return fromHeader;
+  }
+  const base = text(title)
+    .replace(/[^\w.-]+/g, '_')
+    .replace(/_+/g, '_')
+    .slice(0, 60);
+  const name = base || `class-${classId}-recording`;
+  return name.toLowerCase().endsWith('.mp4') ? name : `${name}.mp4`;
+};
+
+const fileNameFromDisposition = header => {
+  const raw = text(header);
+  const utf = raw.match(/filename\*=UTF-8''([^;]+)/i);
+  if (utf?.[1]) {
+    try {
+      return decodeURIComponent(utf[1]);
+    } catch (error) {
+      return utf[1];
+    }
+  }
+  const plain = raw.match(/filename=([^;]+)/i);
+  return plain?.[1] ? plain[1].trim() : '';
+};
+
+export const downloadStudentOnlineClassRecording = async (onlineClassId, title = '') => {
+  const id = text(onlineClassId);
+  if (!id) {
+    throw new Error(Strings.recordingDownloadFailed);
+  }
+
+  let token = getAuthToken();
+  if (!token) {
+    try {
+      token = await storage.getItem(storageKeys.token);
+    } catch (error) {
+      token = null;
+    }
+  }
+
+  const headers = {
+    Accept: '*/*',
+    ...(token ? {Authorization: `Bearer ${token}`} : {}),
+  };
+  const downloadUrl = `${API_BASE_URL}/student/online-classes/${id}/recording/download`;
+  const cacheName = recordingFileName(title, id);
+  const path = `${ReactNativeBlobUtil.fs.dirs.CacheDir}/${cacheName}`;
+
+  const response = await ReactNativeBlobUtil.config({
+    fileCache: true,
+    path,
+    timeout: 30000,
+  }).fetch('GET', downloadUrl, headers);
+  const info = response.info();
+  const type = String(
+    info.headers?.['Content-Type'] || info.headers?.['content-type'] || '',
+  ).toLowerCase();
+
+  if (info.status >= 400 || type.includes('json')) {
+    let message = Strings.recordingDownloadFailed;
+    try {
+      const body = await response.json();
+      if (typeof body?.message === 'string' && body.message) {
+        message = body.message;
+      }
+    } catch (error) {
+      // Keep the default download error.
+    }
+    throw new Error(message);
+  }
+
+  const fileName = recordingFileName(
+    title,
+    id,
+    fileNameFromDisposition(
+      info.headers?.['Content-Disposition'] || info.headers?.['content-disposition'],
+    ),
+  );
+  const localPath = response.path().replace(/^file:\/\//, '');
+  let savedToDevice = false;
+  try {
+    if (Platform.OS === 'android') {
+      await ReactNativeBlobUtil.MediaCollection.copyToMediaStore(
+        {
+          name: fileName,
+          parentFolder: '',
+          mimeType: type.includes('mp4') ? 'video/mp4' : type || 'application/octet-stream',
+        },
+        'Download',
+        localPath,
+      );
+    } else {
+      await ReactNativeBlobUtil.fs.cp(
+        localPath,
+        `${ReactNativeBlobUtil.fs.dirs.DocumentDir}/${fileName}`,
+      );
+    }
+    savedToDevice = true;
+  } catch (error) {
+    try {
+      if (Platform.OS === 'android' && ReactNativeBlobUtil.fs.dirs.DownloadDir) {
+        await ReactNativeBlobUtil.fs.cp(
+          localPath,
+          `${ReactNativeBlobUtil.fs.dirs.DownloadDir}/${fileName}`,
+        );
+        savedToDevice = true;
+      }
+    } catch (fallbackError) {
+      savedToDevice = false;
+    }
+  }
+
+  return {
+    uri: localPath.startsWith('file://') ? localPath : `file://${localPath}`,
+    savedToDevice,
+  };
+};

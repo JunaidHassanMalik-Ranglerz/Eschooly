@@ -147,6 +147,7 @@ export const fetchStudentProfile = createAsyncThunk(
       }
 
       const response = await getStudentProfile();
+      console.log('response', response);
       const body = response?.data;
       if (body && body.success === false) {
         return rejectWithValue({

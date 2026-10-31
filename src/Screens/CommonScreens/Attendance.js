@@ -126,6 +126,7 @@ const AttendanceContent = () => {
     dispatch(fetchStudentAttendance(monthId))
       .unwrap()
       .then(payload => {
+        console.log('payload', payload);
         if (active) {
           setStudentAttendance(payload);
         }
