@@ -416,6 +416,15 @@ export const Strings = {
   child: 'Child',
   viewingChild: 'Viewing',
   upcomingHolidays: 'Upcoming Holidays',
+  todayAtAGlance: 'Today at a glance',
+  keepLearning: 'Keep learning, keep growing',
+  searchClassesPlaceholder: 'Search for classes, notes or resources',
+  sectionViewAll: 'View All',
+  retryAction: 'Try again',
+  stateError: 'Something went wrong.',
+  stateEmpty: 'Nothing to show yet.',
+  eschoolyWordmark: 'ESCHOOLY',
+  nextClass: 'Next Class',
 };
 
 export const LINKED_STUDENTS = [

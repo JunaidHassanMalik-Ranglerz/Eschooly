@@ -1,13 +1,20 @@
 import React from 'react';
-import {Image, StyleSheet, TouchableOpacity, View} from 'react-native';
+import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {Images} from '../Assets';
 import {Colors} from '../Constants/Colors';
+import {Fonts} from '../Constants/Fonts';
 import {wp} from '../Constants/Responsive';
 import {useSelector} from 'react-redux';
 import {navigateToNotification} from '../Navigations/navigationHelpers';
 
-const NotificationBell = ({count, onPress, style, onDark = false}) => {
+const NotificationBell = ({
+  count,
+  onPress,
+  style,
+  onDark = false,
+  numeric = false,
+}) => {
   const navigation = useNavigation();
   const unreadNotifications = useSelector(
     state => state.studentHome?.unreadNotifications || 0,
@@ -28,7 +35,15 @@ const NotificationBell = ({count, onPress, style, onDark = false}) => {
         resizeMode="contain"
       />
       {badgeCount > 0 ? (
-        <View style={[styles.badge, onDark && styles.badgeOnDark]} />
+        numeric ? (
+          <View style={styles.countBadge}>
+            <Text style={styles.countText} numberOfLines={1}>
+              {badgeCount > 99 ? '99+' : String(badgeCount)}
+            </Text>
+          </View>
+        ) : (
+          <View style={[styles.badge, onDark && styles.badgeOnDark]} />
+        )
       ) : null}
     </TouchableOpacity>
   );
@@ -62,5 +77,25 @@ const styles = StyleSheet.create({
   },
   badgeOnDark: {
     borderColor: Colors.parentHeader,
+  },
+  countBadge: {
+    position: 'absolute',
+    top: wp(0.4),
+    right: wp(0.2),
+    minWidth: wp(4.2),
+    height: wp(4.2),
+    paddingHorizontal: wp(0.7),
+    borderRadius: wp(2.1),
+    backgroundColor: Colors.red,
+    borderWidth: 1,
+    borderColor: Colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  countText: {
+    color: Colors.white,
+    fontFamily: Fonts.bold,
+    fontSize: wp(2.2),
+    includeFontPadding: false,
   },
 });

@@ -18,10 +18,6 @@ import Chat from '../../Screens/CommonScreens/Chat';
 
 const BOTTOM_STACK = createBottomTabNavigator();
 
-const CIRCLE_SIZE = wp(13);
-const CIRCLE_RADIUS = wp(6.5);
-const BORDER_WIDTH = wp(0.5);
-
 const TAB_ICONS = {
   Home: Images.homeIcon,
   Attends: Images.attendsIcon,
@@ -52,27 +48,25 @@ const TabBarItem = ({ name, isFocused, onPress }) => {
       unstable_pressDelay={0}
       android_ripple={{color: 'transparent', foreground: false}}
       style={styles.tabItem}>
-      <View
-        style={[
-          styles.iconSlot,
-          isFocused ? styles.iconSlotActive : styles.iconSlotInactive,
-        ]}>
-        <Image
-          source={icon}
-          style={[
-            styles.tabIcon,
-            { tintColor: isFocused ? Colors.primary : Colors.grayText },
-          ]}
-          resizeMode="contain"
-        />
+      <View style={[styles.tabPill, isFocused && styles.tabPillActive]}>
+        <View style={styles.iconSlot}>
+          <Image
+            source={icon}
+            style={[
+              styles.tabIcon,
+              { tintColor: isFocused ? Colors.tabActive : Colors.tabInactive },
+            ]}
+            resizeMode="contain"
+          />
+        </View>
+        <Text
+          style={[styles.label, isFocused && styles.labelActive]}
+          numberOfLines={1}
+          allowFontScaling={false}
+        >
+          {label}
+        </Text>
       </View>
-      <Text
-        style={[styles.label, isFocused && styles.labelActive]}
-        numberOfLines={1}
-        allowFontScaling={false}
-      >
-        {label}
-      </Text>
     </Pressable>
   );
 };
@@ -176,11 +170,11 @@ const EschoolTabBar = ({ state, navigation }) => {
 const styles = StyleSheet.create({
   tabBar: {
     flexDirection: 'row',
-    backgroundColor: Colors.white,
-    borderTopWidth: wp(0.25),
-    borderTopColor: Colors.border,
-    paddingTop: hp(0.6),
-    minHeight: hp(6.2),
+    backgroundColor: Colors.surface,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Colors.borderSubtle,
+    paddingTop: hp(0.8),
+    minHeight: hp(6.4),
   },
   tabItem: {
     flex: 1,
@@ -188,38 +182,38 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     paddingBottom: hp(0.2),
   },
+  tabPill: {
+    minWidth: wp(14),
+    alignItems: 'center',
+    paddingHorizontal: wp(2.4),
+    paddingTop: hp(0.35),
+    paddingBottom: hp(0.25),
+    borderRadius: wp(5),
+  },
+  tabPillActive: {
+    backgroundColor: Colors.tabActivePill,
+  },
   iconSlot: {
-    width: CIRCLE_SIZE,
+    width: wp(8),
+    height: wp(7),
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: hp(0.2),
-  },
-  iconSlotInactive: {
-    height: wp(7),
+    marginBottom: hp(0.1),
   },
   tabIcon: {
     width: wp(5.8),
     height: wp(5.8),
   },
-  iconSlotActive: {
-    height: CIRCLE_SIZE,
-    borderWidth: BORDER_WIDTH,
-    borderColor: Colors.primary,
-    borderRadius: CIRCLE_RADIUS,
-    backgroundColor: Colors.white,
-    marginTop: -wp(2.2),
-    marginBottom: hp(0.25),
-  },
   label: {
     fontSize: Fontsize.tab,
-    fontFamily: Fonts.regular,
-    color: Colors.grayText,
+    fontFamily: Fonts.medium,
+    color: Colors.tabInactive,
     textAlign: 'center',
     includeFontPadding: false,
   },
   labelActive: {
     fontFamily: Fonts.bold,
-    color: Colors.primary,
+    color: Colors.tabActive,
   },
   scene: {
     backgroundColor: Colors.parentBg,

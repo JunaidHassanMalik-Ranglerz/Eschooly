@@ -1,5 +1,5 @@
 import React from 'react';
-import {Pressable, StyleSheet} from 'react-native';
+import {Pressable, StyleSheet, View} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import AnimatedCard from '../AnimatedCard';
 import CardWave from '../CardWave';
@@ -11,6 +11,7 @@ import {
   PROFILE_GRADIENT,
 } from './ProfileTheme';
 import {Colors} from '../../Constants/Colors';
+import {elevation, radius as themeRadius} from '../../Constants/Theme';
 import {wp, hp} from '../../Constants/Responsive';
 
 const ProfileGradientCard = ({
@@ -27,11 +28,19 @@ const ProfileGradientCard = ({
   revealOnScroll,
   waveVariant,
   colors,
+  variant = 'navy',
 }) => {
+  const isLight = variant === 'light';
   const gradient = colors || PROFILE_GRADIENT;
-  const shadowStyle = shadow ? IDENTITY_CARD_SHADOW : null;
+  const shadowStyle = shadow
+    ? isLight
+      ? elevation.card
+      : IDENTITY_CARD_SHADOW
+    : null;
 
-  const card = (
+  const card = isLight ? (
+    <View style={[styles.lightInner, shadowStyle, innerStyle]}>{children}</View>
+  ) : (
     <LinearGradient
       colors={gradient}
       start={GRADIENT_START}
@@ -42,7 +51,11 @@ const ProfileGradientCard = ({
     </LinearGradient>
   );
 
-  const wrapStyle = [styles.wrap, !noMargin && styles.margin, style];
+  const wrapStyle = [
+    isLight ? styles.wrapLight : styles.wrap,
+    !noMargin && styles.margin,
+    style,
+  ];
 
   const content = onPress ? (
     <Pressable
@@ -88,5 +101,18 @@ const styles = StyleSheet.create({
   },
   margin: {
     marginBottom: hp(1.2),
+  },
+  wrapLight: {
+    borderRadius: themeRadius.card,
+    overflow: 'visible',
+    backgroundColor: Colors.transparent,
+  },
+  lightInner: {
+    borderRadius: themeRadius.card,
+    paddingHorizontal: wp(4.5),
+    paddingVertical: hp(1.6),
+    backgroundColor: Colors.surface,
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: Colors.borderSubtle,
   },
 });

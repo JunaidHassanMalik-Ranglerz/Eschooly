@@ -1,23 +1,36 @@
-import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
-import {ActivityIndicator, StatusBar, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import {
+  AppState,
+  Dimensions,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import ScrollEnterScrollView from '../../Component/ScrollEnterScrollView';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {useDispatch, useSelector} from 'react-redux';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
-import LinearGradient from 'react-native-linear-gradient';
 import NotificationBell from '../../Component/NotificationBell';
-import AttendanceStudentDropdown from '../../Component/AttendanceStudentDropdown';
-import AnimatedCard from '../../Component/AnimatedCard';
-import CardWave, {SCREEN_WAVES} from '../../Component/CardWave';
-import DepthIcon from '../../Component/DepthIcon';
-import StudentHubCard from '../../Component/Student/StudentHubCard';
-import {CARD_GRADIENTS} from '../../Constants/CardTheme';
+import GlanceRow from '../../Component/Glass/GlanceRow';
+import HomeSearchField from '../../Component/Glass/HomeSearchField';
+import NavyHeaderBand from '../../Component/Glass/NavyHeaderBand';
+import SectionHeader from '../../Component/Glass/SectionHeader';
+import StateView from '../../Component/Glass/StateView';
+import WelcomeCarousel from '../../Component/Glass/WelcomeCarousel';
+import QuickAccessCard, {
+  QUICK_ACCESS_GAP,
+  QUICK_ACCESS_HEIGHT,
+} from '../../Component/Student/QuickAccessCard';
+import StudentChip from '../../Component/Student/StudentChip';
+import {EducationIcons, getFeatureArt} from '../../Assets/EducationIcons';
 import {Colors} from '../../Constants/Colors';
-import {Fonts} from '../../Constants/Fonts';
-import {Fontsize} from '../../Constants/Fontsize';
+import {Typography} from '../../Constants/Typography';
 import {Strings} from '../../Constants/Strings';
-import {getHubIconMeta} from '../../Constants/IconTheme';
+import {spacing} from '../../Constants/Theme';
 import {wp, hp} from '../../Constants/Responsive';
 import {
   ACADEMICS_ENTER_MOTION,
@@ -26,12 +39,7 @@ import {
 import {showToast} from '../../utils/toast';
 import {fetchStudentHome} from '../../store/slices/studentHomeSlice';
 import {useGreeting} from '../../utils/getGreeting';
-import {
-  ACADEMICS_HEADER_ENTERING,
-  ACADEMICS_PROFILE_ENTERING,
-  getAcademicsMenuEntering,
-} from '../../utils/cardAnimation';
-import {setDarkStatusBar} from '../../Constants/MyStyling';
+import {setBlueStatusBar, setDarkStatusBar} from '../../Constants/MyStyling';
 
 const HUB_ITEMS = [
   {key: 'online', label: Strings.onlineClasses, screen: 'OnlineClass'},
@@ -43,29 +51,116 @@ const HUB_ITEMS = [
   {key: 'syllabus', label: Strings.syllabus, screen: 'Syllabus'},
 ];
 
+const TWO_LINE_HUB_KEYS = new Set(['online', 'library']);
+
+const hubLabelFor = item => {
+  const label = String(item.label || '');
+  if (TWO_LINE_HUB_KEYS.has(item.key) && label.includes(' ')) {
+    return label.replace(' ', '\n');
+  }
+  return label;
+};
+
+const SCREEN_W = Dimensions.get('window').width;
+const HUB_SIDE = spacing.md;
+const HUB_PEEK = wp(5.5);
+const QUICK_ACCESS_WIDTH =
+  (SCREEN_W - HUB_SIDE - QUICK_ACCESS_GAP * 3 - HUB_PEEK) / 4;
+const SEARCH_BANNER_GAP = hp(1.9);
+const NAVY_TUCK = hp(2.2);
+
+const firstNameFrom = name => {
+  const token = String(name || '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)[0];
+  return token || '';
+};
+
+const chipLabelFor = student => {
+  const classParts = [student?.className, student?.sectionName].filter(Boolean);
+  if (!classParts.length) {
+    return Strings.student;
+  }
+  return `${Strings.student} · ${classParts.join(' ')}`;
+};
+
 const StudentHome = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const greeting = useGreeting();
-  const {student, modules, upcomingClass, unreadNotifications} = useSelector(
-    state => state.studentHome,
-  );
+  const {student, modules, upcomingClass, unreadNotifications, error} =
+    useSelector(state => state.studentHome);
   const [homeLoading, setHomeLoading] = useState(true);
-  const hubItems = HUB_ITEMS.filter(item => modules?.[item.key] === true);
+  const hubItems = HUB_ITEMS.filter(
+    item => modules?.[item.key] === true && getFeatureArt(item.key),
+  );
+  const firstName = firstNameFrom(student?.name || student?.label);
+  const showGlance = Boolean(modules?.online === true && upcomingClass);
+
+  const welcomeSlides = useMemo(() => {
+    if (!student) {
+      return [];
+    }
+    const nextMeta = upcomingClass
+      ? [upcomingClass.title, upcomingClass.time].filter(Boolean).join(' · ')
+      : '';
+    return [
+      {
+        key: 'welcome',
+        firstName,
+        subtitle: Strings.keepLearning,
+        art: EducationIcons.welcomeGraduationBooks,
+      },
+      {
+        key: 'library',
+        title: Strings.digitalLibrary,
+        subtitle: Strings.libraryBooksHint,
+        art: EducationIcons.digitalLibrary,
+      },
+      upcomingClass
+        ? {
+            key: 'next-class',
+            title: Strings.nextClass,
+            subtitle: nextMeta || Strings.keepLearning,
+            art: EducationIcons.physicsAtom,
+          }
+        : {
+            key: 'classes',
+            title: Strings.onlineClasses,
+            subtitle: Strings.keepLearning,
+            art: EducationIcons.onlineClasses,
+          },
+    ];
+  }, [student, firstName, upcomingClass]);
+
+  const loadHome = useCallback(() => {
+    setHomeLoading(true);
+    return dispatch(fetchStudentHome())
+      .unwrap()
+      .catch(loadError => {
+        showToast({
+          type: 'error',
+          text1: loadError?.message || 'Unable to load home.',
+        });
+      })
+      .finally(() => {
+        setHomeLoading(false);
+      });
+  }, [dispatch]);
 
   useEffect(() => {
     let active = true;
     setHomeLoading(true);
-
     dispatch(fetchStudentHome())
       .unwrap()
-      .catch(error => {
+      .catch(loadError => {
         if (!active) {
           return;
         }
         showToast({
           type: 'error',
-          text1: error?.message || 'Unable to load home.',
+          text1: loadError?.message || 'Unable to load home.',
         });
       })
       .finally(() => {
@@ -73,29 +168,45 @@ const StudentHome = () => {
           setHomeLoading(false);
         }
       });
-
     return () => {
       active = false;
     };
   }, [dispatch]);
 
-  useLayoutEffect(() => {
-    setDarkStatusBar();
-  }, []);
-
   useFocusEffect(
     useCallback(() => {
-      setDarkStatusBar();
+      const paint = () => setBlueStatusBar();
+      paint();
+      const later = setTimeout(paint, 80);
+      const sub = AppState.addEventListener('change', next => {
+        if (next === 'active') {
+          paint();
+          setTimeout(paint, 80);
+        }
+      });
+      return () => {
+        clearTimeout(later);
+        sub.remove();
+        setDarkStatusBar();
+      };
     }, []),
   );
+
+  const openMenu = () => navigation.navigate('Menu');
+  const openLibrary = () => navigation.navigate('DigitalLibrary');
+  const openOnlineClass = () => navigation.navigate('OnlineClass');
+
+  const glanceMeta = upcomingClass
+    ? [upcomingClass.title, upcomingClass.time].filter(Boolean).join(' · ')
+    : '';
 
   return (
     <ScreenEnterProvider motion={ACADEMICS_ENTER_MOTION}>
       <SafeAreaView style={styles.screen} edges={['top']}>
         <StatusBar
           translucent={false}
-          backgroundColor={Colors.parentBg}
-          barStyle="dark-content"
+          backgroundColor={Colors.brandNavy}
+          barStyle="light-content"
         />
 
         <ScrollEnterScrollView
@@ -105,119 +216,124 @@ const StudentHome = () => {
           overScrollMode="never"
           removeClippedSubviews={false}
           keyboardShouldPersistTaps="handled"
-          contentContainerStyle={styles.scroll}>
-          <AnimatedCard
-            index={0}
-            entering={ACADEMICS_HEADER_ENTERING}
-            style={styles.headerShell}>
-            <View style={styles.headerRow}>
-              <View style={styles.headerText}>
+          contentContainerStyle={styles.scroll}
+          nestedScrollEnabled>
+          <NavyHeaderBand
+            style={styles.headerBand}
+            contentStyle={styles.headerContent}>
+            <View style={styles.brandRow}>
+              <View style={styles.brandLeft}>
+                <Icon name="school" size={wp(5.2)} color={Colors.white} />
+                <View style={styles.brandRule} />
+                <Text style={styles.wordmark}>{Strings.eschoolyWordmark}</Text>
+              </View>
+              <NotificationBell
+                count={unreadNotifications}
+                onDark
+                numeric
+              />
+            </View>
+
+            <View style={styles.greetRow}>
+              <TouchableOpacity
+                onPress={openMenu}
+                activeOpacity={0.8}
+                hitSlop={8}
+                style={styles.menuBtn}
+                accessibilityRole="button"
+                accessibilityLabel={Strings.academics}>
+                <Icon name="menu" size={wp(6.6)} color={Colors.white} />
+              </TouchableOpacity>
+              <View style={styles.greetCopy}>
                 <Text style={styles.greeting} numberOfLines={1}>
                   {greeting},
                 </Text>
                 <Text style={styles.studentName} numberOfLines={1}>
-                  {student?.label}
+                  {student?.label || ' '}
                 </Text>
               </View>
-              <NotificationBell count={unreadNotifications} onDark />
             </View>
-          </AnimatedCard>
+
+            {student ? (
+              <StudentChip label={chipLabelFor(student)} style={styles.chip} />
+            ) : null}
+
+            <HomeSearchField onPress={openLibrary} style={styles.search} />
+          </NavyHeaderBand>
 
           <View style={styles.body}>
-            {homeLoading ? (
-              <ActivityIndicator
-                style={styles.loader}
-                size="large"
-                color={Colors.primary}
-              />
-            ) : null}
-            {!homeLoading && student ? (
-            <AnimatedCard
-              index={1}
-              entering={ACADEMICS_PROFILE_ENTERING}
-              style={styles.dropdownAnchor}>
-              <AttendanceStudentDropdown
-                student={student}
-                premium
-                waveVariant={SCREEN_WAVES.parentHome}
-                readOnly
-                label={Strings.student}
-                embedded
-              />
-            </AnimatedCard>
+            {homeLoading ? <StateView status="loading" /> : null}
+
+            {!homeLoading && error && !student ? (
+              <StateView status="error" message={error} onRetry={loadHome} />
             ) : null}
 
-            {!homeLoading ? (
-            <View style={styles.hubGrid}>
-              {hubItems.map((item, index) => {
-                const iconMeta = getHubIconMeta(index);
-                const cardIndex = index + 2;
-                return (
-                  <StudentHubCard
+            {!homeLoading && !error && !student ? (
+              <StateView status="empty" />
+            ) : null}
+
+            {!homeLoading && student ? (
+              <WelcomeCarousel slides={welcomeSlides} />
+            ) : null}
+
+            {!homeLoading && student ? (
+              <SectionHeader
+                title={Strings.quickAccess}
+                onViewAll={openMenu}
+                style={styles.sectionHead}
+              />
+            ) : null}
+
+            {!homeLoading && student && hubItems.length ? (
+              <ScrollView
+                horizontal
+                nestedScrollEnabled
+                directionalLockEnabled
+                showsHorizontalScrollIndicator={false}
+                bounces={false}
+                overScrollMode="never"
+                removeClippedSubviews={false}
+                contentOffset={{x: 0, y: 0}}
+                disableIntervalMomentum
+                style={styles.hubBleed}
+                contentContainerStyle={styles.hubRow}>
+                {hubItems.map((item, index) => (
+                  <QuickAccessCard
                     key={item.key}
-                    icon={iconMeta.icon}
-                    iconColor={iconMeta.color}
-                    label={item.label}
-                    animationIndex={cardIndex}
-                    hubIndex={index}
+                    label={hubLabelFor(item)}
+                    art={getFeatureArt(item.key)}
+                    selected={index === 0}
+                    width={QUICK_ACCESS_WIDTH}
+                    style={
+                      index === hubItems.length - 1
+                        ? styles.hubCardLast
+                        : styles.hubCard
+                    }
                     onPress={() => navigation.navigate(item.screen)}
                   />
-                );
-              })}
-            </View>
+                ))}
+              </ScrollView>
             ) : null}
 
-            {!homeLoading && modules?.online === true && upcomingClass ? (
-            <>
-            <AnimatedCard
-              index={8}
-              entering={getAcademicsMenuEntering(null, 8)}
-              style={styles.sectionHeader}>
-              <TouchableOpacity
-                style={styles.sectionHeaderRow}
-                activeOpacity={0.85}
-                onPress={() => navigation.navigate('OnlineClass')}>
-                <Text style={styles.sectionTitle}>{Strings.upcomingClass}</Text>
-                <Icon name="chevron-forward" size={wp(5)} color={Colors.grayText} />
-              </TouchableOpacity>
-            </AnimatedCard>
+            {!homeLoading && student && !hubItems.length ? (
+              <StateView status="empty" message={Strings.stateEmpty} />
+            ) : null}
 
-            <AnimatedCard
-              index={9}
-              entering={getAcademicsMenuEntering(null, 9)}
-              style={styles.upcomingWrap}>
-              <LinearGradient
-                colors={CARD_GRADIENTS.sapphire}
-                start={{x: 0, y: 0.5}}
-                end={{x: 1, y: 0.5}}
-                style={styles.upcomingCard}>
-                <CardWave variant={SCREEN_WAVES.studentHome} />
-                <View style={styles.upcomingIcon}>
-                  <DepthIcon name="videocam" size={wp(5.4)} color={Colors.iconSky} />
-                </View>
-                <View style={styles.upcomingInfo}>
-                  <Text style={styles.upcomingTitle} numberOfLines={1}>
-                    {upcomingClass.title}
-                  </Text>
-                  <Text style={styles.upcomingMeta} numberOfLines={1}>
-                    {upcomingClass.classInfo}
-                  </Text>
-                  <View style={styles.upcomingFooter}>
-                    <View style={styles.timeRow}>
-                      <Icon name="time-outline" size={wp(3.6)} color={Colors.whiteMuted85} />
-                      <Text style={styles.timeText}>{upcomingClass.time}</Text>
-                    </View>
-                    <TouchableOpacity
-                      style={styles.joinBtn}
-                      activeOpacity={0.85}
-                      onPress={() => navigation.navigate('OnlineClass')}>
-                      <Text style={styles.joinText}>{Strings.join}</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </LinearGradient>
-            </AnimatedCard>
-            </>
+            {!homeLoading && showGlance ? (
+              <>
+                <SectionHeader
+                  title={Strings.todayAtAGlance}
+                  onViewAll={openMenu}
+                  style={styles.glanceHead}
+                />
+                <GlanceRow
+                  title={Strings.nextClass}
+                  meta={glanceMeta}
+                  art={getFeatureArt('nextClass')}
+                  onPress={openOnlineClass}
+                  animationIndex={9}
+                />
+              </>
             ) : null}
           </View>
         </ScrollEnterScrollView>
@@ -231,145 +347,103 @@ export default StudentHome;
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: Colors.parentBg,
+    backgroundColor: Colors.brandNavy,
   },
   scrollArea: {
     flex: 1,
+    backgroundColor: Colors.canvas,
+    overflow: 'visible',
   },
   scroll: {
-    paddingBottom: hp(3),
-    backgroundColor: Colors.parentBg,
     flexGrow: 1,
+    backgroundColor: Colors.canvas,
+    paddingBottom: hp(3),
+    overflow: 'visible',
   },
-  headerShell: {
-    width: '100%',
-    paddingHorizontal: wp(5),
-    paddingTop: hp(1.8),
-    paddingBottom: hp(7),
-    borderBottomLeftRadius: wp(10),
-    borderBottomRightRadius: wp(10),
-    backgroundColor: Colors.parentHeader,
+  headerBand: {
+    borderBottomLeftRadius: wp(12),
+    paddingBottom: SEARCH_BANNER_GAP + NAVY_TUCK,
   },
-  headerRow: {
+  headerContent: {
+    paddingHorizontal: spacing.lg,
+  },
+  brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  headerText: {
-    flex: 1,
-    marginRight: wp(3),
+  brandLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexShrink: 1,
+    marginRight: spacing.sm,
   },
-  body: {
-    paddingHorizontal: wp(4),
-    marginTop: -hp(4.5),
-    overflow: 'visible',
-    zIndex: 2,
+  brandRule: {
+    width: StyleSheet.hairlineWidth * 2,
+    height: hp(2),
+    backgroundColor: Colors.borderGlass,
+    marginHorizontal: spacing.sm,
   },
-  loader: {
-    marginTop: hp(10),
-    alignSelf: 'center',
-  },
-  dropdownAnchor: {
-    width: '100%',
-    zIndex: 100,
-    marginBottom: hp(0.4),
-    overflow: 'visible',
-  },
-  greeting: {
-    color: Colors.whiteMuted85,
-    fontFamily: Fonts.regular,
-    fontSize: Fontsize.xs1,
-  },
-  studentName: {
+  wordmark: {
+    ...Typography.brand,
     color: Colors.white,
-    fontFamily: Fonts.bold,
-    fontSize: Fontsize.ml,
-    marginTop: hp(0.1),
+    letterSpacing: 0.8,
   },
-  hubGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginTop: hp(0.4),
-    zIndex: 1,
-    elevation: 1,
-    overflow: 'visible',
-  },
-  sectionHeader: {
-    marginTop: hp(0.8),
-    marginBottom: hp(1.3),
-  },
-  sectionHeaderRow: {
+  greetRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    marginTop: hp(0.5),
   },
-  sectionTitle: {
-    color: Colors.black,
-    fontFamily: Fonts.bold,
-    fontSize: Fontsize.sm,
-  },
-  upcomingWrap: {
-    borderRadius: wp(5),
-    overflow: 'hidden',
-  },
-  upcomingCard: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    borderRadius: wp(5),
-    paddingHorizontal: wp(3.6),
-    paddingVertical: hp(1.7),
-    overflow: 'hidden',
-  },
-  upcomingIcon: {
-    width: wp(11),
-    height: wp(11),
-    borderRadius: wp(3.5),
+  menuBtn: {
+    width: wp(8.5),
+    height: wp(8.5),
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: wp(3),
-    zIndex: 1,
+    marginRight: spacing.xs,
   },
-  upcomingInfo: {
+  greetCopy: {
     flex: 1,
-    zIndex: 1,
   },
-  upcomingTitle: {
+  greeting: {
+    ...Typography.greeting,
+    color: Colors.textOnNavyMuted,
+  },
+  studentName: {
+    ...Typography.displayName,
     color: Colors.white,
-    fontFamily: Fonts.bold,
-    fontSize: Fontsize.xs5,
+    marginTop: hp(0.02),
   },
-  upcomingMeta: {
-    color: Colors.whiteMuted75,
-    fontFamily: Fonts.regular,
-    fontSize: Fontsize.xs0,
-    marginTop: hp(0.2),
+  chip: {
+    marginTop: hp(0.45),
   },
-  upcomingFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: hp(1.1),
+  search: {
+    marginTop: hp(0.65),
   },
-  timeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  body: {
+    paddingHorizontal: spacing.md,
+    marginTop: -NAVY_TUCK,
+    overflow: 'visible',
   },
-  timeText: {
-    color: Colors.whiteMuted85,
-    fontFamily: Fonts.medium,
-    fontSize: Fontsize.xs1,
-    marginLeft: wp(1.2),
+  sectionHead: {
+    marginTop: hp(1.4),
   },
-  joinBtn: {
-    backgroundColor: Colors.whiteOverlay22,
-    borderRadius: wp(5),
-    paddingHorizontal: wp(5),
-    paddingVertical: hp(0.75),
+  hubBleed: {
+    marginHorizontal: -spacing.md,
+    overflow: 'visible',
   },
-  joinText: {
-    color: Colors.white,
-    fontFamily: Fonts.semibold,
-    fontSize: Fontsize.xs1,
+  hubRow: {
+    paddingLeft: HUB_SIDE,
+    paddingRight: HUB_SIDE,
+    height: QUICK_ACCESS_HEIGHT + hp(0.6),
+    alignItems: 'stretch',
+  },
+  hubCard: {
+    marginRight: QUICK_ACCESS_GAP,
+  },
+  hubCardLast: {
+    marginRight: 0,
+  },
+  glanceHead: {
+    marginTop: hp(1.6),
   },
 });

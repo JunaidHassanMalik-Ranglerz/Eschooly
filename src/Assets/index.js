@@ -1,3 +1,7 @@
+import {EducationIcons} from './EducationIcons';
+
+export {EducationIcons, FEATURE_ART, getFeatureArt} from './EducationIcons';
+
 export const Images = {
   notification: require('./Notification.png'),
   threeDots: require('./threedots.png'),
@@ -52,4 +56,5 @@ export const Images = {
   send: require('./send.png'),
   pin: require('./pinIcon.png'),
   transportMap: require('./TransportMap.png'),
+  education: EducationIcons,
 };
