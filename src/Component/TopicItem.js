@@ -6,10 +6,12 @@ import {Fonts} from '../Constants/Fonts';
 import {Fontsize} from '../Constants/Fontsize';
 import {Strings} from '../Constants/Strings';
 import {wp, hp} from '../Constants/Responsive';
+import {useStudentTone} from './Glass/StudentTone';
 
 const TopicItem = props => {
   const status = props?.topic?.status;
-  const premium = props?.premium;
+  const icy = useStudentTone();
+  const premium = props?.premium && !icy;
 
   return (
     <View style={styles.row}>
@@ -28,8 +30,8 @@ const TopicItem = props => {
 
       <View style={styles.info}>
         <Text
-          style={[styles.title, premium && styles.titlePremium]}
-          numberOfLines={1}>
+          style={[styles.title, premium && styles.titlePremium, icy && styles.titleIcy]}
+          numberOfLines={2}>
           {props?.topic?.title}
         </Text>
         {props?.topic?.duration ? (
@@ -49,20 +51,26 @@ const TopicItem = props => {
       </View>
 
       {status === 'completed' && (
-        <View style={styles.completedBadge}>
-          <Text style={styles.completedText}>{Strings.completed}</Text>
+        <View style={[styles.completedBadge, icy && styles.completedBadgeIcy]}>
+          <Text style={[styles.completedText, icy && styles.completedTextIcy]}>
+            {Strings.completed}
+          </Text>
         </View>
       )}
 
       {status === 'in_progress' && (
-        <View style={styles.progressBadge}>
-          <Text style={styles.progressText}>{Strings.inProgress}</Text>
+        <View style={[styles.progressBadge, icy && styles.progressBadgeIcy]}>
+          <Text style={[styles.progressText, icy && styles.progressTextIcy]}>
+            {Strings.inProgress}
+          </Text>
         </View>
       )}
 
       {status === 'pending' && (
-        <View style={styles.pendingBadge}>
-          <Text style={styles.pendingText}>{Strings.pending}</Text>
+        <View style={[styles.pendingBadge, icy && styles.pendingBadgeIcy]}>
+          <Text style={[styles.pendingText, icy && styles.pendingTextIcy]}>
+            {Strings.pending}
+          </Text>
         </View>
       )}
     </View>
@@ -163,5 +171,28 @@ const styles = StyleSheet.create({
     color: Colors.whiteMuted75,
     fontFamily: Fonts.regular,
     fontSize: wp(2.24),
+  },
+  titleIcy: {
+    color: Colors.textPrimary,
+    width: undefined,
+    flexShrink: 1,
+  },
+  completedBadgeIcy: {
+    backgroundColor: Colors.hubCard,
+  },
+  completedTextIcy: {
+    color: Colors.brandRoyal,
+  },
+  progressBadgeIcy: {
+    backgroundColor: Colors.hubCard,
+  },
+  progressTextIcy: {
+    color: Colors.brandAccent,
+  },
+  pendingBadgeIcy: {
+    backgroundColor: Colors.hubCard,
+  },
+  pendingTextIcy: {
+    color: Colors.textSecondary,
   },
 });
