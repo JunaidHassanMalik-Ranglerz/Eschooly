@@ -1,13 +1,21 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {ActivityIndicator, StatusBar, StyleSheet, Text} from 'react-native';
+import {ActivityIndicator, StatusBar, StyleSheet, Text, View} from 'react-native';
 import ScrollEnterScrollView from '../../Component/ScrollEnterScrollView';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import AnnouncementCard from '../../Component/AnnouncementCard';
+import AnnouncementStudentCard from '../../Component/Announcement/AnnouncementStudentCard';
+import AnnouncementStudentHeader from '../../Component/Announcement/AnnouncementStudentHeader';
 import AnimatedCard from '../../Component/AnimatedCard';
 import AttendanceStudentDropdown from '../../Component/AttendanceStudentDropdown';
 import ChildSwitchModal from '../../Component/Parent/ChildSwitchModal';
 import MainHeaderComponent from '../../Component/MainHeaderComponent';
 import SelectedChildBanner from '../../Component/SelectedChildBanner';
+import EschoolyScreenShell from '../../Component/Glass/EschoolyScreenShell';
+import CardWave, {SCREEN_WAVES} from '../../Component/CardWave';
+import {
+  StudentToneProvider,
+  useStackBottomPad,
+} from '../../Component/Glass/StudentTone';
 import {Colors} from '../../Constants/Colors';
 import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
@@ -21,6 +29,38 @@ import {showToast} from '../../utils/toast';
 import {fetchChildAnnouncements, fetchParentHome} from '../../store/slices/parentHomeSlice';
 import {fetchStudentAnnouncement, fetchStudentAnnouncements} from '../../store/slices/studentHomeSlice';
 
+const escapeRegExp = value =>
+  String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const classIncludesSection = (className, section) => {
+  const cls = String(className || '').trim();
+  const sec = String(section || '').trim();
+  if (!cls || !sec) {
+    return false;
+  }
+  const trailingToken = new RegExp(`(?:^|[\\s\\-_./])${escapeRegExp(sec)}$`, 'i');
+  if (trailingToken.test(cls)) {
+    return true;
+  }
+  const compact = cls.replace(/\s+/g, '').toLowerCase();
+  const compactSec = sec.replace(/\s+/g, '').toLowerCase();
+  return compact.endsWith(compactSec) && compact.length > compactSec.length;
+};
+
+const formatStudentClassLabel = student => {
+  const className = String(
+    student?.classLabel || student?.className || student?.classInfo || '',
+  ).trim();
+  const section = String(student?.sectionName || '').trim();
+  if (!className) {
+    return section;
+  }
+  if (!section || classIncludesSection(className, section)) {
+    return className;
+  }
+  return `${className} ${section}`;
+};
+
 const AnnouncementsScreen = () => {
   const dispatch = useDispatch();
   const scrollRef = useRef(null);
@@ -33,8 +73,13 @@ const AnnouncementsScreen = () => {
     canSwitchChild,
     studentLabel,
   } = useRoleData();
+  const icy = !isParent;
+  const bottomPad = useStackBottomPad();
   const {selectedChildId: homeChildId, children} = useSelector(state => state.parentHome);
   const homeStudent = useSelector(state => state.studentHome.student);
+  const unreadNotifications = useSelector(
+    state => state.studentHome?.unreadNotifications || 0,
+  );
   const [pickedChildId, setPickedChildId] = useState(null);
   const [parentAnnouncements, setParentAnnouncements] = useState([]);
   const [studentAnnouncements, setStudentAnnouncements] = useState([]);
@@ -59,7 +104,15 @@ const AnnouncementsScreen = () => {
         classLabel: homeStudent?.classLabel || homeStudent?.className || '',
         className: homeStudent?.className || '',
         photoUrl: homeStudent?.photoUrl || '',
+        sectionName: homeStudent?.sectionName || '',
       };
+  const studentIdentity = icy
+    ? {
+        ...bannerChild,
+        classInfo: formatStudentClassLabel(homeStudent) || bannerChild.classInfo,
+        classLabel: formatStudentClassLabel(homeStudent) || bannerChild.classLabel,
+      }
+    : bannerChild;
   const parentCanSwitch = children.length > 1;
 
   const childKey = String(isParent ? activeChildId : selectedChildId ?? activeStudent?.value ?? '');
@@ -181,22 +234,122 @@ const AnnouncementsScreen = () => {
     [childKey, isParent, setSelectedChildId],
   );
 
-  return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <StatusBar backgroundColor={Colors.parentBg} barStyle="dark-content" />
-
-      <MainHeaderComponent
-        title={Strings.announcements}
-        notificationCount={1}
-        navyBack
+  const switchModal =
+    (isParent ? parentCanSwitch : canSwitchChild) ? (
+      <ChildSwitchModal
+        visible={switchVisible}
+        childrenList={isParent ? children : childList}
+        selectedId={isParent ? String(activeChildId || '') : selectedChildId}
+        onSelect={handleSelectChild}
+        onClose={() => setSwitchVisible(false)}
+        replayToken={modalReplay}
       />
+    ) : null;
 
-      <AnimatedCard
-        index={1}
-        entering={getHomeScreenEnter(1)}
-        replayToken={contentReplay}
-        style={styles.profileCard}>
-        {isParent ? (
+  const announcementList = loading ? (
+    <ActivityIndicator
+      style={styles.loader}
+      size="large"
+      color={icy ? Colors.brandRoyal : Colors.primary}
+    />
+  ) : announcements.length === 0 ? (
+    <Text style={[styles.empty, icy && styles.emptyStudent]}>
+      {Strings.noAnnouncements}
+    </Text>
+  ) : (
+    announcements.map((item, index) => {
+      const slot = index + 2;
+      const detail = !isParent ? detailById[item.id] : null;
+      const shown = detail
+        ? {
+            ...item,
+            ...detail,
+            title: detail.title || item.title,
+            message: detail.message || item.message,
+            date: detail.date || item.date,
+            time: detail.time || item.time,
+            category: detail.category || item.category,
+            targeting: detail.targeting || item.targeting,
+          }
+        : item;
+      const Card = icy ? AnnouncementStudentCard : AnnouncementCard;
+      return (
+        <Card
+          key={item.id}
+          item={shown}
+          expanded={!isParent && openId === item.id}
+          onPress={isParent ? undefined : () => openAnnouncement(item)}
+          animationIndex={slot}
+          entering={getHomeScreenEnter(slot)}
+          replayToken={contentReplay}
+        />
+      );
+    })
+  );
+
+  if (icy) {
+    return (
+      <StudentToneProvider active>
+        <EschoolyScreenShell variant="navy-ice">
+          <ScrollEnterScrollView
+            ref={scrollRef}
+            style={styles.scrollArea}
+            contentContainerStyle={[
+              styles.studentScroll,
+              {paddingBottom: bottomPad},
+            ]}
+            showsVerticalScrollIndicator={false}
+            bounces={false}
+            overScrollMode="never"
+            removeClippedSubviews={false}
+            keyboardShouldPersistTaps="handled">
+            <EschoolyScreenShell.Header style={styles.studentBand}>
+              <AnnouncementStudentHeader unreadCount={unreadNotifications} />
+            </EschoolyScreenShell.Header>
+            <EschoolyScreenShell.Body tuck={false} style={styles.studentBody}>
+              <View style={styles.canvasStage}>
+                <View pointerEvents="none" style={styles.canvasWave}>
+                  <CardWave
+                    variant={SCREEN_WAVES.assignmentIce}
+                    color="rgba(37, 99, 235, 0.12)"
+                  />
+                </View>
+                <View style={styles.canvasForeground}>
+                  <AttendanceStudentDropdown
+                    student={studentIdentity}
+                    premium
+                    embedded
+                    readOnly
+                    look="flyer"
+                    label={studentLabel}
+                  />
+                  {announcementList}
+                </View>
+              </View>
+            </EschoolyScreenShell.Body>
+          </ScrollEnterScrollView>
+          {switchModal}
+        </EschoolyScreenShell>
+      </StudentToneProvider>
+    );
+  }
+
+  return (
+    <StudentToneProvider active={false}>
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <StatusBar backgroundColor={Colors.parentBg} barStyle="dark-content" />
+
+        <MainHeaderComponent
+          title={Strings.announcements}
+          notificationCount={1}
+          navyBack
+        />
+
+        <AnimatedCard
+          index={1}
+          entering={getHomeScreenEnter(1)}
+          replayToken={contentReplay}
+          style={styles.profileCard}>
           <SelectedChildBanner
             child={bannerChild}
             variant="large"
@@ -211,72 +364,23 @@ const AnnouncementsScreen = () => {
             }
             canSwitch={parentCanSwitch}
           />
-        ) : (
-          <AttendanceStudentDropdown
-            student={bannerChild}
-            premium
-            embedded
-            readOnly
-            label={studentLabel}
-          />
-        )}
-      </AnimatedCard>
+        </AnimatedCard>
 
-      <ScrollEnterScrollView
-        ref={scrollRef}
-        style={styles.scrollArea}
-        contentContainerStyle={styles.list}
-        showsVerticalScrollIndicator={false}
-        bounces={false}
-        overScrollMode="never"
-        removeClippedSubviews={false}
-        keyboardShouldPersistTaps="handled">
-        {loading ? (
-          <ActivityIndicator style={styles.loader} size="large" color={Colors.primary} />
-        ) : announcements.length === 0 ? (
-          <Text style={styles.empty}>{Strings.noAnnouncements}</Text>
-        ) : (
-          announcements.map((item, index) => {
-            const slot = index + 2;
-            const detail = !isParent ? detailById[item.id] : null;
-            const shown = detail
-              ? {
-                  ...item,
-                  ...detail,
-                  title: detail.title || item.title,
-                  message: detail.message || item.message,
-                  date: detail.date || item.date,
-                  time: detail.time || item.time,
-                  category: detail.category || item.category,
-                  targeting: detail.targeting || item.targeting,
-                }
-              : item;
-            return (
-              <AnnouncementCard
-                key={item.id}
-                item={shown}
-                expanded={!isParent && openId === item.id}
-                onPress={isParent ? undefined : () => openAnnouncement(item)}
-                animationIndex={slot}
-                entering={getHomeScreenEnter(slot)}
-                replayToken={contentReplay}
-              />
-            );
-          })
-        )}
-      </ScrollEnterScrollView>
+        <ScrollEnterScrollView
+          ref={scrollRef}
+          style={styles.scrollArea}
+          contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+          overScrollMode="never"
+          removeClippedSubviews={false}
+          keyboardShouldPersistTaps="handled">
+          {announcementList}
+        </ScrollEnterScrollView>
 
-      {(isParent ? parentCanSwitch : canSwitchChild) ? (
-        <ChildSwitchModal
-          visible={switchVisible}
-          childrenList={isParent ? children : childList}
-          selectedId={isParent ? String(activeChildId || '') : selectedChildId}
-          onSelect={handleSelectChild}
-          onClose={() => setSwitchVisible(false)}
-          replayToken={modalReplay}
-        />
-      ) : null}
-    </SafeAreaView>
+        {switchModal}
+      </SafeAreaView>
+    </StudentToneProvider>
   );
 };
 
@@ -289,6 +393,33 @@ const styles = StyleSheet.create({
   },
   scrollArea: {
     flex: 1,
+  },
+  studentScroll: {
+    flexGrow: 1,
+    backgroundColor: Colors.canvas,
+    overflow: 'visible',
+  },
+  studentBand: {
+    paddingBottom: hp(1.5),
+  },
+  studentBody: {
+    paddingTop: hp(1.35),
+  },
+  canvasStage: {
+    position: 'relative',
+    overflow: 'visible',
+    minHeight: hp(62),
+  },
+  canvasWave: {
+    position: 'absolute',
+    top: hp(2),
+    right: -wp(4),
+    left: 0,
+    height: hp(56),
+    zIndex: 0,
+  },
+  canvasForeground: {
+    zIndex: 1,
   },
   profileCard: {
     marginHorizontal: wp(4),
@@ -312,5 +443,8 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.regular,
     fontSize: Fontsize.xs1,
     marginTop: hp(6),
+  },
+  emptyStudent: {
+    color: Colors.textSecondary,
   },
 });
