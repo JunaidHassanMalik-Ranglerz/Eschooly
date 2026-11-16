@@ -73,29 +73,35 @@ const getAssignmentArt = assignment => {
   return TYPE_ART[type] || EducationIcons.assignments;
 };
 
+const META_ICON_SIZE = wp(3.4);
+
 const MetaLine = ({icon, value, premium, icy}) => {
   if (!value) {
     return null;
   }
   return (
-    <View style={styles.metaRow}>
-      <Icon
-        name={icon}
-        size={wp(3.2)}
-        color={
-          icy
-            ? Colors.textSecondary
-            : premium
-              ? Colors.whiteMuted75
-              : Colors.grayText
-        }
-      />
+    <View style={[styles.metaRow, icy && styles.metaRowIcy]}>
+      <View style={styles.metaIcon}>
+        <Icon
+          name={icon}
+          size={META_ICON_SIZE}
+          color={
+            icy
+              ? Colors.textSecondary
+              : premium
+                ? Colors.whiteMuted75
+                : Colors.grayText
+          }
+        />
+      </View>
       <Text
         style={[
           styles.metaText,
           premium && styles.metaTextPremium,
           icy && styles.metaTextIcy,
-        ]}>
+        ]}
+        numberOfLines={1}
+        ellipsizeMode="tail">
         {value}
       </Text>
     </View>
@@ -207,7 +213,7 @@ const AssignmentItem = props => {
         </View>
         {icy ? <View style={styles.dividerIcy} /> : null}
 
-        <View style={styles.content}>
+        <View style={[styles.content, icy && styles.contentIcy]}>
           <View style={icy ? styles.titleRowIcy : null}>
             <Text
               style={[
@@ -224,13 +230,15 @@ const AssignmentItem = props => {
               <View style={styles.statusTrail}>
                 <Text
                   style={[styles.statusTrailText, {color: statusStyle.text}]}
-                  numberOfLines={1}>
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.85}>
                   {statusStyle.label}
                 </Text>
                 {props?.onPress ? (
                   <Icon
                     name="chevron-forward"
-                    size={wp(4)}
+                    size={wp(3.8)}
                     color={Colors.textSecondary}
                   />
                 ) : null}
@@ -551,12 +559,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: hp(0.3),
   },
+  metaRowIcy: {
+    minHeight: hp(2.1),
+  },
+  metaIcon: {
+    width: wp(4.6),
+    height: wp(4.6),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   metaText: {
     color: Colors.grayText,
     fontFamily: Fonts.regular,
     fontSize: Fontsize.xs1,
-    marginLeft: wp(1.2),
+    marginLeft: wp(1),
     flex: 1,
+    minWidth: 0,
+    includeFontPadding: false,
   },
   metaTextPremium: {
     color: Colors.whiteMuted75,
@@ -656,13 +675,13 @@ const styles = StyleSheet.create({
     ...elevation.card,
   },
   mainRowIcy: {
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   iconSlotIcy: {
     width: wp(12),
     height: wp(12),
     marginRight: wp(0),
-    marginTop: 0,
+    marginTop: hp(0.15),
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -673,31 +692,36 @@ const styles = StyleSheet.create({
     marginHorizontal: wp(2.2),
     marginVertical: hp(0.15),
   },
+  contentIcy: {
+    minWidth: 0,
+  },
   titleRowIcy: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: hp(0.35),
+    alignItems: 'flex-start',
+    marginBottom: hp(0.4),
   },
   titleIcy: {
     color: Colors.textPrimary,
     marginBottom: 0,
+    includeFontPadding: false,
   },
   titleFlex: {
     flex: 1,
+    minWidth: 0,
     marginRight: wp(2),
-    flexShrink: 1,
   },
   statusTrail: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexGrow: 0,
     flexShrink: 0,
-    maxWidth: wp(28),
-    gap: wp(0.6),
-    paddingTop: 0,
+    paddingTop: hp(0.12),
   },
   statusTrailText: {
     fontFamily: Fonts.semibold,
     fontSize: Fontsize.xs0,
+    includeFontPadding: false,
+    marginRight: wp(0.4),
   },
   metaTextIcy: {
     color: Colors.textSecondary,
