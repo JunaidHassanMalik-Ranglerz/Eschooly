@@ -1,43 +1,141 @@
 import React from 'react';
 import {StyleSheet, Text, View} from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import ProfileGradientCard from '../Profile/ProfileGradientCard';
 import PersonAvatar from '../Profile/PersonAvatar';
-import {SCREEN_WAVES} from '../CardWave';
+import CardWave, {SCREEN_WAVES} from '../CardWave';
 import {Colors} from '../../Constants/Colors';
 import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
 import {CARD_GRADIENTS} from '../../Constants/CardTheme';
+import {elevation, radius} from '../../Constants/Theme';
 import {wp, hp} from '../../Constants/Responsive';
+import {useStudentTone} from '../Glass/StudentTone';
 
-const LibraryProfileCard = ({
-  student,
-  animationIndex = 0,
-}) => (
-  <ProfileGradientCard
-    innerStyle={styles.inner}
-    animationIndex={animationIndex}
-    disableAnimation={false}
-    colors={CARD_GRADIENTS.notification}
-    waveVariant={SCREEN_WAVES.library}>
+const escapeRegExp = value =>
+  String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const classIncludesSection = (className, section) => {
+  const cls = String(className || '').trim();
+  const sec = String(section || '').trim();
+  if (!cls || !sec) {
+    return false;
+  }
+  const trailingToken = new RegExp(`(?:^|[\\s\\-_./])${escapeRegExp(sec)}$`, 'i');
+  if (trailingToken.test(cls)) {
+    return true;
+  }
+  const compact = cls.replace(/\s+/g, '').toLowerCase();
+  const compactSec = sec.replace(/\s+/g, '').toLowerCase();
+  return compact.endsWith(compactSec) && compact.length > compactSec.length;
+};
+
+const formatClassLabel = student => {
+  const className = String(
+    student?.classLabel || student?.className || student?.classBadge || '',
+  ).trim();
+  const section = String(student?.sectionName || '').trim();
+  if (!className) {
+    return section;
+  }
+  if (!section || classIncludesSection(className, section)) {
+    return className;
+  }
+  return `${className} ${section}`;
+};
+
+const LibraryProfileCard = ({student, animationIndex = 0, look}) => {
+  const icy = useStudentTone();
+  const onNavy = icy && look === 'onNavy';
+  const classLabel = formatClassLabel(student);
+  const statusLabel = String(student?.status || '').trim();
+
+  const row = (
     <View style={styles.row}>
-      <PersonAvatar person={student} size={wp(12)} style={styles.avatar} />
-
+      <PersonAvatar
+        person={student}
+        size={onNavy ? wp(14) : wp(12)}
+        borderWidth={StyleSheet.hairlineWidth * 2}
+        borderColor={onNavy ? Colors.borderGlass : icy ? Colors.borderSubtle : Colors.whiteOverlay22}
+        style={styles.avatar}
+      />
       <View style={styles.info}>
-        <Text style={styles.name}>{student?.label}</Text>
+        <Text
+          style={[styles.name, icy && !onNavy && styles.nameIcy, onNavy && styles.nameOnNavy]}
+          numberOfLines={2}>
+          {student?.label}
+        </Text>
         <View style={styles.badges}>
-          <View style={styles.classBadge}>
-            <Text style={styles.classText}>
-              {student?.classLabel || student?.classBadge}
-            </Text>
-          </View>
-          <View style={styles.activeBadge}>
-            <Text style={styles.activeText}>{student?.status || 'Active'}</Text>
-          </View>
+          {classLabel ? (
+            <View
+              style={[
+                styles.classBadge,
+                icy && !onNavy && styles.classBadgeIcy,
+                onNavy && styles.classBadgeOnNavy,
+              ]}>
+              <Text
+                style={[
+                  styles.classText,
+                  icy && !onNavy && styles.classTextIcy,
+                  onNavy && styles.classTextOnNavy,
+                ]}
+                numberOfLines={1}>
+                {classLabel}
+              </Text>
+            </View>
+          ) : null}
+          {statusLabel ? (
+            <View
+              style={[
+                styles.activeBadge,
+                icy && !onNavy && styles.activeBadgeIcy,
+                onNavy && styles.activeBadgeOnNavy,
+              ]}>
+              <Text
+                style={[
+                  styles.activeText,
+                  icy && !onNavy && styles.activeTextIcy,
+                  onNavy && styles.activeTextOnNavy,
+                ]}
+                numberOfLines={1}>
+                {statusLabel}
+              </Text>
+            </View>
+          ) : null}
         </View>
       </View>
     </View>
-  </ProfileGradientCard>
-);
+  );
+
+  if (onNavy) {
+    return (
+      <View style={styles.onNavyShell}>
+        <View style={styles.onNavyClip}>
+          <LinearGradient
+            colors={CARD_GRADIENTS.notification}
+            start={{x: 0, y: 0}}
+            end={{x: 1, y: 1}}
+            style={styles.onNavyGradient}>
+            <CardWave variant={SCREEN_WAVES.library} color="rgba(255,255,255,0.12)" />
+            {row}
+          </LinearGradient>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <ProfileGradientCard
+      innerStyle={styles.inner}
+      animationIndex={animationIndex}
+      disableAnimation={false}
+      variant={icy ? 'light' : 'navy'}
+      colors={icy ? undefined : CARD_GRADIENTS.notification}
+      waveVariant={icy ? undefined : SCREEN_WAVES.library}>
+      {row}
+    </ProfileGradientCard>
+  );
+};
 
 export default LibraryProfileCard;
 
@@ -52,11 +150,10 @@ const styles = StyleSheet.create({
   },
   avatar: {
     marginRight: wp(3),
-    borderWidth: 2,
-    borderColor: Colors.whiteOverlay22,
   },
   info: {
     flex: 1,
+    minWidth: 0,
   },
   name: {
     color: Colors.white,
@@ -91,5 +188,55 @@ const styles = StyleSheet.create({
     color: '#86EFAC',
     fontFamily: Fonts.regular,
     fontSize: Fontsize.xs1,
+  },
+  nameIcy: {
+    color: Colors.textPrimary,
+  },
+  classBadgeIcy: {
+    backgroundColor: Colors.hubCard,
+  },
+  classTextIcy: {
+    color: Colors.textSecondary,
+  },
+  activeBadgeIcy: {
+    backgroundColor: Colors.hubCard,
+  },
+  activeTextIcy: {
+    color: Colors.brandRoyal,
+  },
+  onNavyShell: {
+    borderRadius: radius.pill,
+    marginBottom: hp(1.2),
+    ...elevation.banner,
+  },
+  onNavyClip: {
+    borderRadius: radius.pill,
+    overflow: 'hidden',
+  },
+  onNavyGradient: {
+    borderRadius: radius.pill,
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: 'rgba(101, 196, 255, 0.42)',
+    paddingHorizontal: wp(3.4),
+    paddingVertical: hp(1.35),
+    minHeight: hp(8.6),
+    justifyContent: 'center',
+  },
+  nameOnNavy: {
+    color: Colors.white,
+    fontSize: Fontsize.m,
+    marginBottom: hp(0.7),
+  },
+  classBadgeOnNavy: {
+    backgroundColor: Colors.whiteOverlay18,
+  },
+  classTextOnNavy: {
+    color: Colors.whiteMuted85,
+  },
+  activeBadgeOnNavy: {
+    backgroundColor: 'rgba(52, 199, 89, 0.22)',
+  },
+  activeTextOnNavy: {
+    color: '#86EFAC',
   },
 });
