@@ -1,68 +1,65 @@
 import React, {useEffect, useMemo, useState} from 'react';
-
-import {ActivityIndicator, StatusBar, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {
+  ActivityIndicator,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import ScrollEnterScrollView from '../../Component/ScrollEnterScrollView';
-
 import {useNavigation} from '@react-navigation/native';
-
 import {SafeAreaView} from 'react-native-safe-area-context';
-
 import MainHeaderComponent from '../../Component/MainHeaderComponent';
-
 import LibraryProfileCard from '../../Component/DigitalLibrary/LibraryProfileCard';
-
 import LibrarySearchBar from '../../Component/DigitalLibrary/LibrarySearchBar';
-
 import LibraryCategoryFilter from '../../Component/DigitalLibrary/LibraryCategoryFilter';
-
 import LibraryResourceCard from '../../Component/DigitalLibrary/LibraryResourceCard';
-
+import LibraryStudentHeader from '../../Component/DigitalLibrary/LibraryStudentHeader';
 import AnimatedCard from '../../Component/AnimatedCard';
-
+import EschoolyScreenShell from '../../Component/Glass/EschoolyScreenShell';
+import CardWave, {SCREEN_WAVES} from '../../Component/CardWave';
 import {useRoleData} from '../../hooks/useRoleData';
 import {useDispatch, useSelector} from 'react-redux';
 import {showToast} from '../../utils/toast';
 import {fetchChildLibrary, fetchParentHome} from '../../store/slices/parentHomeSlice';
 import {fetchStudentLibrary} from '../../store/slices/studentHomeSlice';
 import {downloadStudentLibraryFile} from '../../services/studentService';
-
 import {withScreenEnter} from '../../hooks/useScreenEnterGate';
-
 import {
-
   LIBRARY_CATEGORIES,
-
   getFilteredResources,
-
 } from '../../Constants/DigitalLibraryData';
-
 import {Colors} from '../../Constants/Colors';
-
 import {Fonts} from '../../Constants/Fonts';
-
 import {Fontsize} from '../../Constants/Fontsize';
-
 import {Strings} from '../../Constants/Strings';
-
 import {wp, hp} from '../../Constants/Responsive';
+import {
+  StudentToneProvider,
+  useStackBottomPad,
+} from '../../Component/Glass/StudentTone';
 
-
+const EMPTY_LIBRARY_ITEMS = [];
 
 const DigitalLibrary = () => {
-
   const navigation = useNavigation();
   const dispatch = useDispatch();
-
   const {isParent} = useRoleData();
-  const {selectedChildId: homeChildId, children} = useSelector(state => state.parentHome);
+  const icy = !isParent;
+  const bottomPad = useStackBottomPad();
+  const {selectedChildId: homeChildId, children} = useSelector(
+    state => state.parentHome,
+  );
   const homeStudent = useSelector(state => state.studentHome.student);
+  const unreadNotifications = useSelector(
+    state => state.studentHome?.unreadNotifications || 0,
+  );
   const [parentLibrary, setParentLibrary] = useState(null);
   const [studentItems, setStudentItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [downloadingId, setDownloadingId] = useState(null);
-
   const [search, setSearch] = useState('');
-
   const [category, setCategory] = useState('all');
 
   const activeChildId = homeChildId || children[0]?.value || null;
@@ -70,15 +67,18 @@ const DigitalLibrary = () => {
     parentLibrary?.child?.label
       ? parentLibrary.child
       : children.find(item => item.value === String(activeChildId)) || null;
-  const resources = isParent ? parentLibrary?.items || [] : studentItems;
+  const resources = isParent
+    ? parentLibrary?.items || EMPTY_LIBRARY_ITEMS
+    : studentItems;
   const profileStudent = isParent
     ? {...parentChild, status: parentChild?.status || 'Active'}
     : {
         label: homeStudent?.label || '',
         classLabel: homeStudent?.classLabel || homeStudent?.className || '',
         className: homeStudent?.className || '',
+        sectionName: homeStudent?.sectionName || '',
         photoUrl: homeStudent?.photoUrl || '',
-        status: 'Active',
+        status: homeStudent?.status || (homeStudent?.label ? 'Active' : undefined),
       };
 
   useEffect(() => {
@@ -177,10 +177,7 @@ const DigitalLibrary = () => {
     ? getFilteredResources(resources, search, category)
     : resources.filter(item => category === 'all' || item.category === category);
 
-
-
   const openStudentFile = async item => {
-
     if (!item?.id || downloadingId) {
       return;
     }
@@ -239,231 +236,236 @@ const DigitalLibrary = () => {
     }
   };
 
-
-
-  return (
-
-      <SafeAreaView style={styles.container} edges={['top']}>
-
-        <StatusBar backgroundColor={Colors.parentBg} barStyle="dark-content" />
-
-        <MainHeaderComponent
-
-          title={Strings.digitalLibrary}
-
-          notificationCount={1}
-
-          navyBack
-
+  const grid = loading ? (
+    <ActivityIndicator style={styles.loader} size="large" color={Colors.primary} />
+  ) : (
+    <View style={[styles.grid, icy && styles.gridStudent]}>
+      {books.map((item, index) => (
+        <LibraryResourceCard
+          key={item.id}
+          item={item}
+          onPress={handleOpen}
+          onDownload={isParent ? undefined : handleDownload}
+          downloading={downloadingId === item.id}
+          animationIndex={index + 5}
         />
-
-
-
-        <ScrollEnterScrollView
-
-          style={styles.scroll}
-
-          contentContainerStyle={styles.content}
-
-          showsVerticalScrollIndicator={false}
-
-          bounces={false}
-
-          overScrollMode="never"
-
-          removeClippedSubviews={false}>
-
-          <LibraryProfileCard
-            student={profileStudent}
-            animationIndex={1}
-          />
-
-
-
-          <LibrarySearchBar
-
-            value={search}
-
-            onChangeText={setSearch}
-
-            placeholder={Strings.librarySearchPlaceholder}
-
-            animationIndex={2}
-          />
-
-
-
-          <AnimatedCard index={3} style={styles.filterWrap}>
-
-            <LibraryCategoryFilter
-
-              categories={categories}
-
-              selected={category}
-
-              onSelect={setCategory}
-
-            />
-
-          </AnimatedCard>
-
-
-
-          <AnimatedCard index={4} style={styles.sectionHeader}>
-
-            <Text style={styles.sectionTitle}>{Strings.recentlyAdded}</Text>
-
-            <TouchableOpacity activeOpacity={0.8}>
-
-              <Text style={styles.seeAll}>{Strings.seeAll}</Text>
-
-            </TouchableOpacity>
-
-          </AnimatedCard>
-
-
-
-          {loading ? (
-            <ActivityIndicator style={styles.loader} size="large" color={Colors.primary} />
-          ) : (
-          <View style={styles.grid}>
-
-            {books.map((item, index) => (
-
-              <LibraryResourceCard
-
-                key={item.id}
-
-                item={item}
-
-                onPress={handleOpen}
-
-                onDownload={isParent ? undefined : handleDownload}
-
-                downloading={downloadingId === item.id}
-
-                animationIndex={index + 5}
-              />
-
-            ))}
-
-          </View>
-          )}
-
-
-
-          {!loading && books.length === 0 ? (
-
-            <Text style={styles.emptyText}>{Strings.libraryNoResults}</Text>
-
-          ) : null}
-
-        </ScrollEnterScrollView>
-
-      </SafeAreaView>
-
+      ))}
+    </View>
   );
 
+  const empty =
+    !loading && books.length === 0 ? (
+      <Text style={[styles.emptyText, icy && styles.emptyTextStudent]}>
+        {Strings.libraryNoResults}
+      </Text>
+    ) : null;
+
+  const section = (
+    <View style={[styles.sectionHeader, icy && styles.sectionHeaderStudent]}>
+      <Text style={[styles.sectionTitle, icy && styles.sectionTitleStudent]}>
+        {Strings.recentlyAdded}
+      </Text>
+      <TouchableOpacity activeOpacity={0.8}>
+        <Text style={[styles.seeAll, icy && styles.seeAllStudent]}>
+          {Strings.seeAll}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  if (icy) {
+    return (
+      <StudentToneProvider active>
+        <EschoolyScreenShell variant="navy-ice">
+          <ScrollEnterScrollView
+            style={styles.scroll}
+            contentContainerStyle={[
+              styles.studentScroll,
+              {paddingBottom: bottomPad},
+            ]}
+            showsVerticalScrollIndicator={false}
+            bounces={false}
+            overScrollMode="never"
+            keyboardShouldPersistTaps="handled"
+            removeClippedSubviews={false}>
+            <EschoolyScreenShell.Header style={styles.libraryBand}>
+              <LibraryStudentHeader unreadCount={unreadNotifications} />
+              <LibraryProfileCard student={profileStudent} look="onNavy" />
+              <LibrarySearchBar
+                value={search}
+                onChangeText={setSearch}
+                placeholder={Strings.librarySearchPlaceholder}
+                look="onNavy"
+              />
+            </EschoolyScreenShell.Header>
+            <EschoolyScreenShell.Body tuck={false} style={styles.libraryBody}>
+              <View style={styles.canvasStage}>
+                <View pointerEvents="none" style={styles.canvasWave}>
+                  <CardWave
+                    variant={SCREEN_WAVES.assignmentIce}
+                    color="rgba(37, 99, 235, 0.12)"
+                  />
+                </View>
+                <View style={styles.canvasForeground}>
+                  <LibraryCategoryFilter
+                    categories={categories}
+                    selected={category}
+                    onSelect={setCategory}
+                  />
+                  {section}
+                  {grid}
+                  {empty}
+                </View>
+              </View>
+            </EschoolyScreenShell.Body>
+          </ScrollEnterScrollView>
+        </EschoolyScreenShell>
+      </StudentToneProvider>
+    );
+  }
+
+  return (
+    <StudentToneProvider active={false}>
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <StatusBar backgroundColor={Colors.parentBg} barStyle="dark-content" />
+        <MainHeaderComponent
+          title={Strings.digitalLibrary}
+          notificationCount={1}
+          navyBack
+        />
+        <ScrollEnterScrollView
+          style={styles.scroll}
+          contentContainerStyle={[styles.content, {paddingBottom: bottomPad}]}
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+          overScrollMode="never"
+          removeClippedSubviews={false}>
+          <LibraryProfileCard student={profileStudent} animationIndex={1} />
+          <LibrarySearchBar
+            value={search}
+            onChangeText={setSearch}
+            placeholder={Strings.librarySearchPlaceholder}
+            animationIndex={2}
+          />
+          <AnimatedCard index={3} style={styles.filterWrap}>
+            <LibraryCategoryFilter
+              categories={categories}
+              selected={category}
+              onSelect={setCategory}
+            />
+          </AnimatedCard>
+          <AnimatedCard index={4} style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>{Strings.recentlyAdded}</Text>
+            <TouchableOpacity activeOpacity={0.8}>
+              <Text style={styles.seeAll}>{Strings.seeAll}</Text>
+            </TouchableOpacity>
+          </AnimatedCard>
+          {grid}
+          {empty}
+        </ScrollEnterScrollView>
+      </SafeAreaView>
+    </StudentToneProvider>
+  );
 };
 
 export default withScreenEnter(DigitalLibrary, 'library');
 
-
-
 const styles = StyleSheet.create({
-
   container: {
-
     flex: 1,
-
     backgroundColor: Colors.parentBg,
-
   },
-
   scroll: {
-
     flex: 1,
-
   },
-
+  studentScroll: {
+    flexGrow: 1,
+    backgroundColor: Colors.canvas,
+    overflow: 'visible',
+  },
   content: {
-
     paddingHorizontal: wp(4),
-
     paddingTop: hp(1),
-
     paddingBottom: hp(3),
-
   },
-
   filterWrap: {
     marginBottom: hp(1),
     borderRadius: wp(5),
     overflow: 'hidden',
   },
-
   sectionHeader: {
-
     flexDirection: 'row',
-
     alignItems: 'center',
-
     justifyContent: 'space-between',
-
     marginBottom: hp(1.5),
-
   },
-
+  sectionHeaderStudent: {
+    marginTop: hp(0.55),
+    marginBottom: hp(1.55),
+    alignItems: 'baseline',
+  },
   sectionTitle: {
-
     color: Colors.black,
-
     fontFamily: Fonts.bold,
-
     fontSize: Fontsize.sm,
-
   },
-
+  sectionTitleStudent: {
+    color: Colors.textPrimary,
+    fontSize: Fontsize.m,
+  },
   seeAll: {
-
     color: Colors.linkBlue,
-
     fontFamily: Fonts.medium,
-
     fontSize: Fontsize.xs1,
-
   },
-
+  seeAllStudent: {
+    color: Colors.brandRoyal,
+    fontFamily: Fonts.semibold,
+    fontSize: Fontsize.xs1,
+  },
   grid: {
-
     flexDirection: 'row',
-
     flexWrap: 'wrap',
-
     justifyContent: 'space-between',
-
     marginBottom: hp(2),
-
   },
-
+  gridStudent: {
+    justifyContent: 'space-between',
+    marginBottom: hp(1),
+  },
+  canvasStage: {
+    position: 'relative',
+    overflow: 'visible',
+    minHeight: hp(62),
+  },
+  canvasWave: {
+    position: 'absolute',
+    top: hp(4),
+    right: -wp(4),
+    left: 0,
+    height: hp(56),
+    zIndex: 0,
+  },
+  libraryBand: {
+    paddingBottom: hp(1.5),
+  },
+  libraryBody: {
+    paddingTop: hp(1.35),
+  },
+  canvasForeground: {
+    zIndex: 1,
+  },
   loader: {
     marginVertical: hp(3),
   },
-
   emptyText: {
-
     color: Colors.grayText,
-
     fontFamily: Fonts.regular,
-
     fontSize: Fontsize.xs1,
-
     textAlign: 'center',
-
     marginBottom: hp(2),
-
   },
-
+  emptyTextStudent: {
+    color: Colors.textSecondary,
+  },
 });
-
-

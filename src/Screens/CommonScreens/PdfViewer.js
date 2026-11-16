@@ -220,7 +220,6 @@ const PdfViewer = () => {
               style={styles.pdf}
               trustAllCerts={false}
               fitPolicy={0}
-              spacing={0}
               onLoadComplete={() => setLoading(false)}
               onError={error => {
                 setErrorMessage(
