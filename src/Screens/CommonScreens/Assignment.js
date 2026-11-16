@@ -8,19 +8,28 @@ import {
   StatusBar,
   StyleSheet,
   Text,
+  View,
 } from 'react-native';
 import ScrollEnterFlatList from '../../Component/ScrollEnterFlatList';
 import {useNavigation} from '@react-navigation/native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useDispatch, useSelector} from 'react-redux';
 import MainHeaderComponent from '../../Component/MainHeaderComponent';
+import EschoolyScreenShell from '../../Component/Glass/EschoolyScreenShell';
 import AssignmentOverviewCard from '../../Component/Assignment/AssignmentOverviewCard';
 import AssignmentSubjectCard from '../../Component/Assignment/AssignmentSubjectCard';
+import AssignmentHeroBanner from '../../Component/Assignment/AssignmentHeroBanner';
+import AssignmentStudentHeader from '../../Component/Assignment/AssignmentStudentHeader';
 import AttendanceStudentDropdown from '../../Component/AttendanceStudentDropdown';
 import SelectedChildBanner from '../../Component/SelectedChildBanner';
 import {Colors} from '../../Constants/Colors';
 import {Strings} from '../../Constants/Strings';
+import {spacing} from '../../Constants/Theme';
 import {wp, hp} from '../../Constants/Responsive';
+import {
+  StudentToneProvider,
+  useStackBottomPad,
+} from '../../Component/Glass/StudentTone';
 import {useRoleData} from '../../hooks/useRoleData';
 import {withScreenEnter} from '../../hooks/useScreenEnterGate';
 import {showToast} from '../../utils/toast';
@@ -38,7 +47,12 @@ const Assignment = () => {
   const dispatch = useDispatch();
   const role = useSelector(state => state.auth.role);
   const isParent = role === 'parent';
+  const icy = !isParent;
+  const bottomPad = useStackBottomPad();
   const homeStudent = useSelector(state => state.studentHome.student);
+  const unreadNotifications = useSelector(
+    state => state.studentHome?.unreadNotifications || 0,
+  );
   const {
     activeStudent,
     assignmentSubjects,
@@ -295,18 +309,7 @@ const Assignment = () => {
       });
   };
 
-  return (
-      <SafeAreaView style={styles.container} edges={['top']}>
-      <StatusBar backgroundColor={Colors.parentBg} barStyle="dark-content" />
-      <MainHeaderComponent
-        title={Strings.assignment}
-        notificationCount={1}
-        navyBack
-      />
-
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+  const list = (
       <ScrollEnterFlatList
         ref={listRef}
         data={loading && !isParent ? [] : subjects}
@@ -315,12 +318,12 @@ const Assignment = () => {
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="none"
         automaticallyAdjustKeyboardInsets
-        bounces
-        overScrollMode="auto"
+        bounces={!icy}
+        overScrollMode={icy ? 'never' : 'auto'}
         removeClippedSubviews={false}
         contentContainerStyle={[
-          styles.content,
-          keyboardInset ? {paddingBottom: keyboardInset + hp(2)} : null,
+          icy ? styles.studentList : styles.content,
+          {paddingBottom: keyboardInset ? keyboardInset + hp(2) : bottomPad},
         ]}
         onScrollToIndexFailed={({index}) => {
           setTimeout(() => {
@@ -342,66 +345,125 @@ const Assignment = () => {
           )
         }
         ListHeaderComponent={
-          <>
-            {isParent ? (
+          icy ? (
+            <>
+              <EschoolyScreenShell.Header>
+                <AssignmentStudentHeader
+                  student={homeStudent}
+                  unreadCount={unreadNotifications}
+                />
+              </EschoolyScreenShell.Header>
+              <EschoolyScreenShell.Body>
+                <AssignmentHeroBanner />
+                {/* <AttendanceStudentDropdown
+                  student={bannerChild}
+                  premium
+                  embedded
+                  readOnly
+                  label={studentLabel}
+                  look="flyer"
+                /> */}
+                {loading ? (
+                  <ActivityIndicator
+                    style={styles.loader}
+                    size="large"
+                    color={Colors.primary}
+                  />
+                ) : (
+                  <AssignmentOverviewCard
+                    overview={overview}
+                    premium
+                    animationIndex={1}
+                  />
+                )}
+              </EschoolyScreenShell.Body>
+            </>
+          ) : (
+            <>
               <SelectedChildBanner
                 child={activeStudent}
                 canSwitch={canSwitchChild}
                 animationIndex={1}
               />
-            ) : (
-              <AttendanceStudentDropdown
-                student={bannerChild}
-                premium
-                embedded
-                readOnly
-                label={studentLabel}
-              />
-            )}
-            {!isParent && loading ? (
-              <ActivityIndicator
-                style={styles.loader}
-                size="large"
-                color={Colors.primary}
-              />
-            ) : (
               <AssignmentOverviewCard
                 overview={overview}
                 premium
-                animationIndex={isParent ? 2 : 1}
+                animationIndex={2}
               />
-            )}
-          </>
+            </>
+          )
         }
         ListEmptyComponent={
           !isParent && !loading && subjects.length === 0 ? (
-            <Text style={styles.emptyText}>{Strings.noHomework}</Text>
+            <Text
+              style={[
+                styles.emptyText,
+                icy && styles.emptyTextStudent,
+                icy && styles.emptyPad,
+              ]}>
+              {Strings.noHomework}
+            </Text>
           ) : null
         }
         renderItem={({item, index}) => (
-          <AssignmentSubjectCard
-            subject={item}
-            open={openSubjectId === item.id}
-            premium
-            animationIndex={index + (isParent ? 3 : 2)}
-            openAssignmentId={openAssignmentId}
-            loadingAssignmentId={loadingAssignmentId}
-            canSubmit={!isParent}
-            notesById={notesById}
-            submittingId={submittingId}
-            downloadingFileId={downloadingFileId}
-            onAssignmentPress={isParent ? undefined : openAssignment}
-            onAttachmentPress={isParent ? undefined : handleAttachment}
-            onSubmit={isParent ? undefined : handleSubmit}
-            onNotesFocus={isParent ? undefined : scrollNotesIntoView}
-            onToggle={() =>
-              setOpenSubjectId(openSubjectId === item.id ? null : item.id)
-            }
-          />
+          <View style={icy ? styles.studentItem : null}>
+            <AssignmentSubjectCard
+              subject={item}
+              open={openSubjectId === item.id}
+              premium
+              animationIndex={index + (isParent ? 3 : 2)}
+              openAssignmentId={openAssignmentId}
+              loadingAssignmentId={loadingAssignmentId}
+              canSubmit={!isParent}
+              notesById={notesById}
+              submittingId={submittingId}
+              downloadingFileId={downloadingFileId}
+              onAssignmentPress={isParent ? undefined : openAssignment}
+              onAttachmentPress={isParent ? undefined : handleAttachment}
+              onSubmit={isParent ? undefined : handleSubmit}
+              onNotesFocus={isParent ? undefined : scrollNotesIntoView}
+              onToggle={() =>
+                setOpenSubjectId(openSubjectId === item.id ? null : item.id)
+              }
+            />
+          </View>
         )}
       />
-      </KeyboardAvoidingView>
+  );
+
+  if (icy) {
+    return (
+      <StudentToneProvider active>
+        <EschoolyScreenShell variant="navy-ice" bottomInsetMode="stack">
+          <KeyboardAvoidingView
+            style={styles.flex}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+            {list}
+          </KeyboardAvoidingView>
+        </EschoolyScreenShell>
+      </StudentToneProvider>
+    );
+  }
+
+  return (
+    <StudentToneProvider active={false}>
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <StatusBar
+          backgroundColor={Colors.parentBg}
+          barStyle="dark-content"
+        />
+        <MainHeaderComponent
+          title={Strings.assignment}
+          notificationCount={1}
+          navyBack
+        />
+        <KeyboardAvoidingView
+          style={styles.flex}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          {list}
+        </KeyboardAvoidingView>
       </SafeAreaView>
+    </StudentToneProvider>
   );
 };
 
@@ -417,8 +479,19 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: wp(4),
-    paddingTop: hp(1),
+    paddingTop: hp(1.4),
     paddingBottom: hp(3),
+  },
+  studentList: {
+    flexGrow: 1,
+    backgroundColor: Colors.canvas,
+    overflow: 'visible',
+  },
+  studentItem: {
+    paddingHorizontal: spacing.md,
+  },
+  emptyPad: {
+    paddingHorizontal: spacing.md,
   },
   loader: {
     marginTop: hp(4),
@@ -430,5 +503,8 @@ const styles = StyleSheet.create({
     fontSize: Fontsize.xs1,
     textAlign: 'center',
     marginTop: hp(2),
+  },
+  emptyTextStudent: {
+    color: Colors.textSecondary,
   },
 });

@@ -9,10 +9,14 @@ import {
 } from '@react-native-documents/picker';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {showToast} from '../../utils/toast';
+import FeatureArtImage from '../Glass/FeatureArtImage';
+import {EducationIcons} from '../../Assets/EducationIcons';
+import {useStudentTone} from '../Glass/StudentTone';
 import {Colors} from '../../Constants/Colors';
 import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
+import {elevation} from '../../Constants/Theme';
 import {wp, hp} from '../../Constants/Responsive';
 
 const TYPE_ICONS = {
@@ -47,7 +51,29 @@ const STATUS_STYLES = {
   },
 };
 
-const MetaLine = ({icon, value, premium}) => {
+const TYPE_ART = {
+  homework: EducationIcons.assignments,
+  project: EducationIcons.digitalLibrary,
+  quiz: EducationIcons.results,
+  lab: EducationIcons.physicsAtom,
+};
+
+const getAssignmentArt = assignment => {
+  const type = assignment?.type || 'homework';
+  const hay = String(assignment?.title || '').toLowerCase();
+  if (type === 'lab' || /physics|atom|lab/.test(hay)) {
+    return EducationIcons.physicsAtom;
+  }
+  if (type === 'quiz' || /quiz|worksheet|algebra|exam/.test(hay)) {
+    return EducationIcons.results;
+  }
+  if (type === 'project' || /report|book|library/.test(hay)) {
+    return EducationIcons.digitalLibrary;
+  }
+  return TYPE_ART[type] || EducationIcons.assignments;
+};
+
+const MetaLine = ({icon, value, premium, icy}) => {
   if (!value) {
     return null;
   }
@@ -56,9 +82,20 @@ const MetaLine = ({icon, value, premium}) => {
       <Icon
         name={icon}
         size={wp(3.2)}
-        color={premium ? Colors.whiteMuted75 : Colors.grayText}
+        color={
+          icy
+            ? Colors.textSecondary
+            : premium
+              ? Colors.whiteMuted75
+              : Colors.grayText
+        }
       />
-      <Text style={[styles.metaText, premium && styles.metaTextPremium]}>
+      <Text
+        style={[
+          styles.metaText,
+          premium && styles.metaTextPremium,
+          icy && styles.metaTextIcy,
+        ]}>
         {value}
       </Text>
     </View>
@@ -67,8 +104,10 @@ const MetaLine = ({icon, value, premium}) => {
 
 const AssignmentItem = props => {
   const assignment = props?.assignment;
-  const premium = props?.premium;
+  const icy = useStudentTone();
+  const premium = props?.premium && !icy;
   const expanded = props?.expanded;
+  const art = getAssignmentArt(assignment);
   const [notes, setNotes] = useState(props?.notes || '');
   const [files, setFiles] = useState([]);
 
@@ -149,31 +188,61 @@ const AssignmentItem = props => {
       : '';
   const hasResult = Boolean(assignment?.grade || marksPreview);
   return (
-    <View style={[styles.card, premium && styles.cardPremium]}>
+    <View style={[styles.card, premium && styles.cardPremium, icy && styles.cardIcy]}>
       <TouchableOpacity
-        style={styles.mainRow}
+        style={[styles.mainRow, icy && styles.mainRowIcy]}
         activeOpacity={props?.onPress ? 0.85 : 1}
         disabled={!props?.onPress}
         onPress={props?.onPress}>
-        <View style={styles.iconSlot}>
-          <Icon
-            name={TYPE_ICONS[type] || TYPE_ICONS.homework}
-            size={wp(5.5)}
-            color={premium ? Colors.iconSky : Colors.primary}
-          />
+        <View style={[styles.iconSlot, icy && styles.iconSlotIcy]}>
+          {icy ? (
+            <FeatureArtImage source={art} size={wp(12)} />
+          ) : (
+            <Icon
+              name={TYPE_ICONS[type] || TYPE_ICONS.homework}
+              size={wp(5.5)}
+              color={premium ? Colors.iconSky : Colors.primary}
+            />
+          )}
         </View>
+        {icy ? <View style={styles.dividerIcy} /> : null}
 
         <View style={styles.content}>
-          <Text
-            style={[styles.title, premium && styles.titlePremium]}
-            numberOfLines={2}>
-            {assignment?.title}
-          </Text>
+          <View style={icy ? styles.titleRowIcy : null}>
+            <Text
+              style={[
+                styles.title,
+                premium && styles.titlePremium,
+                icy && styles.titleIcy,
+                icy && styles.titleFlex,
+              ]}
+              numberOfLines={2}
+              textBreakStrategy="simple">
+              {assignment?.title}
+            </Text>
+            {icy ? (
+              <View style={styles.statusTrail}>
+                <Text
+                  style={[styles.statusTrailText, {color: statusStyle.text}]}
+                  numberOfLines={1}>
+                  {statusStyle.label}
+                </Text>
+                {props?.onPress ? (
+                  <Icon
+                    name="chevron-forward"
+                    size={wp(4)}
+                    color={Colors.textSecondary}
+                  />
+                ) : null}
+              </View>
+            ) : null}
+          </View>
 
           <MetaLine
             icon="person-outline"
             value={assignment?.teacher}
             premium={premium}
+            icy={icy}
           />
           <MetaLine
             icon="calendar-outline"
@@ -183,6 +252,7 @@ const AssignmentItem = props => {
                 : ''
             }
             premium={premium}
+            icy={icy}
           />
           {hasResult ? (
             <MetaLine
@@ -193,9 +263,11 @@ const AssignmentItem = props => {
                   : ''
               }`}
               premium={premium}
+              icy={icy}
             />
           ) : null}
 
+          {icy ? null : (
           <View style={styles.bottomRow}>
             {type !== 'homework' ? (
               <View style={styles.typeBadge}>
@@ -211,21 +283,35 @@ const AssignmentItem = props => {
               </Text>
             </View>
           </View>
+          )}
         </View>
       </TouchableOpacity>
 
       {expanded ? (
         <View style={styles.detailWrap}>
           {props?.loading ? (
-            <ActivityIndicator size="small" color={premium ? Colors.white : Colors.primary} />
+            <ActivityIndicator
+              size="small"
+              color={icy ? Colors.brandRoyal : premium ? Colors.white : Colors.primary}
+            />
           ) : null}
           {assignment?.description ? (
-            <Text style={[styles.detailText, premium && styles.detailTextPremium]}>
+            <Text
+              style={[
+                styles.detailText,
+                premium && styles.detailTextPremium,
+                icy && styles.detailTextIcy,
+              ]}>
               {assignment.description}
             </Text>
           ) : null}
           {assignment?.instructions ? (
-            <Text style={[styles.detailText, premium && styles.detailTextPremium]}>
+            <Text
+              style={[
+                styles.detailText,
+                premium && styles.detailTextPremium,
+                icy && styles.detailTextIcy,
+              ]}>
               {assignment.instructions}
             </Text>
           ) : null}
@@ -237,29 +323,51 @@ const AssignmentItem = props => {
                 : ''
             }
             premium={premium}
+            icy={icy}
           />
           <MetaLine
             icon="school-outline"
             value={classLine}
             premium={premium}
+            icy={icy}
           />
           {obtained ? (
-            <Text style={[styles.detailText, premium && styles.detailTextPremium]}>
+            <Text
+              style={[
+                styles.detailText,
+                premium && styles.detailTextPremium,
+                icy && styles.detailTextIcy,
+              ]}>
               {Strings.obtainedMarks}: {obtained}
             </Text>
           ) : null}
           {total ? (
-            <Text style={[styles.detailText, premium && styles.detailTextPremium]}>
+            <Text
+              style={[
+                styles.detailText,
+                premium && styles.detailTextPremium,
+                icy && styles.detailTextIcy,
+              ]}>
               {Strings.totalMarks}: {total}
             </Text>
           ) : null}
           {assignment?.grade ? (
-            <Text style={[styles.detailText, premium && styles.detailTextPremium]}>
+            <Text
+              style={[
+                styles.detailText,
+                premium && styles.detailTextPremium,
+                icy && styles.detailTextIcy,
+              ]}>
               {Strings.gradeLabel}: {assignment.grade}
             </Text>
           ) : null}
           {assignment?.feedback ? (
-            <Text style={[styles.detailText, premium && styles.detailTextPremium]}>
+            <Text
+              style={[
+                styles.detailText,
+                premium && styles.detailTextPremium,
+                icy && styles.detailTextIcy,
+              ]}>
               {Strings.feedbackLabel}: {assignment.feedback}
             </Text>
           ) : null}
@@ -275,17 +383,21 @@ const AssignmentItem = props => {
                 {downloading ? (
                   <ActivityIndicator
                     size="small"
-                    color={premium ? Colors.white : Colors.primary}
+                    color={icy ? Colors.brandRoyal : premium ? Colors.white : Colors.primary}
                   />
                 ) : (
                   <Icon
                     name="download-outline"
                     size={wp(4)}
-                    color={premium ? Colors.white : Colors.primary}
+                    color={icy ? Colors.brandRoyal : premium ? Colors.white : Colors.primary}
                   />
                 )}
                 <Text
-                  style={[styles.fileText, premium && styles.detailTextPremium]}
+                  style={[
+                    styles.fileText,
+                    premium && styles.detailTextPremium,
+                    icy && styles.fileTextIcy,
+                  ]}
                   numberOfLines={1}>
                   {file.name}
                 </Text>
@@ -293,16 +405,31 @@ const AssignmentItem = props => {
             );
           })}
           {status === 'submitted' && (assignment?.notes || notes) ? (
-            <Text style={[styles.detailText, premium && styles.detailTextPremium]}>
+            <Text
+              style={[
+                styles.detailText,
+                premium && styles.detailTextPremium,
+                icy && styles.detailTextIcy,
+              ]}>
               {Strings.assignmentNotes}: {assignment?.notes || notes}
             </Text>
           ) : null}
           {props?.canSubmit && status !== 'submitted' ? (
             <>
               <TextInput
-                style={[styles.notesInput, premium && styles.notesInputPremium]}
+                style={[
+                  styles.notesInput,
+                  premium && styles.notesInputPremium,
+                  icy && styles.notesInputIcy,
+                ]}
                 placeholder={Strings.assignmentNotes}
-                placeholderTextColor={premium ? Colors.whiteMuted75 : Colors.grayText}
+                placeholderTextColor={
+                  icy
+                    ? Colors.textSecondary
+                    : premium
+                      ? Colors.whiteMuted75
+                      : Colors.grayText
+                }
                 value={notes}
                 onChangeText={setNotes}
                 multiline
@@ -316,10 +443,14 @@ const AssignmentItem = props => {
                   <Icon
                     name="document-attach-outline"
                     size={wp(4)}
-                    color={premium ? Colors.white : Colors.primary}
+                    color={icy ? Colors.brandRoyal : premium ? Colors.white : Colors.primary}
                   />
                   <Text
-                    style={[styles.fileText, premium && styles.detailTextPremium]}
+                    style={[
+                      styles.fileText,
+                      premium && styles.detailTextPremium,
+                      icy && styles.fileTextIcy,
+                    ]}
                     numberOfLines={1}>
                     {file.name || Strings.attachFile}
                   </Text>
@@ -331,7 +462,13 @@ const AssignmentItem = props => {
                     <Icon
                       name="close"
                       size={wp(4.2)}
-                      color={premium ? Colors.whiteMuted75 : Colors.grayText}
+                      color={
+                        icy
+                          ? Colors.textSecondary
+                          : premium
+                            ? Colors.whiteMuted75
+                            : Colors.grayText
+                      }
                     />
                   </TouchableOpacity>
                 </View>
@@ -344,10 +481,14 @@ const AssignmentItem = props => {
                 <Icon
                   name="attach-outline"
                   size={wp(4)}
-                  color={premium ? Colors.white : Colors.primary}
+                  color={icy ? Colors.brandRoyal : premium ? Colors.white : Colors.primary}
                 />
                 <Text
-                  style={[styles.fileText, premium && styles.detailTextPremium]}>
+                  style={[
+                    styles.fileText,
+                    premium && styles.detailTextPremium,
+                    icy && styles.fileTextIcy,
+                  ]}>
                   {Strings.attachFile}
                 </Text>
               </TouchableOpacity>
@@ -502,5 +643,74 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontFamily: Fonts.semibold,
     fontSize: Fontsize.xs1,
+  },
+  cardIcy: {
+    backgroundColor: Colors.surface,
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: Colors.borderSubtle,
+    borderRadius: wp(4.5),
+    paddingVertical: hp(1.35),
+    paddingHorizontal: wp(2.8),
+    marginBottom: hp(1.15),
+    overflow: 'visible',
+    ...elevation.card,
+  },
+  mainRowIcy: {
+    alignItems: 'center',
+  },
+  iconSlotIcy: {
+    width: wp(12),
+    height: wp(12),
+    marginRight: wp(0),
+    marginTop: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dividerIcy: {
+    width: StyleSheet.hairlineWidth * 2,
+    alignSelf: 'stretch',
+    backgroundColor: Colors.borderSubtle,
+    marginHorizontal: wp(2.2),
+    marginVertical: hp(0.15),
+  },
+  titleRowIcy: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: hp(0.35),
+  },
+  titleIcy: {
+    color: Colors.textPrimary,
+    marginBottom: 0,
+  },
+  titleFlex: {
+    flex: 1,
+    marginRight: wp(2),
+    flexShrink: 1,
+  },
+  statusTrail: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexShrink: 0,
+    maxWidth: wp(28),
+    gap: wp(0.6),
+    paddingTop: 0,
+  },
+  statusTrailText: {
+    fontFamily: Fonts.semibold,
+    fontSize: Fontsize.xs0,
+  },
+  metaTextIcy: {
+    color: Colors.textSecondary,
+  },
+  detailTextIcy: {
+    color: Colors.textSecondary,
+  },
+  fileTextIcy: {
+    color: Colors.brandRoyal,
+  },
+  notesInputIcy: {
+    borderColor: Colors.borderSubtle,
+    backgroundColor: Colors.surface,
+    color: Colors.textPrimary,
   },
 });

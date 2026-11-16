@@ -10,6 +10,7 @@ export const Strings = {
   totalPending: 'TOTAL PENDING',
   pendingDuesSummary: 'Across 1 student · 3 fees',
   assignment: 'Assignments',
+  assignmentsHeroSubtitle: 'View, submit and track your assignments',
   assignmentsOverview: 'Overview',
   totalAssignments: 'Total Assignments',
   submitted: 'Submitted',

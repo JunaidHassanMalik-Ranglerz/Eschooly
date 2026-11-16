@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useLayoutEffect, useMemo, useState} from 'react';
 import {
   AppState,
   Dimensions,
@@ -39,7 +39,7 @@ import {
 import {showToast} from '../../utils/toast';
 import {fetchStudentHome} from '../../store/slices/studentHomeSlice';
 import {useGreeting} from '../../utils/getGreeting';
-import {setBlueStatusBar, setDarkStatusBar} from '../../Constants/MyStyling';
+import {setBlueStatusBar} from '../../Constants/MyStyling';
 
 const HUB_ITEMS = [
   {key: 'online', label: Strings.onlineClasses, screen: 'OnlineClass'},
@@ -68,6 +68,21 @@ const QUICK_ACCESS_WIDTH =
   (SCREEN_W - HUB_SIDE - QUICK_ACCESS_GAP * 3 - HUB_PEEK) / 4;
 const SEARCH_BANNER_GAP = hp(1.9);
 const NAVY_TUCK = hp(2.2);
+
+const paintNavyStatusBar = navigation => {
+  const nativeOptions = {
+    statusBarStyle: 'light',
+    statusBarBackgroundColor: Colors.brandNavy,
+    statusBarTranslucent: false,
+    statusBarAnimation: 'none',
+  };
+  let parent = navigation?.getParent?.();
+  while (parent) {
+    parent.setOptions?.(nativeOptions);
+    parent = typeof parent.getParent === 'function' ? parent.getParent() : null;
+  }
+  setBlueStatusBar();
+};
 
 const firstNameFrom = name => {
   const token = String(name || '')
@@ -173,9 +188,13 @@ const StudentHome = () => {
     };
   }, [dispatch]);
 
+  useLayoutEffect(() => {
+    paintNavyStatusBar(navigation);
+  }, [navigation]);
+
   useFocusEffect(
     useCallback(() => {
-      const paint = () => setBlueStatusBar();
+      const paint = () => paintNavyStatusBar(navigation);
       paint();
       const later = setTimeout(paint, 80);
       const sub = AppState.addEventListener('change', next => {
@@ -187,9 +206,8 @@ const StudentHome = () => {
       return () => {
         clearTimeout(later);
         sub.remove();
-        setDarkStatusBar();
       };
-    }, []),
+    }, [navigation]),
   );
 
   const openMenu = () => navigation.navigate('Menu');
@@ -204,9 +222,10 @@ const StudentHome = () => {
     <ScreenEnterProvider motion={ACADEMICS_ENTER_MOTION}>
       <SafeAreaView style={styles.screen} edges={['top']}>
         <StatusBar
-          translucent={false}
-          backgroundColor={Colors.brandNavy}
-          barStyle="light-content"
+          animated={false}
+          translucent={true}
+          backgroundColor={Colors.white}
+          barStyle="dark-content"
         />
 
         <ScrollEnterScrollView
@@ -258,7 +277,7 @@ const StudentHome = () => {
               <StudentChip label={chipLabelFor(student)} style={styles.chip} />
             ) : null}
 
-            <HomeSearchField onPress={openLibrary} style={styles.search} />
+            {/* <HomeSearchField onPress={openLibrary} style={styles.search} /> */}
           </NavyHeaderBand>
 
           <View style={styles.body}>
