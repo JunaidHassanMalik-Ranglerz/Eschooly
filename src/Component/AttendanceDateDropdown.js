@@ -68,11 +68,12 @@ const AttendanceDateDropdown = props => {
     <OptionPickerSheetModal
       visible={open}
       onClose={() => setOpen(false)}
-      title={Strings.dateRange}
+      title={icy ? 'Date Range' : Strings.dateRange}
       subtitle={selectedLabel}
       data={ranges}
       selectedValue={props?.selectedId}
       onSelect={item => props?.onSelect?.(item?.value)}
+      variant={icy ? 'ice' : 'navy'}
     />
   );
 

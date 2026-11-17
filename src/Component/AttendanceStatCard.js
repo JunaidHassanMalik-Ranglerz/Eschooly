@@ -14,6 +14,14 @@ const ICON_COLORS = {
   leave: '#60A5FA',
 };
 
+const resolveIconName = (icon, labelKey) =>
+  icon ||
+  (labelKey === 'present'
+    ? 'checkmark-circle-outline'
+    : labelKey === 'absent'
+      ? 'close-circle-outline'
+      : 'remove-circle-outline');
+
 const AttendanceStatCard = props => {
   const icy = useStudentTone();
   const premium = props?.premium;
@@ -24,10 +32,30 @@ const AttendanceStatCard = props => {
       ICON_COLORS[labelKey] ||
       (props?.image ? ICON_COLORS.present : Colors.iconSky);
 
+  if (icy) {
+    return (
+      <View style={styles.metricIcy}>
+        <View style={styles.iconSlotIcy}>
+          <Icon
+            name={resolveIconName(props?.icon, labelKey)}
+            size={wp(5.2)}
+            color={iconColor}
+          />
+        </View>
+        <Text style={styles.countIcy} numberOfLines={1}>
+          {props?.count}
+        </Text>
+        <Text style={styles.labelIcy} numberOfLines={1}>
+          {props?.label}
+        </Text>
+      </View>
+    );
+  }
+
   return (
-    <View style={[styles.card, premium && styles.cardPremium, icy && styles.cardIcy]}>
-      <View style={[styles.iconSlot, icy && styles.iconSlotIcy]}>
-        {props?.image && !icy ? (
+    <View style={[styles.card, premium && styles.cardPremium]}>
+      <View style={styles.iconSlot}>
+        {props?.image ? (
           <Image
             source={props?.image}
             style={[styles.iconImage, {tintColor: iconColor}]}
@@ -35,36 +63,21 @@ const AttendanceStatCard = props => {
           />
         ) : (
           <Icon
-            name={
-              props?.icon ||
-              (labelKey === 'present'
-                ? 'checkmark-circle-outline'
-                : labelKey === 'absent'
-                  ? 'close-circle-outline'
-                  : 'remove-circle-outline')
-            }
+            name={resolveIconName(props?.icon, labelKey)}
             size={wp(5.2)}
             color={iconColor}
           />
         )}
       </View>
       <Text
-        style={[
-          styles.label,
-          premium && styles.labelPremium,
-          icy && styles.labelIcy,
-        ]}
+        style={[styles.label, premium && styles.labelPremium]}
         numberOfLines={1}
         adjustsFontSizeToFit
         minimumFontScale={0.75}>
         {props?.label}
       </Text>
       <Text
-        style={[
-          styles.count,
-          premium && styles.countPremium,
-          icy && styles.countIcy,
-        ]}
+        style={[styles.count, premium && styles.countPremium]}
         numberOfLines={1}
         adjustsFontSizeToFit
         minimumFontScale={0.7}>
@@ -125,20 +138,38 @@ const styles = StyleSheet.create({
   countPremium: {
     color: Colors.white,
   },
-  cardIcy: {
-    backgroundColor: Colors.transparent,
-    borderColor: Colors.transparent,
+  metricIcy: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    paddingHorizontal: wp(0.4),
   },
   iconSlotIcy: {
-    backgroundColor: Colors.hubCard,
-    borderRadius: wp(10),
-    marginBottom: hp(0.55),
+    width: wp(9),
+    height: wp(9),
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: hp(0.4),
+  },
+  countIcy: {
+    color: Colors.brandNavy,
+    fontFamily: Fonts.bold,
+    fontSize: Fontsize.sm1,
+    lineHeight: hp(2.5),
+    minHeight: hp(2.5),
+    textAlign: 'center',
+    alignSelf: 'stretch',
+    flexShrink: 0,
   },
   labelIcy: {
     color: Colors.textSecondary,
-  },
-  countIcy: {
-    color: Colors.textPrimary,
-    fontSize: Fontsize.sm1,
+    fontFamily: Fonts.medium,
+    fontSize: Fontsize.xs0,
+    lineHeight: hp(2.15),
+    minHeight: hp(2.15),
+    marginTop: hp(0.12),
+    textAlign: 'center',
+    alignSelf: 'stretch',
+    flexShrink: 0,
   },
 });

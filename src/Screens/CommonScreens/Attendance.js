@@ -304,12 +304,16 @@ const AttendanceContent = () => {
           colors={[Colors.bannerIceStart, Colors.bannerIceEnd]}
           start={{x: 0, y: 0.08}}
           end={{x: 1, y: 1}}
-          style={styles.statsFaceIcy}>
+          style={styles.overviewFill}
+        />
+        <View pointerEvents="none" style={styles.overviewWave}>
           <CardWave
             variant={SCREEN_WAVES.assignmentIce}
             color="rgba(91, 156, 255, 0.18)"
           />
-          <View style={styles.monthRow}>
+        </View>
+        <View style={styles.overviewContent}>
+          <View style={styles.monthHeader}>
             <Text style={styles.monthTitleIcy} numberOfLines={1}>
               {Strings.thisMonth}
             </Text>
@@ -317,8 +321,9 @@ const AttendanceContent = () => {
               {student.month}
             </Text>
           </View>
-          <View style={styles.statsRowPremium}>
-            <View style={styles.statEnter}>
+
+          <View style={styles.metricsRow}>
+            <View style={styles.metricCol}>
               <AttendanceStatCard
                 icon="checkmark-circle-outline"
                 label={Strings.present}
@@ -326,7 +331,7 @@ const AttendanceContent = () => {
                 premium
               />
             </View>
-            <View style={styles.statEnter}>
+            <View style={styles.metricCol}>
               <AttendanceStatCard
                 icon="close-circle-outline"
                 label={Strings.absent}
@@ -334,7 +339,7 @@ const AttendanceContent = () => {
                 premium
               />
             </View>
-            <View style={styles.statEnter}>
+            <View style={styles.metricCol}>
               <AttendanceStatCard
                 icon="remove-circle-outline"
                 label={Strings.leave}
@@ -343,12 +348,15 @@ const AttendanceContent = () => {
               />
             </View>
           </View>
-          <AttendanceRateCard
-            rate={student.rate}
-            rateText={student.rateText}
-            premium
-          />
-        </LinearGradient>
+
+          <View style={styles.attendanceRateSection}>
+            <AttendanceRateCard
+              rate={student.rate}
+              rateText={student.rateText}
+              premium
+            />
+          </View>
+        </View>
       </View>
     </AnimatedCard>
   );
@@ -641,39 +649,62 @@ const styles = StyleSheet.create({
   },
   statsShellIcy: {
     marginBottom: hp(1.45),
-    borderRadius: radius.banner,
-    backgroundColor: Colors.bannerIceStart,
     overflow: 'visible',
-    ...elevation.card,
   },
   statsClipIcy: {
     borderRadius: radius.banner,
     overflow: 'hidden',
-  },
-  statsFaceIcy: {
-    borderRadius: radius.banner,
+    backgroundColor: Colors.bannerIceStart,
     borderWidth: StyleSheet.hairlineWidth * 2,
     borderColor: 'rgba(91, 156, 255, 0.35)',
+    ...elevation.card,
+  },
+  overviewFill: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  overviewWave: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  overviewContent: {
+    width: '100%',
     paddingHorizontal: wp(3.6),
     paddingTop: hp(1.5),
     paddingBottom: hp(1.4),
   },
+  monthHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: hp(1.1),
+    width: '100%',
+  },
   monthTitleIcy: {
-    color: Colors.textPrimary,
+    color: Colors.brandNavy,
     fontFamily: Fonts.semibold,
     fontSize: Fontsize.xs5,
     flex: 1,
     minWidth: 0,
     marginRight: wp(2),
-    zIndex: 1,
   },
   monthTextIcy: {
     color: Colors.textSecondary,
-    fontFamily: Fonts.regular,
+    fontFamily: Fonts.medium,
     fontSize: Fontsize.xs0,
     flexShrink: 1,
     textAlign: 'right',
-    zIndex: 1,
+  },
+  metricsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+  },
+  metricCol: {
+    flex: 1,
+    minWidth: 0,
+  },
+  attendanceRateSection: {
+    marginTop: hp(1.4),
+    width: '100%',
   },
   historyCta: {
     flexDirection: 'row',

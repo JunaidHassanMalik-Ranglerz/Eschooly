@@ -5,6 +5,7 @@ import ParentSheetModal from './Parent/ParentSheetModal';
 import {Colors} from '../Constants/Colors';
 import {Fonts} from '../Constants/Fonts';
 import {Fontsize} from '../Constants/Fontsize';
+import {elevation, radius} from '../Constants/Theme';
 import {wp, hp} from '../Constants/Responsive';
 
 const VISIBLE_ROWS = 6;
@@ -21,7 +22,9 @@ const OptionPickerSheetModal = ({
   onSelect,
   renderItem,
   keyExtractor,
+  variant = 'navy',
 }) => {
+  const ice = variant === 'ice';
   const defaultKeyExtractor = useCallback(
     item => String(item?.[valueField] ?? item?.key ?? item?.label),
     [valueField],
@@ -33,16 +36,31 @@ const OptionPickerSheetModal = ({
       const selected = value === selectedValue;
       return (
         <TouchableOpacity
-          style={[styles.row, selected && styles.rowSelected]}
+          style={[
+            styles.row,
+            ice && styles.rowIce,
+            selected && (ice ? styles.rowSelectedIce : styles.rowSelected),
+          ]}
           activeOpacity={0.85}
           onPress={() => {
             onSelect?.(item);
             onClose?.();
           }}>
-          <Text style={styles.rowLabel} numberOfLines={2}>
+          <Text
+            style={[
+              styles.rowLabel,
+              ice && styles.rowLabelIce,
+              selected && ice && styles.rowLabelSelectedIce,
+            ]}
+            numberOfLines={2}>
             {item?.[labelField]}
           </Text>
-          <View style={[styles.radio, selected && styles.radioSelected]}>
+          <View
+            style={[
+              styles.radio,
+              ice && styles.radioIce,
+              selected && (ice ? styles.radioSelectedIce : styles.radioSelected),
+            ]}>
             {selected ? (
               <Icon name="checkmark" size={wp(3.5)} color={Colors.white} />
             ) : null}
@@ -50,7 +68,7 @@ const OptionPickerSheetModal = ({
         </TouchableOpacity>
       );
     },
-    [labelField, onClose, onSelect, selectedValue, valueField],
+    [ice, labelField, onClose, onSelect, selectedValue, valueField],
   );
 
   const useTallList = data.length > VISIBLE_ROWS;
@@ -61,6 +79,7 @@ const OptionPickerSheetModal = ({
       onClose={onClose}
       title={title}
       subtitle={subtitle}
+      variant={variant}
       dismissOnBackdropPress={false}
       compact={!useTallList}
       tall={useTallList}>
@@ -70,7 +89,9 @@ const OptionPickerSheetModal = ({
         renderItem={renderItem || defaultRenderRow}
         style={useTallList ? styles.listScrollTall : styles.listScroll}
         contentContainerStyle={
-          useTallList ? styles.listContentTall : styles.listContent
+          useTallList
+            ? [styles.listContentTall, ice && styles.listContentIce]
+            : [styles.listContent, ice && styles.listContentIce]
         }
         keyboardShouldPersistTaps="handled"
         nestedScrollEnabled
@@ -135,5 +156,45 @@ const styles = StyleSheet.create({
   radioSelected: {
     backgroundColor: Colors.primary,
     borderColor: Colors.primary,
+  },
+  listContentIce: {
+    paddingHorizontal: wp(1.4),
+    paddingTop: hp(0.2),
+    paddingBottom: hp(1.6),
+  },
+  rowIce: {
+    backgroundColor: Colors.surface,
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: Colors.borderSubtle,
+    borderRadius: radius.card,
+    minHeight: hp(6.4),
+    paddingVertical: hp(1.45),
+    paddingHorizontal: wp(3.4),
+    marginBottom: hp(0.85),
+  },
+  rowSelectedIce: {
+    backgroundColor: Colors.hubCard,
+    borderColor: Colors.brandRoyal,
+    borderWidth: 1.5,
+    ...elevation.card,
+  },
+  rowLabelIce: {
+    color: Colors.brandNavy,
+    fontFamily: Fonts.medium,
+    fontSize: Fontsize.xs4,
+  },
+  rowLabelSelectedIce: {
+    fontFamily: Fonts.bold,
+    color: Colors.brandNavy,
+  },
+  radioIce: {
+    borderColor: Colors.borderSubtle,
+    backgroundColor: Colors.surface,
+    flexShrink: 0,
+    marginLeft: wp(1.2),
+  },
+  radioSelectedIce: {
+    backgroundColor: Colors.brandRoyal,
+    borderColor: Colors.brandRoyal,
   },
 });

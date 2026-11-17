@@ -4,6 +4,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import ProgressBar from './ProgressBar';
 import {Colors} from '../Constants/Colors';
 import {Fonts} from '../Constants/Fonts';
+import {Fontsize} from '../Constants/Fontsize';
 import {Strings} from '../Constants/Strings';
 import {wp, hp} from '../Constants/Responsive';
 import {useStudentTone} from './Glass/StudentTone';
@@ -11,14 +12,15 @@ import {useStudentTone} from './Glass/StudentTone';
 const AttendanceRateCard = ({rate, rateText, premium = false}) => {
   const icy = useStudentTone();
   const clampedRate = Math.min(Math.max(Number(rate) || 0, 0), 1);
+  const navyPremium = premium && !icy;
 
   return (
-    <View style={[styles.card, premium && styles.cardPremium, icy && styles.cardIcy]}>
-      <View style={styles.topRow}>
+    <View style={[styles.card, navyPremium && styles.cardPremium, icy && styles.cardIcy]}>
+      <View style={[styles.topRow, icy && styles.topRowIcy]}>
         <Text
           style={[
             styles.title,
-            premium && styles.titlePremium,
+            navyPremium && styles.titlePremium,
             icy && styles.titleIcy,
           ]}
           numberOfLines={1}>
@@ -27,7 +29,7 @@ const AttendanceRateCard = ({rate, rateText, premium = false}) => {
         <Text
           style={[
             styles.percent,
-            premium && styles.percentPremium,
+            navyPremium && styles.percentPremium,
             icy && styles.percentIcy,
           ]}
           numberOfLines={1}>
@@ -35,13 +37,13 @@ const AttendanceRateCard = ({rate, rateText, premium = false}) => {
         </Text>
       </View>
 
-      <View style={styles.progressTrackWrap}>
+      <View style={[styles.progressTrackWrap, icy && styles.progressTrackWrapIcy]}>
         <ProgressBar
           progress={clampedRate}
           fillColor={icy ? Colors.brandRoyal : undefined}
           style={[
             styles.progressBar,
-            premium && styles.progressBarPremium,
+            navyPremium && styles.progressBarPremium,
             icy && styles.progressBarIcy,
           ]}
         />
@@ -62,10 +64,10 @@ const AttendanceRateCard = ({rate, rateText, premium = false}) => {
         <Text
           style={[
             styles.footerText,
-            premium && styles.footerTextPremium,
+            navyPremium && styles.footerTextPremium,
             icy && styles.footerTextIcy,
           ]}
-          numberOfLines={1}>
+          numberOfLines={icy ? 2 : 1}>
           {Strings.greatConsistency}
         </Text>
       </View>
@@ -142,17 +144,32 @@ const styles = StyleSheet.create({
   },
   cardIcy: {
     backgroundColor: Colors.transparent,
+    marginBottom: 0,
+    padding: 0,
+  },
+  topRowIcy: {
+    alignItems: 'center',
+    marginBottom: hp(0.85),
   },
   titleIcy: {
     color: Colors.textSecondary,
+    fontFamily: Fonts.medium,
+    fontSize: Fontsize.xs1,
   },
   percentIcy: {
-    color: Colors.textPrimary,
+    color: Colors.brandNavy,
+    fontFamily: Fonts.bold,
+    fontSize: Fontsize.sm,
+  },
+  progressTrackWrapIcy: {
+    marginBottom: hp(0.75),
   },
   progressBarIcy: {
     backgroundColor: Colors.hubCard,
   },
   footerTextIcy: {
     color: Colors.textSecondary,
+    fontFamily: Fonts.regular,
+    fontSize: Fontsize.xs0,
   },
 });
