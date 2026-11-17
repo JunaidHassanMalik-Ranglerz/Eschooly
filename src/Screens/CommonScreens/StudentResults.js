@@ -11,16 +11,27 @@ import MainHeaderComponent from '../../Component/MainHeaderComponent';
 import SelectedChildBanner from '../../Component/SelectedChildBanner';
 import ChildSwitchModal from '../../Component/Parent/ChildSwitchModal';
 import AnimatedCard from '../../Component/AnimatedCard';
+import EschoolyScreenShell, {
+  FLOAT_CARD_GAP,
+  FLOAT_CARD_TUCK,
+  NAVY_ICE_CURVE,
+} from '../../Component/Glass/EschoolyScreenShell';
 import CardWave, {SCREEN_WAVES} from '../../Component/CardWave';
 import OverallGradeCard from '../../Component/Student/OverallGradeCard';
+import ResultsStudentHeader from '../../Component/Student/ResultsStudentHeader';
+import ResultsSummaryBanner from '../../Component/Student/ResultsSummaryBanner';
+import ResultsSubjectCard from '../../Component/Student/ResultsSubjectCard';
 import {Colors} from '../../Constants/Colors';
 import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
-import {
-  STUDENT_RESULT_TERMS,
-} from '../../Constants/dummydata';
+import {STUDENT_RESULT_TERMS} from '../../Constants/dummydata';
 import {wp, hp} from '../../Constants/Responsive';
+import {elevation} from '../../Constants/Theme';
+import {
+  StudentToneProvider,
+  useStackBottomPad,
+} from '../../Component/Glass/StudentTone';
 import {useRoleData} from '../../hooks/useRoleData';
 import {withScreenEnter} from '../../hooks/useScreenEnterGate';
 import {getHomeScreenEnter} from '../../utils/cardAnimation';
@@ -63,9 +74,14 @@ const StudentResults = () => {
   const dispatch = useDispatch();
   const role = useSelector(state => state.auth.role);
   const isParent = role === 'parent';
+  const icy = !isParent;
+  const bottomPad = useStackBottomPad(4);
   const {studentLabel} = useRoleData();
   const {selectedChildId: homeChildId, children} = useSelector(state => state.parentHome);
   const homeStudent = useSelector(state => state.studentHome.student);
+  const unreadNotifications = useSelector(
+    state => state.studentHome?.unreadNotifications || 0,
+  );
   const [pickedChildId, setPickedChildId] = useState(null);
   const [resultCard, setResultCard] = useState(null);
   const [studentResults, setStudentResults] = useState(null);
@@ -247,21 +263,164 @@ const StudentResults = () => {
     }
   }, [activeChildId, downloading, isParent, navigation, result.pdfUrl]);
 
-  return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <StatusBar backgroundColor={SCREEN_BG} barStyle="dark-content" />
-      <MainHeaderComponent title={Strings.results} notificationCount={1} navyBack />
+  const switchModal =
+    isParent && parentCanSwitch ? (
+      <ChildSwitchModal
+        visible={switchVisible}
+        childrenList={children}
+        selectedId={String(activeChildId || '')}
+        onSelect={nextId => {
+          setPickedChildId(String(nextId));
+          setDownloaded(false);
+        }}
+        onClose={() => setSwitchVisible(false)}
+        replayToken={modalReplay}
+      />
+    ) : null;
 
-      <ScrollEnterScrollView
-        style={styles.scrollArea}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        bounces={false}
-        overScrollMode="never"
-        removeClippedSubviews={false}
-        keyboardShouldPersistTaps="handled">
-        <AnimatedCard index={1} entering={getHomeScreenEnter(1)} style={styles.childWrap}>
-          {isParent ? (
+  const overallCard = (
+    <AnimatedCard
+      key={`${activeTerm}-overall`}
+      index={result.subjects.length + 2}
+      entering={getHomeScreenEnter(result.subjects.length + 2)}
+      replayToken={termReplay}
+      style={styles.gradeCardWrap}>
+      <OverallGradeCard
+        grade={loading ? '—' : result.overall}
+        hint={
+          loading
+            ? ''
+            : isParent
+              ? result.hint || Strings.greatProgress
+              : result.hint
+        }
+      />
+    </AnimatedCard>
+  );
+
+  if (icy) {
+    return (
+      <StudentToneProvider active>
+        <EschoolyScreenShell variant="navy-ice">
+          <ScrollEnterScrollView
+            style={styles.scrollArea}
+            contentContainerStyle={[
+              styles.studentScroll,
+              {paddingBottom: bottomPad},
+            ]}
+            showsVerticalScrollIndicator={false}
+            bounces={false}
+            overScrollMode="never"
+            removeClippedSubviews={false}
+            keyboardShouldPersistTaps="handled">
+            <EschoolyScreenShell.Header style={styles.studentBand}>
+              <ResultsStudentHeader unreadCount={unreadNotifications} />
+            </EschoolyScreenShell.Header>
+            <EschoolyScreenShell.Body tuck={false} style={styles.studentBody}>
+              <View style={styles.canvasStage}>
+                <View pointerEvents="none" style={styles.canvasWave}>
+                  <CardWave
+                    variant={SCREEN_WAVES.assignmentIce}
+                    color="rgba(37, 99, 235, 0.12)"
+                  />
+                </View>
+                <View style={styles.canvasForeground}>
+                  <AttendanceStudentDropdown
+                    student={bannerChild}
+                    premium
+                    embedded
+                    readOnly
+                    look="float"
+                    label={studentLabel}
+                  />
+                  <ResultsSummaryBanner
+                    childName={shownChild?.label}
+                    classLine={classLine}
+                    term={activeTerm}
+                    grade={loading ? '—' : result.overall}
+                    loading={loading}
+                    downloading={downloading}
+                    downloaded={downloaded}
+                    onDownload={handleDownload}
+                    entering={getHomeScreenEnter(1)}
+                    replayToken={termReplay}
+                  />
+                  <AnimatedCard
+                    index={1}
+                    entering={getHomeScreenEnter(1)}
+                    style={styles.tabTrackEnterStudent}>
+                    <View style={styles.toggleWrapStudent}>
+                      {STUDENT_RESULT_TERMS.map(tab => {
+                        const active = tab === activeTerm;
+                        return (
+                          <TouchableOpacity
+                            key={tab}
+                            activeOpacity={0.88}
+                            onPress={() => selectTerm(tab)}
+                            style={[
+                              styles.toggleBtn,
+                              active && styles.toggleBtnActiveStudent,
+                            ]}>
+                            <Text
+                              style={[
+                                styles.toggleTextStudent,
+                                active && styles.toggleTextActive,
+                              ]}>
+                              {tab}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  </AnimatedCard>
+                  <View style={styles.listWrap}>
+                    {loading ? (
+                      <ActivityIndicator
+                        style={styles.loader}
+                        size="large"
+                        color={Colors.brandRoyal}
+                      />
+                    ) : null}
+                    {!loading &&
+                      result.subjects.map((item, index) => (
+                        <ResultsSubjectCard
+                          key={`${activeTerm}-${item.id}`}
+                          item={item}
+                          animationIndex={index + 2}
+                          entering={getHomeScreenEnter(index + 2)}
+                          replayToken={termReplay}
+                          spaced={index < result.subjects.length - 1}
+                        />
+                      ))}
+                    {!loading && result.subjects.length === 0 ? (
+                      <Text style={styles.emptyStudent}>No results yet.</Text>
+                    ) : null}
+                  </View>
+                  {overallCard}
+                </View>
+              </View>
+            </EschoolyScreenShell.Body>
+          </ScrollEnterScrollView>
+        </EschoolyScreenShell>
+      </StudentToneProvider>
+    );
+  }
+
+  return (
+    <StudentToneProvider active={false}>
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <StatusBar backgroundColor={SCREEN_BG} barStyle="dark-content" />
+        <MainHeaderComponent title={Strings.results} notificationCount={1} navyBack />
+
+        <ScrollEnterScrollView
+          style={styles.scrollArea}
+          contentContainerStyle={[styles.content, {paddingBottom: bottomPad}]}
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+          overScrollMode="never"
+          removeClippedSubviews={false}
+          keyboardShouldPersistTaps="handled">
+          <AnimatedCard index={1} entering={getHomeScreenEnter(1)} style={styles.childWrap}>
             <SelectedChildBanner
               child={bannerChild}
               variant="large"
@@ -271,181 +430,145 @@ const StudentResults = () => {
               canSwitch={parentCanSwitch}
               onSwitchPress={parentCanSwitch ? openSwitch : undefined}
             />
-          ) : (
-            <AttendanceStudentDropdown
-              student={bannerChild}
-              premium
-              embedded
-              readOnly
-              label={studentLabel}
-            />
-          )}
-        </AnimatedCard>
+          </AnimatedCard>
 
-        <AnimatedCard
-          index={1}
-          entering={getHomeScreenEnter(1)}
-          replayToken={termReplay}
-          style={styles.resultCardWrap}>
-          <LinearGradient
-            colors={['#0A2F5C', '#0D5CA8', '#2563EB']}
-            start={{x: 0, y: 0}}
-            end={{x: 1, y: 1}}
-            style={styles.resultCard}>
-            <CardWave variant={SCREEN_WAVES.results} />
-            <Text style={styles.cardKicker}>{Strings.resultCard}</Text>
-            <View style={styles.cardTop}>
-              <View style={styles.cardIdentity}>
-                <Text style={styles.cardName} numberOfLines={1}>
-                  {shownChild?.label}
-                </Text>
-                <Text style={styles.cardMeta} numberOfLines={1}>
-                  {classLine}
-                </Text>
-                <Text style={styles.cardTerm}>{activeTerm}</Text>
-              </View>
-              <View style={styles.cardGradeBox}>
-                <Text style={styles.cardGradeLabel}>{Strings.overallGrade}</Text>
-                <Text style={styles.cardGrade}>
-                  {loading ? '—' : result.overall}
-                </Text>
-              </View>
-            </View>
-            <TouchableOpacity
-              style={styles.downloadBtn}
-              activeOpacity={0.85}
-              disabled={downloading}
-              onPress={handleDownload}>
-              {downloading ? (
-                <ActivityIndicator size="small" color={Colors.white} />
-              ) : (
-                <Icon
-                  name={downloaded ? 'checkmark-circle' : 'download-outline'}
-                  size={wp(4.6)}
-                  color={Colors.white}
-                />
-              )}
-              <Text style={styles.downloadText}>
-                {downloaded ? Strings.resultDownloaded : Strings.downloadResult}
-              </Text>
-            </TouchableOpacity>
-          </LinearGradient>
-        </AnimatedCard>
-
-        <AnimatedCard
-          index={1}
-          entering={getHomeScreenEnter(1)}
-          style={styles.tabTrackEnter}>
-          <View style={styles.tabTrack}>
-            {STUDENT_RESULT_TERMS.map(tab => {
-              const active = tab === activeTerm;
-              return (
-                <TouchableOpacity
-                  key={tab}
-                  activeOpacity={0.88}
-                  onPress={() => selectTerm(tab)}
-                  style={[styles.tab, active && styles.tabActive]}>
-                  <Text style={[styles.tabText, active && styles.tabTextActive]}>
-                    {tab}
+          <AnimatedCard
+            index={1}
+            entering={getHomeScreenEnter(1)}
+            replayToken={termReplay}
+            style={styles.resultCardWrap}>
+            <LinearGradient
+              colors={['#0A2F5C', '#0D5CA8', '#2563EB']}
+              start={{x: 0, y: 0}}
+              end={{x: 1, y: 1}}
+              style={styles.resultCard}>
+              <CardWave variant={SCREEN_WAVES.results} />
+              <Text style={styles.cardKicker}>{Strings.resultCard}</Text>
+              <View style={styles.cardTop}>
+                <View style={styles.cardIdentity}>
+                  <Text style={styles.cardName} numberOfLines={1}>
+                    {shownChild?.label}
                   </Text>
-                </TouchableOpacity>
+                  <Text style={styles.cardMeta} numberOfLines={1}>
+                    {classLine}
+                  </Text>
+                  <Text style={styles.cardTerm}>{activeTerm}</Text>
+                </View>
+                <View style={styles.cardGradeBox}>
+                  <Text style={styles.cardGradeLabel}>{Strings.overallGrade}</Text>
+                  <Text style={styles.cardGrade}>
+                    {loading ? '—' : result.overall}
+                  </Text>
+                </View>
+              </View>
+              <TouchableOpacity
+                style={styles.downloadBtn}
+                activeOpacity={0.85}
+                disabled={downloading}
+                onPress={handleDownload}>
+                {downloading ? (
+                  <ActivityIndicator size="small" color={Colors.white} />
+                ) : (
+                  <Icon
+                    name={downloaded ? 'checkmark-circle' : 'download-outline'}
+                    size={wp(4.6)}
+                    color={Colors.white}
+                  />
+                )}
+                <Text style={styles.downloadText}>
+                  {downloaded ? Strings.resultDownloaded : Strings.downloadResult}
+                </Text>
+              </TouchableOpacity>
+            </LinearGradient>
+          </AnimatedCard>
+
+          <AnimatedCard
+            index={1}
+            entering={getHomeScreenEnter(1)}
+            style={styles.tabTrackEnter}>
+            <View style={styles.tabTrack}>
+              {STUDENT_RESULT_TERMS.map(tab => {
+                const active = tab === activeTerm;
+                return (
+                  <TouchableOpacity
+                    key={tab}
+                    activeOpacity={0.88}
+                    onPress={() => selectTerm(tab)}
+                    style={[styles.tab, active && styles.tabActive]}>
+                    <Text style={[styles.tabText, active && styles.tabTextActive]}>
+                      {tab}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </AnimatedCard>
+
+          <View style={styles.listWrap}>
+            {loading ? (
+              <ActivityIndicator style={styles.loader} size="large" color={Colors.primary} />
+            ) : null}
+            {!loading && result.subjects.map((item, index) => {
+              const slot = index + 2;
+              const meta = SUBJECT_ICONS[item.name] || {
+                name: 'school-outline',
+                color: Colors.iconSky,
+              };
+              const tone = gradeTone(item.grade);
+              return (
+                <AnimatedCard
+                  key={`${activeTerm}-${item.id}`}
+                  index={slot}
+                  entering={getHomeScreenEnter(slot)}
+                  replayToken={termReplay}
+                  style={[
+                    styles.cardWrap,
+                    index < result.subjects.length - 1 && styles.cardSpacing,
+                  ]}>
+                  <LinearGradient
+                    colors={CARD_GRADIENT}
+                    start={{x: 0, y: 0.5}}
+                    end={{x: 1, y: 0.5}}
+                    style={styles.subjectCard}>
+                    <DepthIcon name={meta.name} size={wp(6.2)} color={meta.color} />
+                    <View style={styles.subjectInfo}>
+                      <Text style={styles.subjectName} numberOfLines={2}>
+                        {item.name}
+                      </Text>
+                      {item.obtained && item.total ? (
+                        <Text style={styles.subjectScore}>
+                          {item.score
+                            ? `${item.obtained}/${item.total} · ${item.score}%`
+                            : `${item.obtained}/${item.total}`}
+                        </Text>
+                      ) : item.score ? (
+                        <Text style={styles.subjectScore}>{item.score}%</Text>
+                      ) : item.obtained ? (
+                        <Text style={styles.subjectScore}>{item.obtained}</Text>
+                      ) : null}
+                    </View>
+                    {item.grade ? (
+                      <View style={[styles.gradeBadge, {backgroundColor: tone.bg}]}>
+                        <Text style={[styles.gradeText, {color: tone.text}]}>
+                          {item.grade}
+                        </Text>
+                      </View>
+                    ) : null}
+                  </LinearGradient>
+                </AnimatedCard>
               );
             })}
+            {!loading && result.subjects.length === 0 ? (
+              <Text style={styles.emptyText}>No results yet.</Text>
+            ) : null}
           </View>
-        </AnimatedCard>
 
-        <View style={styles.listWrap}>
-          {loading ? (
-            <ActivityIndicator style={styles.loader} size="large" color={Colors.primary} />
-          ) : null}
-          {!loading && result.subjects.map((item, index) => {
-            const slot = index + 2;
-            const meta = SUBJECT_ICONS[item.name] || {
-              name: 'school-outline',
-              color: Colors.iconSky,
-            };
-            const tone = gradeTone(item.grade);
-            return (
-              <AnimatedCard
-                key={`${activeTerm}-${item.id}`}
-                index={slot}
-                entering={getHomeScreenEnter(slot)}
-                replayToken={termReplay}
-                style={[
-                  styles.cardWrap,
-                  index < result.subjects.length - 1 && styles.cardSpacing,
-                ]}>
-                <LinearGradient
-                  colors={CARD_GRADIENT}
-                  start={{x: 0, y: 0.5}}
-                  end={{x: 1, y: 0.5}}
-                  style={styles.subjectCard}>
-                  <DepthIcon name={meta.name} size={wp(6.2)} color={meta.color} />
-                  <View style={styles.subjectInfo}>
-                    <Text style={styles.subjectName} numberOfLines={1}>
-                      {item.name}
-                    </Text>
-                    {item.obtained && item.total ? (
-                      <Text style={styles.subjectScore}>
-                        {item.score
-                          ? `${item.obtained}/${item.total} · ${item.score}%`
-                          : `${item.obtained}/${item.total}`}
-                      </Text>
-                    ) : item.score ? (
-                      <Text style={styles.subjectScore}>{item.score}%</Text>
-                    ) : item.obtained ? (
-                      <Text style={styles.subjectScore}>{item.obtained}</Text>
-                    ) : null}
-                  </View>
-                  {item.grade ? (
-                    <View style={[styles.gradeBadge, {backgroundColor: tone.bg}]}>
-                      <Text style={[styles.gradeText, {color: tone.text}]}>
-                        {item.grade}
-                      </Text>
-                    </View>
-                  ) : null}
-                </LinearGradient>
-              </AnimatedCard>
-            );
-          })}
-          {!loading && result.subjects.length === 0 ? (
-            <Text style={styles.emptyText}>No results yet.</Text>
-          ) : null}
-        </View>
+          {overallCard}
+        </ScrollEnterScrollView>
 
-        <AnimatedCard
-          key={`${activeTerm}-overall`}
-          index={result.subjects.length + 2}
-          entering={getHomeScreenEnter(result.subjects.length + 2)}
-          replayToken={termReplay}
-          style={styles.gradeCardWrap}>
-          <OverallGradeCard
-            grade={loading ? '—' : result.overall}
-            hint={
-              loading
-                ? ''
-                : isParent
-                  ? result.hint || Strings.greatProgress
-                  : result.hint
-            }
-          />
-        </AnimatedCard>
-      </ScrollEnterScrollView>
-
-      {isParent && parentCanSwitch ? (
-        <ChildSwitchModal
-          visible={switchVisible}
-          childrenList={children}
-          selectedId={String(activeChildId || '')}
-          onSelect={nextId => {
-            setPickedChildId(String(nextId));
-            setDownloaded(false);
-          }}
-          onClose={() => setSwitchVisible(false)}
-          replayToken={modalReplay}
-        />
-      ) : null}
-    </SafeAreaView>
+        {switchModal}
+      </SafeAreaView>
+    </StudentToneProvider>
   );
 };
 
@@ -458,6 +581,76 @@ const styles = StyleSheet.create({
   },
   scrollArea: {
     flex: 1,
+    overflow: 'visible',
+  },
+  studentScroll: {
+    flexGrow: 1,
+    backgroundColor: Colors.canvas,
+    overflow: 'visible',
+  },
+  studentBand: {
+    borderBottomLeftRadius: NAVY_ICE_CURVE,
+    paddingBottom: FLOAT_CARD_GAP + FLOAT_CARD_TUCK,
+    overflow: 'visible',
+  },
+  studentBody: {
+    paddingTop: 0,
+    marginTop: -FLOAT_CARD_TUCK,
+    overflow: 'visible',
+  },
+  canvasStage: {
+    position: 'relative',
+    overflow: 'visible',
+    minHeight: hp(62),
+  },
+  canvasWave: {
+    position: 'absolute',
+    top: hp(2),
+    right: -wp(4),
+    left: 0,
+    height: hp(56),
+    zIndex: 0,
+  },
+  canvasForeground: {
+    zIndex: 1,
+  },
+  toggleWrapStudent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.hubCard,
+    borderRadius: wp(8),
+    padding: wp(1.2),
+    borderWidth: 1,
+    borderColor: Colors.borderSubtle,
+    ...elevation.card,
+  },
+  toggleBtn: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: hp(1.15),
+    borderRadius: wp(7),
+  },
+  toggleBtnActiveStudent: {
+    backgroundColor: Colors.brandNavy,
+  },
+  toggleTextStudent: {
+    color: Colors.textPrimary,
+    fontFamily: Fonts.medium,
+    fontSize: Fontsize.xs1,
+  },
+  toggleTextActive: {
+    color: Colors.white,
+    fontFamily: Fonts.semibold,
+  },
+  tabTrackEnterStudent: {
+    marginBottom: hp(1.45),
+  },
+  emptyStudent: {
+    color: Colors.textSecondary,
+    fontFamily: Fonts.medium,
+    fontSize: Fontsize.xs1,
+    textAlign: 'center',
+    marginTop: hp(1),
   },
   childWrap: {
     marginBottom: hp(0.4),

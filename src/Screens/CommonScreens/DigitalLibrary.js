@@ -17,7 +17,10 @@ import LibraryCategoryFilter from '../../Component/DigitalLibrary/LibraryCategor
 import LibraryResourceCard from '../../Component/DigitalLibrary/LibraryResourceCard';
 import LibraryStudentHeader from '../../Component/DigitalLibrary/LibraryStudentHeader';
 import AnimatedCard from '../../Component/AnimatedCard';
-import EschoolyScreenShell from '../../Component/Glass/EschoolyScreenShell';
+import EschoolyScreenShell, {
+  FLOAT_CARD_GAP,
+  FLOAT_CARD_TUCK,
+} from '../../Component/Glass/EschoolyScreenShell';
 import CardWave, {SCREEN_WAVES} from '../../Component/CardWave';
 import {useRoleData} from '../../hooks/useRoleData';
 import {useDispatch, useSelector} from 'react-redux';
@@ -290,13 +293,6 @@ const DigitalLibrary = () => {
             removeClippedSubviews={false}>
             <EschoolyScreenShell.Header style={styles.libraryBand}>
               <LibraryStudentHeader unreadCount={unreadNotifications} />
-              <LibraryProfileCard student={profileStudent} look="onNavy" />
-              <LibrarySearchBar
-                value={search}
-                onChangeText={setSearch}
-                placeholder={Strings.librarySearchPlaceholder}
-                look="onNavy"
-              />
             </EschoolyScreenShell.Header>
             <EschoolyScreenShell.Body tuck={false} style={styles.libraryBody}>
               <View style={styles.canvasStage}>
@@ -307,6 +303,12 @@ const DigitalLibrary = () => {
                   />
                 </View>
                 <View style={styles.canvasForeground}>
+                  <LibraryProfileCard student={profileStudent} look="float" />
+                  <LibrarySearchBar
+                    value={search}
+                    onChangeText={setSearch}
+                    placeholder={Strings.librarySearchPlaceholder}
+                  />
                   <LibraryCategoryFilter
                     categories={categories}
                     selected={category}
@@ -377,6 +379,7 @@ const styles = StyleSheet.create({
   },
   scroll: {
     flex: 1,
+    overflow: 'visible',
   },
   studentScroll: {
     flexGrow: 1,
@@ -447,10 +450,14 @@ const styles = StyleSheet.create({
     zIndex: 0,
   },
   libraryBand: {
-    paddingBottom: hp(1.5),
+    borderBottomLeftRadius: wp(12),
+    paddingBottom: FLOAT_CARD_GAP + FLOAT_CARD_TUCK,
+    overflow: 'visible',
   },
   libraryBody: {
-    paddingTop: hp(1.35),
+    paddingTop: 0,
+    marginTop: -FLOAT_CARD_TUCK,
+    overflow: 'visible',
   },
   canvasForeground: {
     zIndex: 1,

@@ -16,16 +16,20 @@ import {Fonts} from '../Constants/Fonts';
 import {Fontsize} from '../Constants/Fontsize';
 import {Strings} from '../Constants/Strings';
 import {wp, hp} from '../Constants/Responsive';
+import {elevation, radius} from '../Constants/Theme';
+import {useStudentTone} from './Glass/StudentTone';
 
 const AttendanceDateDropdown = props => {
+  const icy = useStudentTone();
   const [open, setOpen] = useState(false);
   const premium = props?.premium !== false;
   const ranges = props?.ranges || [];
 
   const selectedLabel = useMemo(() => {
-    const match = ranges.find(r => r.value === props?.selectedId);
-    return match?.label || ranges[0]?.label || '';
-  }, [props?.selectedId, ranges]);
+    const list = props?.ranges || [];
+    const match = list.find(r => r.value === props?.selectedId);
+    return match?.label || list[0]?.label || '';
+  }, [props?.selectedId, props?.ranges]);
 
   const trigger = (
     <Pressable
@@ -35,19 +39,27 @@ const AttendanceDateDropdown = props => {
       <View style={styles.calendarWrap}>
         <Image
           source={Images.calendar}
-          style={[styles.calendarIcon, premium && styles.calendarIconPremium]}
+          style={[
+            styles.calendarIcon,
+            premium && styles.calendarIconPremium,
+            icy && styles.calendarIconIcy,
+          ]}
           resizeMode="contain"
         />
       </View>
       <Text
-        style={[styles.dateText, premium && styles.dateTextPremium]}
+        style={[
+          styles.dateText,
+          premium && styles.dateTextPremium,
+          icy && styles.dateTextIcy,
+        ]}
         numberOfLines={1}>
         {selectedLabel}
       </Text>
       <Icon
         name="chevron-down"
         size={wp(4)}
-        color={premium ? Colors.whiteMuted85 : Colors.linkBlue}
+        color={icy ? Colors.brandRoyal : premium ? Colors.whiteMuted85 : Colors.linkBlue}
       />
     </Pressable>
   );
@@ -63,6 +75,21 @@ const AttendanceDateDropdown = props => {
       onSelect={item => props?.onSelect?.(item?.value)}
     />
   );
+
+  if (icy) {
+    return (
+      <>
+        <AnimatedCard
+          index={props?.animationIndex ?? 0}
+          entering={props?.entering}
+          replayToken={props?.replayToken ?? 0}
+          style={styles.wrapIcy}>
+          <View style={styles.icyFace}>{trigger}</View>
+        </AnimatedCard>
+        {sheet}
+      </>
+    );
+  }
 
   if (premium) {
     return (
@@ -139,5 +166,25 @@ const styles = StyleSheet.create({
   },
   dateTextPremium: {
     color: Colors.white,
+  },
+  wrapIcy: {
+    borderRadius: radius.banner,
+    marginBottom: hp(1.5),
+    backgroundColor: Colors.bannerIceStart,
+    overflow: 'visible',
+    ...elevation.card,
+  },
+  icyFace: {
+    borderRadius: radius.banner,
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: 'rgba(91, 156, 255, 0.35)',
+    backgroundColor: Colors.bannerIceStart,
+    overflow: 'hidden',
+  },
+  calendarIconIcy: {
+    tintColor: Colors.brandRoyal,
+  },
+  dateTextIcy: {
+    color: Colors.textPrimary,
   },
 });

@@ -9,6 +9,7 @@ import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
 import {CARD_GRADIENTS} from '../../Constants/CardTheme';
 import {elevation, radius} from '../../Constants/Theme';
+import {FLOAT_CARD_RADIUS} from '../Glass/EschoolyScreenShell';
 import {wp, hp} from '../../Constants/Responsive';
 import {useStudentTone} from '../Glass/StudentTone';
 
@@ -47,6 +48,7 @@ const formatClassLabel = student => {
 const LibraryProfileCard = ({student, animationIndex = 0, look}) => {
   const icy = useStudentTone();
   const onNavy = icy && look === 'onNavy';
+  const floating = icy && look === 'float';
   const classLabel = formatClassLabel(student);
   const statusLabel = String(student?.status || '').trim();
 
@@ -54,9 +56,15 @@ const LibraryProfileCard = ({student, animationIndex = 0, look}) => {
     <View style={styles.row}>
       <PersonAvatar
         person={student}
-        size={onNavy ? wp(14) : wp(12)}
+        size={onNavy || floating ? wp(14) : wp(12)}
         borderWidth={StyleSheet.hairlineWidth * 2}
-        borderColor={onNavy ? Colors.borderGlass : icy ? Colors.borderSubtle : Colors.whiteOverlay22}
+        borderColor={
+          onNavy
+            ? Colors.borderGlass
+            : icy
+              ? Colors.borderSubtle
+              : Colors.whiteOverlay22
+        }
         style={styles.avatar}
       />
       <View style={styles.info}>
@@ -106,6 +114,26 @@ const LibraryProfileCard = ({student, animationIndex = 0, look}) => {
       </View>
     </View>
   );
+
+  if (floating) {
+    return (
+      <View style={styles.floatShell}>
+        <View style={styles.floatClip}>
+          <LinearGradient
+            colors={[Colors.bannerIceStart, Colors.bannerIceEnd]}
+            start={{x: 0, y: 0.08}}
+            end={{x: 1, y: 1}}
+            style={styles.floatGradient}>
+            <CardWave
+              variant={SCREEN_WAVES.assignmentIce}
+              color="rgba(91, 156, 255, 0.18)"
+            />
+            {row}
+          </LinearGradient>
+        </View>
+      </View>
+    );
+  }
 
   if (onNavy) {
     return (
@@ -203,6 +231,27 @@ const styles = StyleSheet.create({
   },
   activeTextIcy: {
     color: Colors.brandRoyal,
+  },
+  floatShell: {
+    borderRadius: FLOAT_CARD_RADIUS,
+    backgroundColor: Colors.bannerIceStart,
+    marginBottom: hp(1.5),
+    zIndex: 2,
+    overflow: 'visible',
+    ...elevation.banner,
+  },
+  floatClip: {
+    borderRadius: FLOAT_CARD_RADIUS,
+    overflow: 'hidden',
+  },
+  floatGradient: {
+    borderRadius: FLOAT_CARD_RADIUS,
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: Colors.borderGlass,
+    paddingHorizontal: wp(3.6),
+    paddingVertical: hp(1.4),
+    minHeight: hp(11.2),
+    justifyContent: 'center',
   },
   onNavyShell: {
     borderRadius: radius.pill,

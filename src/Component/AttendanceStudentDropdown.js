@@ -17,9 +17,16 @@ import {Fonts} from '../Constants/Fonts';
 import {Fontsize} from '../Constants/Fontsize';
 import {Strings} from '../Constants/Strings';
 import {wp, hp} from '../Constants/Responsive';
+import {elevation, radius} from '../Constants/Theme';
+import {FLOAT_CARD_RADIUS} from './Glass/EschoolyScreenShell';
 import AnimatedCard from './AnimatedCard';
+import {useStudentTone} from './Glass/StudentTone';
 
 const AttendanceStudentDropdown = props => {
+  const icy = useStudentTone();
+  const flyer = icy && props?.look === 'flyer';
+  const floating = icy && props?.look === 'float';
+  const icyGlass = flyer || floating;
   const [open, setOpen] = React.useState(false);
   const students = props?.students || [];
   const readOnly =
@@ -60,13 +67,26 @@ const AttendanceStudentDropdown = props => {
 
   const cardContent = (
     <>
-      <PersonAvatar person={props?.student} size={wp(12)} />
+      <PersonAvatar
+        person={props?.student}
+        size={flyer || floating ? wp(12.5) : wp(12)}
+        borderWidth={flyer || floating ? StyleSheet.hairlineWidth * 2 : 0}
+        borderColor={flyer || floating ? Colors.borderSubtle : undefined}
+      />
       <View style={styles.info}>
-        <Text style={styles.studentLabel} numberOfLines={1}>
+        <Text
+          style={[
+            styles.studentLabel,
+            icy && styles.studentLabelIcy,
+            (flyer || floating) && styles.studentLabelFlyer,
+          ]}
+          numberOfLines={1}>
           {props?.label || Strings.student}
         </Text>
         <View style={styles.nameRow}>
-          <Text style={styles.name} numberOfLines={1}>
+          <Text
+            style={[styles.name, icy && styles.nameIcy, (flyer || floating) && styles.nameFlyer]}
+            numberOfLines={2}>
             {props?.student?.label}
           </Text>
           {!readOnly ? (
@@ -74,11 +94,21 @@ const AttendanceStudentDropdown = props => {
               style={{
                 transform: [{rotate: open ? '180deg' : '0deg'}],
               }}>
-              <Icon name="chevron-down" size={wp(4.5)} color={Colors.whiteMuted85} />
+              <Icon
+                name="chevron-down"
+                size={wp(4.5)}
+                color={icy ? Colors.textSecondary : Colors.whiteMuted85}
+              />
             </View>
           ) : null}
         </View>
-        <Text style={styles.classText} numberOfLines={1}>
+        <Text
+          style={[
+            styles.classText,
+            icy && styles.classTextIcy,
+            (flyer || floating) && styles.classTextFlyer,
+          ]}
+          numberOfLines={2}>
           {classText}
         </Text>
       </View>
@@ -98,14 +128,20 @@ const AttendanceStudentDropdown = props => {
 
   const shell = (
     <View
-      style={[styles.wrap, embedded && styles.embeddedWrap]}
+      style={[
+        styles.wrap,
+        embedded && styles.embeddedWrap,
+        flyer && styles.flyerWrap,
+        floating && styles.floatWrap,
+        props?.containerStyle,
+      ]}
       collapsable={false}>
       <TouchableOpacity
-        style={styles.cardPress}
+        style={[styles.cardPress, floating && styles.cardPressFloat]}
         disabled={readOnly}
         activeOpacity={0.88}
         onPress={openPicker}>
-        {premium ? (
+        {premium && !icy ? (
           <LinearGradient
             colors={PROFILE_GRADIENT}
             start={GRADIENT_START}
@@ -114,6 +150,35 @@ const AttendanceStudentDropdown = props => {
             <CardWave variant={waveVariant} />
             <View style={styles.cardContent}>{cardContent}</View>
           </LinearGradient>
+        ) : icyGlass ? (
+          <LinearGradient
+            colors={
+              floating
+                ? [Colors.bannerIceStart, Colors.bannerIceEnd]
+                : [Colors.bannerIceStart, Colors.hubCard]
+            }
+            start={GRADIENT_START}
+            end={GRADIENT_END}
+            style={[
+              styles.card,
+              styles.cardIcy,
+              flyer && styles.cardFlyer,
+              floating && styles.cardFloat,
+            ]}>
+            <CardWave
+              variant={SCREEN_WAVES.assignmentIce}
+              color={
+                floating
+                  ? 'rgba(91, 156, 255, 0.18)'
+                  : 'rgba(19, 69, 163, 0.14)'
+              }
+            />
+            <View style={styles.cardContent}>{cardContent}</View>
+          </LinearGradient>
+        ) : icy ? (
+          <View style={[styles.card, styles.cardIcy]}>
+            <View style={styles.cardContent}>{cardContent}</View>
+          </View>
         ) : (
           <View style={styles.cardPlain}>{cardContent}</View>
         )}
@@ -161,8 +226,21 @@ const styles = StyleSheet.create({
   embeddedWrap: {
     marginBottom: hp(0.4),
   },
+  flyerWrap: {
+    marginBottom: hp(1.55),
+  },
+  floatWrap: {
+    marginBottom: hp(1.5),
+    zIndex: 2,
+    overflow: 'visible',
+    ...elevation.banner,
+  },
   cardPress: {
     borderRadius: CARD_RADIUS,
+    overflow: 'hidden',
+  },
+  cardPressFloat: {
+    borderRadius: FLOAT_CARD_RADIUS,
     overflow: 'hidden',
   },
   card: {
@@ -214,5 +292,45 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.regular,
     fontSize: Fontsize.xs0,
     marginTop: hp(0.2),
+  },
+  cardIcy: {
+    backgroundColor: Colors.surface,
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: Colors.borderSubtle,
+    minHeight: hp(11),
+  },
+  cardFlyer: {
+    minHeight: hp(11.2),
+    borderRadius: radius.banner,
+    paddingVertical: hp(1.65),
+    paddingHorizontal: wp(4.2),
+    borderColor: Colors.borderGlass,
+    ...elevation.card,
+  },
+  cardFloat: {
+    minHeight: hp(11.2),
+    borderRadius: FLOAT_CARD_RADIUS,
+    paddingVertical: hp(1.65),
+    paddingHorizontal: wp(4.2),
+    borderColor: Colors.borderGlass,
+    backgroundColor: Colors.bannerIceStart,
+  },
+  studentLabelIcy: {
+    color: Colors.textSecondary,
+  },
+  studentLabelFlyer: {
+    marginBottom: hp(0.15),
+  },
+  nameIcy: {
+    color: Colors.textPrimary,
+  },
+  nameFlyer: {
+    fontSize: Fontsize.sm,
+  },
+  classTextIcy: {
+    color: Colors.textSecondary,
+  },
+  classTextFlyer: {
+    marginTop: hp(0.12),
   },
 });

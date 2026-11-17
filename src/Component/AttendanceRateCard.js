@@ -6,20 +6,30 @@ import {Colors} from '../Constants/Colors';
 import {Fonts} from '../Constants/Fonts';
 import {Strings} from '../Constants/Strings';
 import {wp, hp} from '../Constants/Responsive';
+import {useStudentTone} from './Glass/StudentTone';
 
 const AttendanceRateCard = ({rate, rateText, premium = false}) => {
+  const icy = useStudentTone();
   const clampedRate = Math.min(Math.max(Number(rate) || 0, 0), 1);
 
   return (
-    <View style={[styles.card, premium && styles.cardPremium]}>
+    <View style={[styles.card, premium && styles.cardPremium, icy && styles.cardIcy]}>
       <View style={styles.topRow}>
         <Text
-          style={[styles.title, premium && styles.titlePremium]}
+          style={[
+            styles.title,
+            premium && styles.titlePremium,
+            icy && styles.titleIcy,
+          ]}
           numberOfLines={1}>
           {Strings.attendanceRate}
         </Text>
         <Text
-          style={[styles.percent, premium && styles.percentPremium]}
+          style={[
+            styles.percent,
+            premium && styles.percentPremium,
+            icy && styles.percentIcy,
+          ]}
           numberOfLines={1}>
           {rateText}
         </Text>
@@ -28,7 +38,12 @@ const AttendanceRateCard = ({rate, rateText, premium = false}) => {
       <View style={styles.progressTrackWrap}>
         <ProgressBar
           progress={clampedRate}
-          style={[styles.progressBar, premium && styles.progressBarPremium]}
+          fillColor={icy ? Colors.brandRoyal : undefined}
+          style={[
+            styles.progressBar,
+            premium && styles.progressBarPremium,
+            icy && styles.progressBarIcy,
+          ]}
         />
       </View>
 
@@ -36,10 +51,20 @@ const AttendanceRateCard = ({rate, rateText, premium = false}) => {
         <Icon
           name="trending-up"
           size={wp(4)}
-          color={premium ? Colors.whiteMuted75 : Colors.iconSky}
+          color={
+            icy
+              ? Colors.brandRoyal
+              : premium
+                ? Colors.whiteMuted75
+                : Colors.iconSky
+          }
         />
         <Text
-          style={[styles.footerText, premium && styles.footerTextPremium]}
+          style={[
+            styles.footerText,
+            premium && styles.footerTextPremium,
+            icy && styles.footerTextIcy,
+          ]}
           numberOfLines={1}>
           {Strings.greatConsistency}
         </Text>
@@ -114,5 +139,20 @@ const styles = StyleSheet.create({
   },
   footerTextPremium: {
     color: Colors.whiteMuted75,
+  },
+  cardIcy: {
+    backgroundColor: Colors.transparent,
+  },
+  titleIcy: {
+    color: Colors.textSecondary,
+  },
+  percentIcy: {
+    color: Colors.textPrimary,
+  },
+  progressBarIcy: {
+    backgroundColor: Colors.hubCard,
+  },
+  footerTextIcy: {
+    color: Colors.textSecondary,
   },
 });

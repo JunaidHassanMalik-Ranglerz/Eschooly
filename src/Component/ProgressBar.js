@@ -14,6 +14,7 @@ const ProgressBar = props => {
         style={[
           styles.fill,
           {width: `${progress * 100}%`, borderRadius: radius},
+          props?.fillColor ? {backgroundColor: props.fillColor} : null,
         ]}
       />
     </View>

@@ -6,6 +6,7 @@ import {Colors} from '../Constants/Colors';
 import {Fonts} from '../Constants/Fonts';
 import {Fontsize} from '../Constants/Fontsize';
 import {wp, hp} from '../Constants/Responsive';
+import {useStudentTone} from './Glass/StudentTone';
 
 const STATUS_STYLES = {
   Present: {text: '#38BDF8'},
@@ -16,6 +17,7 @@ const STATUS_STYLES = {
 };
 
 const AttendanceHistoryItem = props => {
+  const icy = useStudentTone();
   const statusStyle = STATUS_STYLES[props?.item?.status] || STATUS_STYLES.Unmarked;
   const premium = props?.premium;
   const animationIndex = props?.animationIndex ?? 0;
@@ -24,20 +26,28 @@ const AttendanceHistoryItem = props => {
 
   const content = (
     <>
-      <View style={[styles.dateBox, premium && styles.dateBoxPremium]}>
-        <Text style={[styles.dayNum, premium && styles.textPremium]} numberOfLines={1}>
+      <View style={[styles.dateBox, premium && styles.dateBoxPremium, icy && styles.dateBoxIcy]}>
+        <Text
+          style={[styles.dayNum, premium && styles.textPremium, icy && styles.textIcy]}
+          numberOfLines={1}>
           {props?.item?.day}
         </Text>
-        <Text style={[styles.shortDay, premium && styles.metaPremium]} numberOfLines={1}>
+        <Text
+          style={[styles.shortDay, premium && styles.metaPremium, icy && styles.metaIcy]}
+          numberOfLines={1}>
           {props?.item?.shortDay}
         </Text>
       </View>
 
       <View style={styles.info}>
-        <Text style={[styles.dateLabel, premium && styles.textPremium]} numberOfLines={1}>
+        <Text
+          style={[styles.dateLabel, premium && styles.textPremium, icy && styles.textIcy]}
+          numberOfLines={1}>
           {props?.item?.dateLabel}
         </Text>
-        <Text style={[styles.fullDay, premium && styles.metaPremium]} numberOfLines={1}>
+        <Text
+          style={[styles.fullDay, premium && styles.metaPremium, icy && styles.metaIcy]}
+          numberOfLines={1}>
           {props?.item?.fullDay}
         </Text>
       </View>
@@ -51,6 +61,7 @@ const AttendanceHistoryItem = props => {
   if (premium) {
     return (
       <ProfileGradientCard
+        variant={icy ? 'light' : 'navy'}
         innerStyle={styles.premiumInner}
         animationIndex={animationIndex}
         entering={entering}
@@ -145,5 +156,14 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     maxWidth: '34%',
     textAlign: 'right',
+  },
+  dateBoxIcy: {
+    backgroundColor: Colors.hubCard,
+  },
+  textIcy: {
+    color: Colors.textPrimary,
+  },
+  metaIcy: {
+    color: Colors.textSecondary,
   },
 });

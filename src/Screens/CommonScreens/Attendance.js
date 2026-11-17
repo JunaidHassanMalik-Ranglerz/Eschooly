@@ -3,10 +3,12 @@ import {ActivityIndicator, StatusBar, StyleSheet, Text, TouchableOpacity, View} 
 import {useDispatch, useSelector} from 'react-redux';
 import ScrollEnterScrollView from '../../Component/ScrollEnterScrollView';
 import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
+import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
 import MainHeaderComponent from '../../Component/MainHeaderComponent';
 import AnimatedCard from '../../Component/AnimatedCard';
 import AttendanceStudentDropdown from '../../Component/AttendanceStudentDropdown';
+import AttendanceStudentHeader from '../../Component/Attendance/AttendanceStudentHeader';
 import ChildSwitchModal from '../../Component/Parent/ChildSwitchModal';
 import AttendanceStatCard from '../../Component/AttendanceStatCard';
 import AttendanceRateCard from '../../Component/AttendanceRateCard';
@@ -14,7 +16,16 @@ import AttendanceDateDropdown from '../../Component/AttendanceDateDropdown';
 import AttendanceHistoryItem from '../../Component/AttendanceHistoryItem';
 import ProfileGradientCard from '../../Component/Profile/ProfileGradientCard';
 import ProfileSectionTitle from '../../Component/Profile/ProfileSectionTitle';
-import {SCREEN_WAVES} from '../../Component/CardWave';
+import EschoolyScreenShell, {
+  FLOAT_CARD_GAP,
+  FLOAT_CARD_TUCK,
+  NAVY_ICE_CURVE,
+} from '../../Component/Glass/EschoolyScreenShell';
+import CardWave, {SCREEN_WAVES} from '../../Component/CardWave';
+import {
+  StudentToneProvider,
+  useStackBottomPad,
+} from '../../Component/Glass/StudentTone';
 import SegmentTabs from '../../Component/SegmentTabs';
 import Btn from '../../Component/btn';
 import {Images} from '../../Assets';
@@ -22,6 +33,7 @@ import {Colors} from '../../Constants/Colors';
 import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
+import {elevation, radius} from '../../Constants/Theme';
 import {wp, hp} from '../../Constants/Responsive';
 import {withScreenEnter} from '../../hooks/useScreenEnterGate';
 import {CARD_RADIUS} from '../../Component/Profile/ProfileTheme';
@@ -54,8 +66,13 @@ const AttendanceContent = () => {
   const dispatch = useDispatch();
   const role = useSelector(state => state.auth.role);
   const isParent = role === 'parent';
+  const icy = !isParent;
+  const bottomPad = useStackBottomPad();
   const {children, selectedChildId: homeChildId} = useSelector(state => state.parentHome);
   const homeStudent = useSelector(state => state.studentHome.student);
+  const unreadNotifications = useSelector(
+    state => state.studentHome?.unreadNotifications || 0,
+  );
   const [parentAttendance, setParentAttendance] = useState(null);
   const [studentAttendance, setStudentAttendance] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -276,7 +293,173 @@ const AttendanceContent = () => {
     </View>
   );
 
+  const studentStatsPanel = (
+    <AnimatedCard
+      index={statsSlot}
+      entering={getAttendanceCardEnter(statsSlot)}
+      replayToken={contentReplay}
+      style={styles.statsShellIcy}>
+      <View style={styles.statsClipIcy}>
+        <LinearGradient
+          colors={[Colors.bannerIceStart, Colors.bannerIceEnd]}
+          start={{x: 0, y: 0.08}}
+          end={{x: 1, y: 1}}
+          style={styles.statsFaceIcy}>
+          <CardWave
+            variant={SCREEN_WAVES.assignmentIce}
+            color="rgba(91, 156, 255, 0.18)"
+          />
+          <View style={styles.monthRow}>
+            <Text style={styles.monthTitleIcy} numberOfLines={1}>
+              {Strings.thisMonth}
+            </Text>
+            <Text style={styles.monthTextIcy} numberOfLines={1}>
+              {student.month}
+            </Text>
+          </View>
+          <View style={styles.statsRowPremium}>
+            <View style={styles.statEnter}>
+              <AttendanceStatCard
+                icon="checkmark-circle-outline"
+                label={Strings.present}
+                count={student.present}
+                premium
+              />
+            </View>
+            <View style={styles.statEnter}>
+              <AttendanceStatCard
+                icon="close-circle-outline"
+                label={Strings.absent}
+                count={student.absent}
+                premium
+              />
+            </View>
+            <View style={styles.statEnter}>
+              <AttendanceStatCard
+                icon="remove-circle-outline"
+                label={Strings.leave}
+                count={student.leave}
+                premium
+              />
+            </View>
+          </View>
+          <AttendanceRateCard
+            rate={student.rate}
+            rateText={student.rateText}
+            premium
+          />
+        </LinearGradient>
+      </View>
+    </AnimatedCard>
+  );
+
+  const historyList = (
+    <>
+      {showHistoryList
+        ? history.map((item, index) => (
+            <AttendanceHistoryItem
+              key={`${item.id}-${contentReplay}`}
+              item={item}
+              premium
+              animationIndex={index + historyListStart}
+              entering={getAttendanceCardEnter(Math.min(index + historyListStart, 8))}
+              replayToken={contentReplay}
+            />
+          ))
+        : null}
+      {showHistoryList && !loading && history.length === 0 ? (
+        <Text style={[styles.empty, icy && styles.emptyIcy]}>
+          No attendance records yet.
+        </Text>
+      ) : null}
+    </>
+  );
+
+  if (icy) {
+    return (
+      <StudentToneProvider active>
+        <EschoolyScreenShell variant="navy-ice">
+          <ScrollEnterScrollView
+            style={styles.scrollArea}
+            contentContainerStyle={[
+              styles.studentScroll,
+              {paddingBottom: bottomPad},
+            ]}
+            showsVerticalScrollIndicator={false}
+            bounces={false}
+            overScrollMode="never"
+            removeClippedSubviews={false}
+            keyboardShouldPersistTaps="handled">
+            <EschoolyScreenShell.Header style={styles.studentBand}>
+              <AttendanceStudentHeader unreadCount={unreadNotifications} />
+            </EschoolyScreenShell.Header>
+            <EschoolyScreenShell.Body tuck={false} style={styles.studentBody}>
+              <View style={styles.canvasStage}>
+                <View pointerEvents="none" style={styles.canvasWave}>
+                  <CardWave
+                    variant={SCREEN_WAVES.assignmentIce}
+                    color="rgba(37, 99, 235, 0.12)"
+                  />
+                </View>
+                <View style={styles.canvasForeground}>
+                  <AttendanceStudentDropdown
+                    student={student}
+                    premium
+                    embedded
+                    readOnly
+                    look="float"
+                    label={studentLabel}
+                  />
+                  {loading ? (
+                    <ActivityIndicator
+                      style={styles.loader}
+                      size="large"
+                      color={Colors.brandRoyal}
+                    />
+                  ) : (
+                    studentStatsPanel
+                  )}
+                  <AttendanceDateDropdown
+                    ranges={monthRanges}
+                    selectedId={monthId}
+                    onSelect={setMonthId}
+                    animationIndex={dateSlot}
+                    entering={getAttendanceCardEnter(dateSlot)}
+                    replayToken={contentReplay}
+                    premium
+                  />
+                  <TouchableOpacity
+                    style={styles.historyCta}
+                    activeOpacity={0.85}
+                    onPress={() => setShowHistory(!showHistory)}>
+                    <Icon
+                      name={showHistory ? 'eye-off-outline' : 'time-outline'}
+                      size={wp(4.6)}
+                      color={Colors.white}
+                    />
+                    <Text style={styles.historyCtaText}>
+                      {showHistory ? Strings.hideHistory : Strings.seeHistory}
+                    </Text>
+                  </TouchableOpacity>
+                  {!isParent && showHistory ? (
+                    <View style={styles.historyHeaderIcy}>
+                      <Text style={styles.historyTitleIcy} numberOfLines={1}>
+                        {Strings.attendanceHistory}
+                      </Text>
+                    </View>
+                  ) : null}
+                  {historyList}
+                </View>
+              </View>
+            </EschoolyScreenShell.Body>
+          </ScrollEnterScrollView>
+        </EschoolyScreenShell>
+      </StudentToneProvider>
+    );
+  }
+
   return (
+    <StudentToneProvider active={false}>
     <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar backgroundColor={Colors.parentBg} barStyle="dark-content" />
 
@@ -391,21 +574,7 @@ const AttendanceContent = () => {
           </AnimatedCard>
         ) : null}
 
-        {showHistoryList
-          ? history.map((item, index) => (
-              <AttendanceHistoryItem
-                key={`${item.id}-${contentReplay}`}
-                item={item}
-                premium
-                animationIndex={index + historyListStart}
-                entering={getAttendanceCardEnter(Math.min(index + historyListStart, 8))}
-                replayToken={contentReplay}
-              />
-            ))
-          : null}
-        {showHistoryList && !loading && history.length === 0 ? (
-          <Text style={styles.empty}>No attendance records yet.</Text>
-        ) : null}
+        {historyList}
       </ScrollEnterScrollView>
 
       {useExternalSwitch ? (
@@ -422,6 +591,7 @@ const AttendanceContent = () => {
         />
       ) : null}
     </SafeAreaView>
+    </StudentToneProvider>
   );
 };
 
@@ -436,6 +606,103 @@ const styles = StyleSheet.create({
   },
   scrollArea: {
     flex: 1,
+    overflow: 'visible',
+  },
+  studentScroll: {
+    flexGrow: 1,
+    backgroundColor: Colors.canvas,
+    overflow: 'visible',
+  },
+  studentBand: {
+    borderBottomLeftRadius: NAVY_ICE_CURVE,
+    paddingBottom: FLOAT_CARD_GAP + FLOAT_CARD_TUCK,
+    overflow: 'visible',
+  },
+  studentBody: {
+    paddingTop: 0,
+    marginTop: -FLOAT_CARD_TUCK,
+    overflow: 'visible',
+  },
+  canvasStage: {
+    position: 'relative',
+    overflow: 'visible',
+    minHeight: hp(62),
+  },
+  canvasWave: {
+    position: 'absolute',
+    top: hp(2),
+    right: -wp(4),
+    left: 0,
+    height: hp(56),
+    zIndex: 0,
+  },
+  canvasForeground: {
+    zIndex: 1,
+  },
+  statsShellIcy: {
+    marginBottom: hp(1.45),
+    borderRadius: radius.banner,
+    backgroundColor: Colors.bannerIceStart,
+    overflow: 'visible',
+    ...elevation.card,
+  },
+  statsClipIcy: {
+    borderRadius: radius.banner,
+    overflow: 'hidden',
+  },
+  statsFaceIcy: {
+    borderRadius: radius.banner,
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: 'rgba(91, 156, 255, 0.35)',
+    paddingHorizontal: wp(3.6),
+    paddingTop: hp(1.5),
+    paddingBottom: hp(1.4),
+  },
+  monthTitleIcy: {
+    color: Colors.textPrimary,
+    fontFamily: Fonts.semibold,
+    fontSize: Fontsize.xs5,
+    flex: 1,
+    minWidth: 0,
+    marginRight: wp(2),
+    zIndex: 1,
+  },
+  monthTextIcy: {
+    color: Colors.textSecondary,
+    fontFamily: Fonts.regular,
+    fontSize: Fontsize.xs0,
+    flexShrink: 1,
+    textAlign: 'right',
+    zIndex: 1,
+  },
+  historyCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.brandNavy,
+    borderRadius: radius.pill,
+    paddingVertical: hp(1.15),
+    paddingHorizontal: wp(4),
+    minHeight: hp(5.2),
+    marginBottom: hp(1.45),
+    ...elevation.banner,
+  },
+  historyCtaText: {
+    color: Colors.white,
+    fontFamily: Fonts.semibold,
+    fontSize: Fontsize.xs1,
+    marginLeft: wp(1.6),
+  },
+  historyHeaderIcy: {
+    marginBottom: hp(1),
+  },
+  historyTitleIcy: {
+    color: Colors.textPrimary,
+    fontFamily: Fonts.semibold,
+    fontSize: Fontsize.sm,
+  },
+  emptyIcy: {
+    color: Colors.textSecondary,
   },
   content: {
     paddingHorizontal: wp(4),
@@ -499,6 +766,7 @@ const styles = StyleSheet.create({
     alignItems: 'stretch',
     width: '100%',
     marginBottom: hp(1.2),
+    zIndex: 1,
   },
   historyBtn: {
     marginTop: hp(0.5),

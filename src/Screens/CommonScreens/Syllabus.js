@@ -6,17 +6,26 @@ import {useNavigation} from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
 import SyllabusFilter from '../../Component/SyllabusFilter';
+import SyllabusStudentHeader from '../../Component/Syllabus/SyllabusStudentHeader';
 import OverallProgressCard from '../../Component/OverallProgressCard';
 import ChapterCard from '../../Component/ChapterCard';
 import SelectedChildBanner from '../../Component/SelectedChildBanner';
 import ChildSwitchModal from '../../Component/Parent/ChildSwitchModal';
 import AnimatedCard from '../../Component/AnimatedCard';
-import {SCREEN_WAVES} from '../../Component/CardWave';
+import EschoolyScreenShell from '../../Component/Glass/EschoolyScreenShell';
+import CardWave, {SCREEN_WAVES} from '../../Component/CardWave';
+import FeatureArtImage from '../../Component/Glass/FeatureArtImage';
+import {EducationIcons} from '../../Assets/EducationIcons';
 import {Colors} from '../../Constants/Colors';
 import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
+import {elevation, radius, spacing} from '../../Constants/Theme';
 import {wp, hp} from '../../Constants/Responsive';
+import {
+  StudentToneProvider,
+  useStackBottomPad,
+} from '../../Component/Glass/StudentTone';
 import MainHeaderComponent from '../../Component/MainHeaderComponent';
 import {useRoleData} from '../../hooks/useRoleData';
 import {withScreenEnter} from '../../hooks/useScreenEnterGate';
@@ -45,8 +54,21 @@ const STATS = [
     colors: ['#F59E0B', '#EA580C'],
     label: Strings.inDraft,
   },
- 
 ];
+
+const STUDENT_STAT_ART = {
+  total: EducationIcons.digitalLibrary,
+  published: EducationIcons.assignments,
+  draft: EducationIcons.exams,
+};
+
+const STAT_ART_SIZE = wp(8.4);
+const STAT_TILE_SIZE = wp(10.4);
+
+const PILL_ICONS = {
+  total: 'school',
+  published: 'checkmark-circle',
+};
 
 const StatCard = ({item, value, hint}) => (
   <LinearGradient colors={item.colors} start={{x: 0, y: 0}} end={{x: 1, y: 1}} style={styles.statCard}>
@@ -67,12 +89,85 @@ const StatCard = ({item, value, hint}) => (
   </LinearGradient>
 );
 
+const statHintText = (label, hint) => {
+  const hintText = String(hint || '').trim();
+  if (!hintText || hintText.toLowerCase() === String(label || '').toLowerCase()) {
+    return '';
+  }
+  return hintText;
+};
+
+const StudentMetric = ({item, value, hint, showDivider}) => {
+  const support = statHintText(item.label, hint);
+  const pillIcon = PILL_ICONS[item.key];
+
+  return (
+    <View style={[styles.studentMetric, showDivider && styles.studentMetricDivider]}>
+      <View style={styles.studentMetricTile}>
+        <FeatureArtImage
+          source={STUDENT_STAT_ART[item.key]}
+          width={STAT_ART_SIZE}
+          height={STAT_ART_SIZE}
+        />
+      </View>
+      <View style={styles.studentMetricInfo}>
+        <Text
+          style={styles.studentMetricLabel}
+          numberOfLines={2}
+          textBreakStrategy="simple">
+          {item.label}
+        </Text>
+        <View style={styles.studentMetricValueSlot}>
+          <Text style={styles.studentMetricValue} numberOfLines={1}>
+            {value}
+          </Text>
+        </View>
+        <View style={styles.studentMetricPillSlot}>
+          {support ? (
+            <View style={styles.studentMetricPill}>
+              {pillIcon ? (
+                <Icon
+                  name={pillIcon}
+                  size={wp(2.8)}
+                  color={Colors.brandRoyal}
+                />
+              ) : null}
+              <Text style={styles.studentMetricHint} numberOfLines={1}>
+                {support}
+              </Text>
+            </View>
+          ) : null}
+        </View>
+      </View>
+    </View>
+  );
+};
+
+const StudentStatsPanel = ({items, values}) => (
+  <View style={styles.studentMetricsRow}>
+    {items.map((item, index) => (
+      <StudentMetric
+        key={item.key}
+        item={item}
+        value={values[item.key]?.value}
+        hint={values[item.key]?.hint}
+        showDivider={index > 0}
+      />
+    ))}
+  </View>
+);
+
 const Syllabus = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const {isParent} = useRoleData();
+  const icy = !isParent;
+  const bottomPad = useStackBottomPad();
   const {selectedChildId: homeChildId, children} = useSelector(state => state.parentHome);
   const homeStudent = useSelector(state => state.studentHome.student);
+  const unreadNotifications = useSelector(
+    state => state.studentHome?.unreadNotifications || 0,
+  );
   const [pickedChildId, setPickedChildId] = useState(null);
   const [parentSyllabus, setParentSyllabus] = useState(null);
   const [studentSyllabus, setStudentSyllabus] = useState(null);
@@ -186,22 +281,91 @@ const Syllabus = () => {
     update: {value: shownCount(apiStats?.update, updateCount), hint: Strings.needsUpdate},
   };
 
-  return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <StatusBar backgroundColor={Colors.parentBg} barStyle="dark-content" />
-      <MainHeaderComponent
-        title={Strings.syllabus}
-        showBack
-        navyBack
-        onBackPress={() => navigation.goBack()}
-        notificationCount={1}
+  const statsSection = icy ? (
+    <View style={styles.statsPanel}>
+      <View style={styles.statsClip}>
+        <LinearGradient
+          colors={[Colors.bannerIceStart, '#F8FBFF', '#DCEBFD']}
+          start={{x: 0, y: 0}}
+          end={{x: 1, y: 1}}
+          style={styles.statsFace}>
+          <CardWave
+            variant={SCREEN_WAVES.assignmentIce}
+            color="rgba(91, 156, 255, 0.14)"
+          />
+          <StudentStatsPanel items={STATS} values={statValues} />
+        </LinearGradient>
+      </View>
+    </View>
+  ) : (
+    <View style={styles.statsGrid}>
+      {STATS.map(item => (
+        <StatCard
+          key={item.key}
+          item={item}
+          value={statValues[item.key].value}
+          hint={statValues[item.key].hint}
+        />
+      ))}
+    </View>
+  );
+
+  const headerBody = (
+    <>
+      {isParent ? (
+        <AnimatedCard index={1} entering={getHomeScreenEnter(1)} style={styles.childWrap}>
+          <SelectedChildBanner
+            child={parentChild}
+            variant="large"
+            waveVariant={SCREEN_WAVES.parentHome}
+            disableEnterAnimation
+            compactMargin
+            canSwitch={parentCanSwitch}
+            onSwitchPress={parentCanSwitch ? openSwitch : undefined}
+          />
+        </AnimatedCard>
+      ) : null}
+
+      {statsSection}
+
+      <SyllabusFilter
+        subjects={subjects}
+        value={syllabus?.value}
+        label={syllabus?.label}
+        animationIndex={2}
+        onChange={item => {
+          setSyllabus(item);
+          setOpenChapterId(null);
+        }}
+        className={classLabel}
       />
 
-      <ScrollEnterFlatList
-        data={loading ? [] : syllabus?.chapters}
-        keyExtractor={item => `${syllabus?.value}-${item.id}`}
-        extraData={openChapterId}
-        renderItem={({item, index}) => (
+      <OverallProgressCard
+        overview={syllabus}
+        subjectLabel={syllabus?.label}
+        animationIndex={3}
+      />
+
+      <Text style={[styles.sectionTitle, icy && styles.sectionTitleStudent]}>
+        {Strings.syllabusUnits}
+      </Text>
+      {loading ? (
+        <ActivityIndicator
+          style={styles.loader}
+          size="large"
+          color={icy ? Colors.brandRoyal : Colors.primary}
+        />
+      ) : null}
+    </>
+  );
+
+  const list = (
+    <ScrollEnterFlatList
+      data={loading ? [] : syllabus?.chapters}
+      keyExtractor={item => `${syllabus?.value}-${item.id}`}
+      extraData={openChapterId}
+      renderItem={({item, index}) => (
+        <View style={icy ? styles.studentItem : null}>
           <ChapterCard
             chapter={item}
             subjectLabel={syllabus?.label}
@@ -211,76 +375,81 @@ const Syllabus = () => {
               setOpenChapterId(openChapterId === item.id ? null : item.id)
             }
           />
-        )}
-        showsVerticalScrollIndicator={false}
-        bounces={false}
-        overScrollMode="never"
-        removeClippedSubviews={false}
-        contentContainerStyle={styles.content}
-        ListHeaderComponent={
-          <View>
-            {isParent ? (
-              <AnimatedCard index={1} entering={getHomeScreenEnter(1)} style={styles.childWrap}>
-                <SelectedChildBanner
-                  child={parentChild}
-                  variant="large"
-                  waveVariant={SCREEN_WAVES.parentHome}
-                  disableEnterAnimation
-                  compactMargin
-                  canSwitch={parentCanSwitch}
-                  onSwitchPress={parentCanSwitch ? openSwitch : undefined}
-                />
-              </AnimatedCard>
-            ) : null}
+        </View>
+      )}
+      showsVerticalScrollIndicator={false}
+      bounces={false}
+      overScrollMode="never"
+      removeClippedSubviews={false}
+      contentContainerStyle={[
+        icy ? styles.studentList : styles.content,
+        {paddingBottom: bottomPad},
+      ]}
+      ListHeaderComponent={
+        icy ? (
+          <>
+            <EschoolyScreenShell.Header style={styles.studentBand}>
+              <SyllabusStudentHeader unreadCount={unreadNotifications} />
+            </EschoolyScreenShell.Header>
+            <EschoolyScreenShell.Body tuck={false} style={styles.studentBody}>
+              <View style={styles.canvasStage}>
+                <View pointerEvents="none" style={styles.canvasWave}>
+                  <CardWave
+                    variant={SCREEN_WAVES.assignmentIce}
+                    color="rgba(37, 99, 235, 0.12)"
+                  />
+                </View>
+                <View style={styles.canvasForeground}>{headerBody}</View>
+              </View>
+            </EschoolyScreenShell.Body>
+          </>
+        ) : (
+          <View>{headerBody}</View>
+        )
+      }
+    />
+  );
 
-            <View style={styles.statsGrid}>
-              {STATS.map(item => (
-                <StatCard
-                  key={item.key}
-                  item={item}
-                  value={statValues[item.key].value}
-                  hint={statValues[item.key].hint}
-                />
-              ))}
-            </View>
-
-            <SyllabusFilter
-              subjects={subjects}
-              value={syllabus?.value}
-              label={syllabus?.label}
-              animationIndex={2}
-              onChange={item => {
-                setSyllabus(item);
-                setOpenChapterId(null);
-              }}
-              className={classLabel}
-            />
-
-            <OverallProgressCard
-              overview={syllabus}
-              subjectLabel={syllabus?.label}
-              animationIndex={3}
-            />
-
-            <Text style={styles.sectionTitle}>{Strings.syllabusUnits}</Text>
-            {loading ? (
-              <ActivityIndicator style={styles.loader} size="large" color={Colors.primary} />
-            ) : null}
-          </View>
-        }
+  const switchModal =
+    isParent && parentCanSwitch ? (
+      <ChildSwitchModal
+        visible={switchVisible}
+        childrenList={children}
+        selectedId={String(activeChildId || '')}
+        onSelect={nextId => setPickedChildId(String(nextId))}
+        onClose={() => setSwitchVisible(false)}
+        replayToken={modalReplay}
       />
+    ) : null;
 
-      {isParent && parentCanSwitch ? (
-        <ChildSwitchModal
-          visible={switchVisible}
-          childrenList={children}
-          selectedId={String(activeChildId || '')}
-          onSelect={nextId => setPickedChildId(String(nextId))}
-          onClose={() => setSwitchVisible(false)}
-          replayToken={modalReplay}
+  if (icy) {
+    return (
+      <StudentToneProvider active>
+        <EschoolyScreenShell variant="navy-ice">
+          {list}
+        </EschoolyScreenShell>
+      </StudentToneProvider>
+    );
+  }
+
+  return (
+    <StudentToneProvider active={false}>
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <StatusBar
+          backgroundColor={Colors.parentBg}
+          barStyle="dark-content"
         />
-      ) : null}
-    </SafeAreaView>
+        <MainHeaderComponent
+          title={Strings.syllabus}
+          showBack
+          navyBack
+          onBackPress={() => navigation.goBack()}
+          notificationCount={1}
+        />
+        {list}
+        {switchModal}
+      </SafeAreaView>
+    </StudentToneProvider>
   );
 };
 
@@ -296,6 +465,35 @@ const styles = StyleSheet.create({
     paddingTop: hp(1),
     paddingBottom: hp(3),
   },
+  studentList: {
+    flexGrow: 1,
+    backgroundColor: Colors.canvas,
+    overflow: 'visible',
+  },
+  studentItem: {
+    paddingHorizontal: spacing.md,
+  },
+  studentBand: {
+    paddingBottom: hp(1.5),
+  },
+  studentBody: {
+    paddingTop: hp(1.35),
+  },
+  canvasStage: {
+    position: 'relative',
+    overflow: 'visible',
+  },
+  canvasWave: {
+    position: 'absolute',
+    top: hp(2),
+    right: -wp(4),
+    left: 0,
+    height: hp(42),
+    zIndex: 0,
+  },
+  canvasForeground: {
+    zIndex: 1,
+  },
   childWrap: {
     marginBottom: hp(0.6),
   },
@@ -304,6 +502,105 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     marginBottom: hp(0.6),
+  },
+  statsPanel: {
+    marginBottom: hp(1.35),
+    borderRadius: radius.pill,
+    backgroundColor: Colors.bannerIceStart,
+    ...elevation.card,
+  },
+  statsClip: {
+    borderRadius: radius.pill,
+    overflow: 'hidden',
+  },
+  statsFace: {
+    borderRadius: radius.pill,
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: 'rgba(91, 156, 255, 0.32)',
+    paddingVertical: hp(1.55),
+    paddingHorizontal: wp(3.2),
+  },
+  studentMetricsRow: {
+    zIndex: 1,
+    flexDirection: 'row',
+    alignItems: 'stretch',
+  },
+  studentMetric: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: wp(1.15),
+  },
+  studentMetricDivider: {
+    borderLeftWidth: StyleSheet.hairlineWidth,
+    borderLeftColor: 'rgba(19, 69, 163, 0.18)',
+  },
+  studentMetricTile: {
+    width: STAT_TILE_SIZE,
+    height: STAT_TILE_SIZE,
+    borderRadius: wp(3.2),
+    backgroundColor: 'rgba(220, 235, 253, 0.92)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: wp(1.3),
+  },
+  studentMetricInfo: {
+    flex: 1,
+    minWidth: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  studentMetricLabel: {
+    width: '100%',
+    minHeight: Fontsize.xs0 * 2 + 2,
+    color: Colors.textPrimary,
+    fontFamily: Fonts.bold,
+    fontSize: Fontsize.xs0,
+    lineHeight: Fontsize.xs0 + 3,
+    textAlign: 'center',
+    includeFontPadding: false,
+  },
+  studentMetricValueSlot: {
+    width: '100%',
+    minHeight: Fontsize.ml + 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  studentMetricValue: {
+    width: '100%',
+    color: Colors.textPrimary,
+    fontFamily: Fonts.bold,
+    fontSize: Fontsize.ml,
+    lineHeight: Fontsize.ml + 2,
+    textAlign: 'center',
+    fontVariant: ['tabular-nums'],
+    includeFontPadding: false,
+  },
+  studentMetricPillSlot: {
+    width: '100%',
+    minHeight: hp(2.2),
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: hp(0.12),
+  },
+  studentMetricPill: {
+    maxWidth: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.hubCard,
+    borderRadius: radius.pill,
+    paddingHorizontal: wp(1.6),
+    paddingVertical: hp(0.22),
+  },
+  studentMetricHint: {
+    flexShrink: 1,
+    color: Colors.brandRoyal,
+    fontFamily: Fonts.medium,
+    fontSize: Fontsize.xxm,
+    lineHeight: Fontsize.xs0 + 1,
+    marginLeft: wp(0.8),
+    includeFontPadding: false,
   },
   statCard: {
     width: '48.5%',
@@ -353,5 +650,9 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.bold,
     fontSize: Fontsize.sm,
     marginBottom: hp(1.2),
+  },
+  sectionTitleStudent: {
+    color: Colors.textPrimary,
+    fontSize: Fontsize.m,
   },
 });

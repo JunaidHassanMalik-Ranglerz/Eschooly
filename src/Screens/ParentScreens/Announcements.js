@@ -10,7 +10,9 @@ import AttendanceStudentDropdown from '../../Component/AttendanceStudentDropdown
 import ChildSwitchModal from '../../Component/Parent/ChildSwitchModal';
 import MainHeaderComponent from '../../Component/MainHeaderComponent';
 import SelectedChildBanner from '../../Component/SelectedChildBanner';
-import EschoolyScreenShell from '../../Component/Glass/EschoolyScreenShell';
+import EschoolyScreenShell, {
+  NAVY_ICE_SEARCH_GAP,
+} from '../../Component/Glass/EschoolyScreenShell';
 import CardWave, {SCREEN_WAVES} from '../../Component/CardWave';
 import {
   StudentToneProvider,
@@ -28,6 +30,8 @@ import {useDispatch, useSelector} from 'react-redux';
 import {showToast} from '../../utils/toast';
 import {fetchChildAnnouncements, fetchParentHome} from '../../store/slices/parentHomeSlice';
 import {fetchStudentAnnouncement, fetchStudentAnnouncements} from '../../store/slices/studentHomeSlice';
+
+const IDENTITY_TUCK = hp(1.8);
 
 const escapeRegExp = value =>
   String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -322,6 +326,7 @@ const AnnouncementsScreen = () => {
                     readOnly
                     look="flyer"
                     label={studentLabel}
+                    containerStyle={styles.identityTuck}
                   />
                   {announcementList}
                 </View>
@@ -400,10 +405,17 @@ const styles = StyleSheet.create({
     overflow: 'visible',
   },
   studentBand: {
-    paddingBottom: hp(1.5),
+    paddingBottom: NAVY_ICE_SEARCH_GAP + IDENTITY_TUCK,
+    overflow: 'visible',
   },
   studentBody: {
-    paddingTop: hp(1.35),
+    paddingTop: 0,
+    marginTop: -IDENTITY_TUCK,
+    overflow: 'visible',
+  },
+  identityTuck: {
+    zIndex: 2,
+    marginBottom: hp(1.55),
   },
   canvasStage: {
     position: 'relative',

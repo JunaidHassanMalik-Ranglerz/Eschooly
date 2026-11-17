@@ -17,7 +17,7 @@ const LibraryStudentHeader = ({unreadCount}) => {
     <>
       <View style={styles.brandRow}>
         <View style={styles.brandLeft}>
-          <Icon name="school" size={wp(4.8)} color={Colors.white} />
+          <Icon name="school" size={wp(5.2)} color={Colors.white} />
           <View style={styles.brandRule} />
           <Text style={styles.wordmark}>{Strings.eschoolyWordmark}</Text>
         </View>
@@ -32,7 +32,7 @@ const LibraryStudentHeader = ({unreadCount}) => {
           style={styles.backBtn}
           accessibilityRole="button"
           accessibilityLabel="Back">
-          <Icon name="chevron-back" size={wp(6.4)} color={Colors.white} />
+          <Icon name="chevron-back" size={wp(6.6)} color={Colors.white} />
         </TouchableOpacity>
         <Text style={styles.title} numberOfLines={1}>
           {Strings.digitalLibrary}
@@ -70,8 +70,7 @@ const styles = StyleSheet.create({
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: hp(0.7),
-    marginBottom: hp(1.1),
+    marginTop: hp(0.5),
   },
   backBtn: {
     width: wp(8.5),

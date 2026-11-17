@@ -5,6 +5,7 @@ import {Colors} from '../Constants/Colors';
 import {Fonts} from '../Constants/Fonts';
 import {Fontsize} from '../Constants/Fontsize';
 import {wp, hp} from '../Constants/Responsive';
+import {useStudentTone} from './Glass/StudentTone';
 
 const ICON_COLORS = {
   present: '#38BDF8',
@@ -14,35 +15,56 @@ const ICON_COLORS = {
 };
 
 const AttendanceStatCard = props => {
+  const icy = useStudentTone();
   const premium = props?.premium;
   const labelKey = String(props?.label || '').toLowerCase();
-  const iconColor =
-    props?.iconColor ||
-    ICON_COLORS[labelKey] ||
-    (props?.image ? ICON_COLORS.present : Colors.iconSky);
+  const iconColor = icy
+    ? Colors.brandRoyal
+    : props?.iconColor ||
+      ICON_COLORS[labelKey] ||
+      (props?.image ? ICON_COLORS.present : Colors.iconSky);
 
   return (
-    <View style={[styles.card, premium && styles.cardPremium]}>
-      <View style={styles.iconSlot}>
-        {props?.image ? (
+    <View style={[styles.card, premium && styles.cardPremium, icy && styles.cardIcy]}>
+      <View style={[styles.iconSlot, icy && styles.iconSlotIcy]}>
+        {props?.image && !icy ? (
           <Image
             source={props?.image}
             style={[styles.iconImage, {tintColor: iconColor}]}
             resizeMode="contain"
           />
         ) : (
-          <Icon name={props?.icon} size={wp(5.2)} color={iconColor} />
+          <Icon
+            name={
+              props?.icon ||
+              (labelKey === 'present'
+                ? 'checkmark-circle-outline'
+                : labelKey === 'absent'
+                  ? 'close-circle-outline'
+                  : 'remove-circle-outline')
+            }
+            size={wp(5.2)}
+            color={iconColor}
+          />
         )}
       </View>
       <Text
-        style={[styles.label, premium && styles.labelPremium]}
+        style={[
+          styles.label,
+          premium && styles.labelPremium,
+          icy && styles.labelIcy,
+        ]}
         numberOfLines={1}
         adjustsFontSizeToFit
         minimumFontScale={0.75}>
         {props?.label}
       </Text>
       <Text
-        style={[styles.count, premium && styles.countPremium]}
+        style={[
+          styles.count,
+          premium && styles.countPremium,
+          icy && styles.countIcy,
+        ]}
         numberOfLines={1}
         adjustsFontSizeToFit
         minimumFontScale={0.7}>
@@ -102,5 +124,21 @@ const styles = StyleSheet.create({
   },
   countPremium: {
     color: Colors.white,
+  },
+  cardIcy: {
+    backgroundColor: Colors.transparent,
+    borderColor: Colors.transparent,
+  },
+  iconSlotIcy: {
+    backgroundColor: Colors.hubCard,
+    borderRadius: wp(10),
+    marginBottom: hp(0.55),
+  },
+  labelIcy: {
+    color: Colors.textSecondary,
+  },
+  countIcy: {
+    color: Colors.textPrimary,
+    fontSize: Fontsize.sm1,
   },
 });
