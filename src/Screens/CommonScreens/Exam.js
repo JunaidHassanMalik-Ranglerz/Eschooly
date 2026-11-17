@@ -1,10 +1,13 @@
 import React, {useEffect, useMemo, useState} from 'react';
-import {ActivityIndicator, Image, StatusBar, StyleSheet, Text, View} from 'react-native';
+import {ActivityIndicator, Image, StatusBar, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
+import Icon from 'react-native-vector-icons/Ionicons';
 import ScrollEnterFlatList from '../../Component/ScrollEnterFlatList';
+import ScrollEnterScrollView from '../../Component/ScrollEnterScrollView';
 import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import MainHeaderComponent from '../../Component/MainHeaderComponent';
 import AttendanceStudentDropdown from '../../Component/AttendanceStudentDropdown';
+import StudentBrandedHeader from '../../Component/Student/StudentBrandedHeader';
 import ExamOverviewCard from '../../Component/ExamOverviewCard';
 import ExamNextExamCard from '../../Component/ExamNextExamCard';
 import ExamHistoryItem from '../../Component/ExamHistoryItem';
@@ -12,7 +15,16 @@ import ExamDateRangeBox from '../../Component/ExamDateRangeBox';
 import ProfileSectionTitle from '../../Component/Profile/ProfileSectionTitle';
 import AnimatedCard from '../../Component/AnimatedCard';
 import Btn from '../../Component/btn';
-import {SCREEN_WAVES} from '../../Component/CardWave';
+import CardWave, {SCREEN_WAVES} from '../../Component/CardWave';
+import EschoolyScreenShell, {
+  FLOAT_CARD_GAP,
+  FLOAT_CARD_TUCK,
+  NAVY_ICE_CURVE,
+} from '../../Component/Glass/EschoolyScreenShell';
+import {
+  StudentToneProvider,
+  useStackBottomPad,
+} from '../../Component/Glass/StudentTone';
 import {Images} from '../../Assets';
 import {Colors} from '../../Constants/Colors';
 import {Fonts} from '../../Constants/Fonts';
@@ -20,6 +32,7 @@ import {Fontsize} from '../../Constants/Fontsize';
 import {Strings, EXAM_HISTORY, EXAM_STUDENTS} from '../../Constants/Strings';
 import {ATTENDANCE_STUDENTS, getExamStudentForChild} from '../../Constants/dummydata';
 import {EXAM_STAT_GRADIENTS} from '../../Constants/CardTheme';
+import {elevation, radius} from '../../Constants/Theme';
 import {wp, hp} from '../../Constants/Responsive';
 import {withScreenEnter} from '../../hooks/useScreenEnterGate';
 import {showToast} from '../../utils/toast';
@@ -47,7 +60,12 @@ const Exam = () => {
   const dispatch = useDispatch();
   const role = useSelector(state => state.auth.role);
   const isParent = role === 'parent';
+  const icy = !isParent;
+  const bottomPad = useStackBottomPad();
   const homeStudent = useSelector(state => state.studentHome.student);
+  const unreadNotifications = useSelector(
+    state => state.studentHome?.unreadNotifications || 0,
+  );
   const [pickedChildId, setPickedChildId] = useState(ATTENDANCE_STUDENTS[0]?.value);
   const [studentExams, setStudentExams] = useState({
     overview: EMPTY_OVERVIEW,
@@ -160,11 +178,224 @@ const Exam = () => {
   const overviewValue = (value, loadingValue = '—') =>
     loading && !isParent ? loadingValue : value || (isParent ? value : '');
 
+  const overviewGrid = (
+    <View style={styles.overviewGrid}>
+      <ExamOverviewCard
+        icon="document-text-outline"
+        iconBg={Colors.whiteOverlay22}
+        iconColor={Colors.white}
+        label={Strings.totalExams}
+        value={overviewValue(examStudent.totalExams)}
+        trendIcon="pulse-outline"
+        premium
+        animationIndex={3}
+        colors={EXAM_STAT_GRADIENTS[0]}
+        waveVariant={EXAM_WAVES[0]}
+      />
+      <ExamOverviewCard
+        icon="stats-chart-outline"
+        iconBg={Colors.whiteOverlay22}
+        iconColor="#86EFAC"
+        label={Strings.averageScore}
+        value={overviewValue(examStudent.averageScore)}
+        percent={Boolean(overviewValue(examStudent.averageScore))}
+        trendIcon="bar-chart-outline"
+        premium
+        animationIndex={4}
+        colors={EXAM_STAT_GRADIENTS[1]}
+      />
+      <ExamOverviewCard
+        icon="trending-up-outline"
+        iconBg={Colors.whiteOverlay22}
+        iconColor="#FCD34D"
+        label={Strings.highestScore}
+        value={overviewValue(examStudent.highestScore)}
+        percent={Boolean(overviewValue(examStudent.highestScore))}
+        trendIcon="arrow-up-outline"
+        premium
+        animationIndex={5}
+        colors={EXAM_STAT_GRADIENTS[2]}
+      />
+      <ExamOverviewCard
+        icon="trending-down-outline"
+        iconBg={Colors.whiteOverlay22}
+        iconColor="#FCA5A5"
+        label={Strings.lowestScore}
+        value={overviewValue(examStudent.lowestScore)}
+        percent={Boolean(overviewValue(examStudent.lowestScore))}
+        trendIcon="arrow-down-outline"
+        premium
+        animationIndex={6}
+        colors={EXAM_STAT_GRADIENTS[3]}
+      />
+    </View>
+  );
+
+  const nextExamCard =
+    isParent || examStudent.nextExamSubject ? (
+      <ExamNextExamCard
+        subject={examStudent.nextExamSubject}
+        date={examStudent.nextExamDate}
+        time={examStudent.nextExamTime}
+        animationIndex={7}
+      />
+    ) : null;
+
+  const historyPanel = showHistory ? (
+    <View>
+      <AnimatedCard
+        index={0}
+        style={[styles.historyHeader, icy && styles.historyHeaderIcy]}>
+        <View style={styles.historyHeaderText}>
+          <Text
+            style={[styles.historyTitle, icy && styles.historyTitleIcy]}
+            numberOfLines={1}>
+            {Strings.examHistory}
+          </Text>
+          <Text
+            style={[styles.historySub, icy && styles.historySubIcy]}
+            numberOfLines={2}>
+            {Strings.recentAcademicResults}
+          </Text>
+        </View>
+        <Image
+          source={Images.recentCalendar}
+          style={[styles.recentCalendarIcon, icy && styles.recentCalendarIconIcy]}
+          resizeMode="contain"
+        />
+      </AnimatedCard>
+      <ExamDateRangeBox
+        startDate={startDate}
+        endDate={endDate}
+        animationIndex={1}
+        onApply={(start, end) => {
+          setStartDate(start);
+          setEndDate(end);
+        }}
+      />
+    </View>
+  ) : null;
+
+  if (icy) {
+    return (
+      <StudentToneProvider active>
+        <EschoolyScreenShell variant="navy-ice">
+          <ScrollEnterScrollView
+            style={styles.scrollArea}
+            contentContainerStyle={[
+              styles.studentScroll,
+              {paddingBottom: bottomPad},
+            ]}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            bounces={false}
+            overScrollMode="never"
+            removeClippedSubviews={false}>
+            <EschoolyScreenShell.Header style={styles.studentBand}>
+              <StudentBrandedHeader
+                title={Strings.exam}
+                unreadCount={unreadNotifications}
+              />
+            </EschoolyScreenShell.Header>
+            <EschoolyScreenShell.Body tuck={false} style={styles.studentBody}>
+              <View style={styles.canvasStage}>
+                <View pointerEvents="none" style={styles.canvasWave}>
+                  <CardWave
+                    variant={SCREEN_WAVES.assignmentIce}
+                    color="rgba(37, 99, 235, 0.12)"
+                  />
+                </View>
+                <View style={styles.canvasForeground}>
+                  <AttendanceStudentDropdown
+                    animationIndex={1}
+                    student={bannerStudent}
+                    premium
+                    embedded
+                    readOnly
+                    look="float"
+                    label={studentLabel}
+                  />
+                  <ProfileSectionTitle animationIndex={2} style={styles.sectionIcy}>
+                    {Strings.examOverview}
+                  </ProfileSectionTitle>
+                  {loading ? (
+                    <ActivityIndicator
+                      style={styles.loader}
+                      size="large"
+                      color={Colors.brandRoyal}
+                    />
+                  ) : (
+                    <>
+                      {overviewGrid}
+                      {nextExamCard}
+                    </>
+                  )}
+                  <TouchableOpacity
+                    style={styles.historyCta}
+                    activeOpacity={0.85}
+                    onPress={() => setShowHistory(!showHistory)}>
+                    <Icon
+                      name={showHistory ? 'eye-off-outline' : 'time-outline'}
+                      size={wp(4.6)}
+                      color={Colors.white}
+                    />
+                    <Text style={styles.historyCtaText}>
+                      {showHistory ? Strings.hideHistory : Strings.examHistory}
+                    </Text>
+                  </TouchableOpacity>
+                  {historyPanel}
+                  {showHistory && loading ? (
+                    <ActivityIndicator
+                      style={styles.loader}
+                      size="large"
+                      color={Colors.brandRoyal}
+                    />
+                  ) : null}
+                  {showHistory && !loading
+                    ? filteredHistory.map((item, index) => (
+                        <ExamHistoryItem
+                          key={item.id}
+                          item={item}
+                          animationIndex={index + 2}
+                          onPress={() => openExamDetail(item)}
+                        />
+                      ))
+                    : null}
+                  {showHistory && !loading && filteredHistory.length === 0 ? (
+                    <Text style={[styles.empty, styles.emptyIcy]}>
+                      {Strings.noResultsInRange}
+                    </Text>
+                  ) : null}
+                  {showHistory ? (
+                    <TouchableOpacity
+                      style={[styles.historyCta, styles.downloadCtaIcy]}
+                      activeOpacity={0.85}
+                      onPress={() => {}}>
+                      <Icon
+                        name="document-outline"
+                        size={wp(4.6)}
+                        color={Colors.white}
+                      />
+                      <Text style={styles.historyCtaText}>
+                        {Strings.downloadPdf}
+                      </Text>
+                    </TouchableOpacity>
+                  ) : null}
+                </View>
+              </View>
+            </EschoolyScreenShell.Body>
+          </ScrollEnterScrollView>
+        </EschoolyScreenShell>
+      </StudentToneProvider>
+    );
+  }
+
   return (
+    <StudentToneProvider active={false}>
     <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar backgroundColor={Colors.parentBg} barStyle="dark-content" />
       <MainHeaderComponent
-        title={isParent ? Strings.results : Strings.exam}
+        title={Strings.results}
         notificationCount={1}
         navyBack
       />
@@ -174,11 +405,11 @@ const Exam = () => {
           animationIndex={1}
           student={bannerStudent}
           students={students}
-          selectedId={isParent ? pickedChildId : undefined}
+          selectedId={pickedChildId}
           premium
           embedded
-          onSelect={isParent ? item => setPickedChildId(item.value) : undefined}
-          readOnly={!isParent || students.length <= 1}
+          onSelect={item => setPickedChildId(item.value)}
+          readOnly={students.length <= 1}
           label={studentLabel}
         />
       </View>
@@ -190,7 +421,7 @@ const Exam = () => {
           <ExamHistoryItem
             item={item}
             animationIndex={index + 2}
-            onPress={isParent ? undefined : () => openExamDetail(item)}
+            onPress={undefined}
           />
         )}
         showsVerticalScrollIndicator={false}
@@ -205,75 +436,10 @@ const Exam = () => {
         ListHeaderComponent={
           <View>
             <ProfileSectionTitle animationIndex={2}>
-              {isParent ? Strings.resultOverview : Strings.examOverview}
+              {Strings.resultOverview}
             </ProfileSectionTitle>
-
-            {loading && !isParent ? (
-              <ActivityIndicator style={styles.loader} size="large" color={Colors.primary} />
-            ) : (
-              <>
-            <View style={styles.overviewGrid}>
-              <ExamOverviewCard
-                icon="document-text-outline"
-                iconBg={Colors.whiteOverlay22}
-                iconColor={Colors.white}
-                label={Strings.totalExams}
-                value={overviewValue(examStudent.totalExams)}
-                trendIcon="pulse-outline"
-                premium
-                animationIndex={3}
-                colors={EXAM_STAT_GRADIENTS[0]}
-                waveVariant={EXAM_WAVES[0]}
-              />
-              <ExamOverviewCard
-                icon="stats-chart-outline"
-                iconBg={Colors.whiteOverlay22}
-                iconColor="#86EFAC"
-                label={Strings.averageScore}
-                value={overviewValue(examStudent.averageScore)}
-                percent={Boolean(overviewValue(examStudent.averageScore))}
-                trendIcon="bar-chart-outline"
-                premium
-                animationIndex={4}
-                colors={EXAM_STAT_GRADIENTS[1]}
-              />
-              <ExamOverviewCard
-                icon="trending-up-outline"
-                iconBg={Colors.whiteOverlay22}
-                iconColor="#FCD34D"
-                label={Strings.highestScore}
-                value={overviewValue(examStudent.highestScore)}
-                percent={Boolean(overviewValue(examStudent.highestScore))}
-                trendIcon="arrow-up-outline"
-                premium
-                animationIndex={5}
-                colors={EXAM_STAT_GRADIENTS[2]}
-              />
-              <ExamOverviewCard
-                icon="trending-down-outline"
-                iconBg={Colors.whiteOverlay22}
-                iconColor="#FCA5A5"
-                label={Strings.lowestScore}
-                value={overviewValue(examStudent.lowestScore)}
-                percent={Boolean(overviewValue(examStudent.lowestScore))}
-                trendIcon="arrow-down-outline"
-                premium
-                animationIndex={6}
-                colors={EXAM_STAT_GRADIENTS[3]}
-              />
-            </View>
-
-            {isParent || examStudent.nextExamSubject ? (
-            <ExamNextExamCard
-              subject={examStudent.nextExamSubject}
-              date={examStudent.nextExamDate}
-              time={examStudent.nextExamTime}
-              animationIndex={7}
-            />
-            ) : null}
-              </>
-            )}
-
+            {overviewGrid}
+            {nextExamCard}
             <Btn
               title={showHistory ? Strings.hideHistory : Strings.examHistory}
               icon={showHistory ? 'eye-off-outline' : 'time-outline'}
@@ -281,36 +447,7 @@ const Exam = () => {
               animationIndex={8}
               onPress={() => setShowHistory(!showHistory)}
             />
-
-            {showHistory ? (
-              <View>
-                <AnimatedCard index={0} style={styles.historyHeader}>
-                  <View style={styles.historyHeaderText}>
-                    <Text style={styles.historyTitle} numberOfLines={1}>
-                      {Strings.examHistory}
-                    </Text>
-                    <Text style={styles.historySub} numberOfLines={2}>
-                      {Strings.recentAcademicResults}
-                    </Text>
-                  </View>
-                  <Image
-                    source={Images.recentCalendar}
-                    style={styles.recentCalendarIcon}
-                    resizeMode="contain"
-                  />
-                </AnimatedCard>
-
-                <ExamDateRangeBox
-                  startDate={startDate}
-                  endDate={endDate}
-                  animationIndex={1}
-                  onApply={(start, end) => {
-                    setStartDate(start);
-                    setEndDate(end);
-                  }}
-                />
-              </View>
-            ) : null}
+            {historyPanel}
           </View>
         }
         ListEmptyComponent={
@@ -333,6 +470,7 @@ const Exam = () => {
         }
       />
     </SafeAreaView>
+    </StudentToneProvider>
   );
 };
 
@@ -407,5 +545,90 @@ const styles = StyleSheet.create({
   },
   loader: {
     marginVertical: hp(3),
+  },
+  scrollArea: {
+    flex: 1,
+    overflow: 'visible',
+  },
+  studentScroll: {
+    flexGrow: 1,
+    backgroundColor: Colors.canvas,
+    overflow: 'visible',
+  },
+  studentBand: {
+    borderBottomLeftRadius: NAVY_ICE_CURVE,
+    paddingBottom: FLOAT_CARD_GAP + FLOAT_CARD_TUCK,
+    overflow: 'visible',
+  },
+  studentBody: {
+    paddingTop: 0,
+    marginTop: -FLOAT_CARD_TUCK,
+    overflow: 'visible',
+  },
+  canvasStage: {
+    position: 'relative',
+    overflow: 'visible',
+    minHeight: hp(62),
+  },
+  canvasWave: {
+    position: 'absolute',
+    top: hp(2),
+    right: -wp(4),
+    left: 0,
+    height: hp(56),
+    zIndex: 0,
+  },
+  canvasForeground: {
+    zIndex: 1,
+  },
+  sectionIcy: {
+    color: Colors.brandNavy,
+  },
+  historyCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.brandNavy,
+    borderRadius: radius.pill,
+    paddingVertical: hp(1.15),
+    paddingHorizontal: wp(4),
+    minHeight: hp(5.2),
+    marginTop: hp(0.4),
+    marginBottom: hp(1.45),
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: Colors.brandRoyal,
+    ...elevation.banner,
+  },
+  downloadCtaIcy: {
+    marginTop: hp(0.6),
+    marginBottom: hp(0.4),
+  },
+  historyCtaText: {
+    color: Colors.white,
+    fontFamily: Fonts.semibold,
+    fontSize: Fontsize.xs1,
+    marginLeft: wp(1.6),
+  },
+  historyHeaderIcy: {
+    marginTop: hp(0.2),
+    marginBottom: hp(1.2),
+    alignItems: 'center',
+  },
+  historyTitleIcy: {
+    color: Colors.brandNavy,
+    fontFamily: Fonts.bold,
+    fontSize: Fontsize.sm,
+  },
+  historySubIcy: {
+    color: Colors.textSecondary,
+    fontFamily: Fonts.regular,
+  },
+  recentCalendarIconIcy: {
+    tintColor: Colors.brandRoyal,
+    width: wp(6),
+    height: wp(6),
+  },
+  emptyIcy: {
+    color: Colors.textSecondary,
   },
 });

@@ -9,10 +9,12 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import LinearGradient from 'react-native-linear-gradient';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {Colors} from '../Constants/Colors';
 import {Fonts} from '../Constants/Fonts';
 import {Fontsize} from '../Constants/Fontsize';
 import {Strings} from '../Constants/Strings';
+import {elevation, radius} from '../Constants/Theme';
 import {wp, hp} from '../Constants/Responsive';
 import {
   GRADIENT_END,
@@ -21,6 +23,7 @@ import {
 } from './Profile/ProfileTheme';
 import {EnterView} from './AnimatedCard';
 import {enterFromBottom} from '../utils/cardAnimation';
+import {useStudentTone} from './Glass/StudentTone';
 
 const WEEKDAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 const MONTHS = [
@@ -132,6 +135,8 @@ const getRangeType = (date, start, end) => {
 };
 
 const ExamDateRangeModal = ({visible, startDate, endDate, onClose, onApply}) => {
+  const icy = useStudentTone();
+  const insets = useSafeAreaInsets();
   const today = new Date();
   const [viewYear, setViewYear] = useState(today.getFullYear());
   const [viewMonth, setViewMonth] = useState(today.getMonth());
@@ -142,7 +147,7 @@ const ExamDateRangeModal = ({visible, startDate, endDate, onClose, onApply}) => 
     if (visible) {
       setTempStart(startDate);
       setTempEnd(endDate);
-      const base = startDate || today;
+      const base = startDate || new Date();
       setViewYear(base.getFullYear());
       setViewMonth(base.getMonth());
     }
@@ -222,20 +227,27 @@ const ExamDateRangeModal = ({visible, startDate, endDate, onClose, onApply}) => 
         style={styles.dayCell}
         activeOpacity={0.8}
         onPress={() => handleDayPress(item.year, item.month, item.day)}>
-        {rangeType === 'middle' ? <View style={styles.rangeMiddle} /> : null}
-        {rangeType === 'start' ? <View style={styles.rangeStart} /> : null}
-        {rangeType === 'end' ? <View style={styles.rangeEnd} /> : null}
+        {rangeType === 'middle' ? (
+          <View style={[styles.rangeMiddle, icy && styles.rangeBarIcy]} />
+        ) : null}
+        {rangeType === 'start' ? (
+          <View style={[styles.rangeStart, icy && styles.rangeBarIcy]} />
+        ) : null}
+        {rangeType === 'end' ? (
+          <View style={[styles.rangeEnd, icy && styles.rangeBarIcy]} />
+        ) : null}
 
         <View
           style={[
             styles.dayCircle,
-            isSelected && styles.dayCircleSelected,
-            isToday && !isSelected && styles.dayCircleToday,
+            isSelected && (icy ? styles.dayCircleSelectedIcy : styles.dayCircleSelected),
+            isToday && !isSelected && (icy ? styles.dayCircleTodayIcy : styles.dayCircleToday),
           ]}>
           <Text
             style={[
               styles.dayText,
-              !item.current && styles.dayTextMuted,
+              icy && styles.dayTextIcy,
+              !item.current && (icy ? styles.dayTextMutedIcy : styles.dayTextMuted),
               isSelected && styles.dayTextSelected,
             ]}>
             {item.day}
@@ -251,41 +263,62 @@ const ExamDateRangeModal = ({visible, startDate, endDate, onClose, onApply}) => 
       transparent
       animationType="none"
       onRequestClose={onClose}>
-      <View style={styles.overlay}>
+      <View
+        style={[
+          styles.overlay,
+          icy && {
+            paddingTop: Math.max(insets.top, hp(1.2)) + hp(0.8),
+            paddingBottom: Math.max(insets.bottom, hp(1.2)) + hp(0.8),
+          },
+        ]}>
           <EnterView
             motion={visible ? enterFromBottom(0) : null}
-            style={styles.sheetWrap}>
+            style={[styles.sheetWrap, icy && styles.sheetWrapIcy]}>
           <LinearGradient
-            colors={PROFILE_GRADIENT}
+            colors={
+              icy
+                ? [Colors.bannerIceStart, Colors.bannerIceEnd]
+                : PROFILE_GRADIENT
+            }
             start={GRADIENT_START}
             end={GRADIENT_END}
-            style={styles.sheet}>
+            style={[styles.sheet, icy && styles.sheetIcy]}>
           <View style={styles.header}>
             <TouchableOpacity
-              style={styles.navBtn}
+              style={[styles.navBtn, icy && styles.navBtnIcy]}
               activeOpacity={0.8}
               onPress={handlePrevMonth}>
-              <Icon name="chevron-back" size={wp(4.2)} color={Colors.white} />
+              <Icon
+                name="chevron-back"
+                size={wp(4.2)}
+                color={icy ? Colors.brandNavy : Colors.white}
+              />
             </TouchableOpacity>
 
             <View style={styles.headerCenter}>
-              <Text style={styles.monthTitle}>
+              <Text style={[styles.monthTitle, icy && styles.monthTitleIcy]}>
                 {MONTHS[viewMonth]} {viewYear}
               </Text>
-              <Text style={styles.selectLabel}>{Strings.selectRange}</Text>
+              <Text style={[styles.selectLabel, icy && styles.selectLabelIcy]}>
+                {Strings.selectRange}
+              </Text>
             </View>
 
             <TouchableOpacity
-              style={styles.navBtn}
+              style={[styles.navBtn, icy && styles.navBtnIcy]}
               activeOpacity={0.8}
               onPress={handleNextMonth}>
-              <Icon name="chevron-forward" size={wp(4.2)} color={Colors.white} />
+              <Icon
+                name="chevron-forward"
+                size={wp(4.2)}
+                color={icy ? Colors.brandNavy : Colors.white}
+              />
             </TouchableOpacity>
           </View>
 
           <View style={styles.weekRow}>
             {WEEKDAYS.map(day => (
-              <Text key={day} style={styles.weekday}>
+              <Text key={day} style={[styles.weekday, icy && styles.weekdayIcy]}>
                 {day}
               </Text>
             ))}
@@ -299,10 +332,12 @@ const ExamDateRangeModal = ({visible, startDate, endDate, onClose, onApply}) => 
             ))}
           </View>
 
-          <View style={styles.rangeBox}>
+          <View style={[styles.rangeBox, icy && styles.rangeBoxIcy]}>
             <View style={styles.rangeSideLeft}>
-              <Text style={styles.rangeLabel}>{Strings.start}</Text>
-              <Text style={styles.rangeValue}>
+              <Text style={[styles.rangeLabel, icy && styles.rangeLabelIcy]}>
+                {Strings.start}
+              </Text>
+              <Text style={[styles.rangeValue, icy && styles.rangeValueIcy]}>
                 {formatShort(tempStart) || '-'}
               </Text>
             </View>
@@ -310,31 +345,40 @@ const ExamDateRangeModal = ({visible, startDate, endDate, onClose, onApply}) => 
             <Icon
               name="arrow-forward"
               size={wp(4)}
-              color={Colors.whiteMuted85}
+              color={icy ? Colors.brandRoyal : Colors.whiteMuted85}
               style={styles.rangeArrow}
             />
 
             <View style={styles.rangeSideRight}>
-              <Text style={styles.rangeLabel}>{Strings.end}</Text>
-              <Text style={styles.rangeValue}>{formatShort(tempEnd) || '-'}</Text>
+              <Text style={[styles.rangeLabel, icy && styles.rangeLabelIcy]}>
+                {Strings.end}
+              </Text>
+              <Text style={[styles.rangeValue, icy && styles.rangeValueIcy]}>
+                {formatShort(tempEnd) || '-'}
+              </Text>
             </View>
           </View>
 
           <View style={styles.footer}>
             <TouchableOpacity onPress={handleClear} activeOpacity={0.8}>
-              <Text style={styles.clearText}>{Strings.clear}</Text>
+              <Text style={[styles.clearText, icy && styles.clearTextIcy]}>
+                {Strings.clear}
+              </Text>
             </TouchableOpacity>
 
             <View style={styles.footerBtns}>
               <TouchableOpacity
-                style={styles.cancelBtn}
+                style={[styles.cancelBtn, icy && styles.cancelBtnIcy]}
                 activeOpacity={0.8}
                 onPress={onClose}>
-                <Text style={styles.cancelText}>{Strings.cancel}</Text>
+                <Text style={[styles.cancelText, icy && styles.cancelTextIcy]}>
+                  {Strings.cancel}
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[
                   styles.applyBtn,
+                  icy && styles.applyBtnIcy,
                   !(tempStart && tempEnd) && styles.applyBtnDisabled,
                 ]}
                 disabled={!(tempStart && tempEnd)}
@@ -552,5 +596,70 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontFamily: Fonts.bold,
     fontSize: Fontsize.normal,
+  },
+  sheetWrapIcy: {
+    borderRadius: radius.banner,
+    overflow: 'hidden',
+    ...elevation.banner,
+  },
+  sheetIcy: {
+    borderRadius: radius.banner,
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: 'rgba(91, 156, 255, 0.35)',
+  },
+  navBtnIcy: {
+    backgroundColor: Colors.hubCard,
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: Colors.borderSubtle,
+  },
+  monthTitleIcy: {
+    color: Colors.brandNavy,
+  },
+  selectLabelIcy: {
+    color: Colors.textSecondary,
+  },
+  weekdayIcy: {
+    color: Colors.textSecondary,
+  },
+  dayTextIcy: {
+    color: Colors.brandNavy,
+  },
+  dayTextMutedIcy: {
+    color: Colors.borderSubtle,
+  },
+  dayCircleSelectedIcy: {
+    backgroundColor: Colors.brandRoyal,
+  },
+  dayCircleTodayIcy: {
+    borderWidth: 1.5,
+    borderColor: Colors.brandRoyal,
+    backgroundColor: Colors.hubCard,
+  },
+  rangeBarIcy: {
+    backgroundColor: Colors.tabActivePill,
+  },
+  rangeBoxIcy: {
+    backgroundColor: Colors.hubCard,
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: Colors.borderSubtle,
+  },
+  rangeLabelIcy: {
+    color: Colors.textSecondary,
+  },
+  rangeValueIcy: {
+    color: Colors.brandNavy,
+  },
+  clearTextIcy: {
+    color: Colors.brandRoyal,
+  },
+  cancelBtnIcy: {
+    backgroundColor: Colors.surface,
+    borderColor: Colors.borderSubtle,
+  },
+  cancelTextIcy: {
+    color: Colors.brandNavy,
+  },
+  applyBtnIcy: {
+    backgroundColor: Colors.brandNavy,
   },
 });

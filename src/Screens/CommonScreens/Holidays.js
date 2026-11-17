@@ -1,22 +1,38 @@
 import React, {useEffect, useState} from 'react';
 import {ActivityIndicator, StatusBar, StyleSheet, Text, View} from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import {useDispatch, useSelector} from 'react-redux';
 import ScrollEnterScrollView from '../../Component/ScrollEnterScrollView';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import DepthIcon from '../../Component/DepthIcon';
 import AnimatedCard from '../../Component/AnimatedCard';
 import AttendanceStudentDropdown from '../../Component/AttendanceStudentDropdown';
+import StudentBrandedHeader from '../../Component/Student/StudentBrandedHeader';
 import MainHeaderComponent from '../../Component/MainHeaderComponent';
 import ProfileGradientCard from '../../Component/Profile/ProfileGradientCard';
 import ProfileSectionTitle from '../../Component/Profile/ProfileSectionTitle';
 import ParentChildCard from '../../Component/Parent/ParentChildCard';
 import ChildSwitchModal from '../../Component/Parent/ChildSwitchModal';
-import {SCREEN_WAVES} from '../../Component/CardWave';
+import FeatureArtImage from '../../Component/Glass/FeatureArtImage';
+import CardWave, {SCREEN_WAVES} from '../../Component/CardWave';
+import EschoolyScreenShell, {
+  FLOAT_CARD_GAP,
+  FLOAT_CARD_TUCK,
+  NAVY_ICE_CURVE,
+} from '../../Component/Glass/EschoolyScreenShell';
+import {
+  StudentToneProvider,
+  useStackBottomPad,
+  useStudentTone,
+} from '../../Component/Glass/StudentTone';
+import {GRADIENT_END, GRADIENT_START} from '../../Component/Profile/ProfileTheme';
+import {EducationIcons} from '../../Assets/EducationIcons';
 import {Colors} from '../../Constants/Colors';
 import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
 import {HOLIDAY_LIST} from '../../Constants/dummydata';
+import {elevation, radius} from '../../Constants/Theme';
 import {wp, hp} from '../../Constants/Responsive';
 import {ScreenEnterProvider} from '../../hooks/useScreenEnterGate';
 import {
@@ -60,8 +76,63 @@ const parseHolidayDate = date => {
 };
 
 const HolidayCard = ({item, animationIndex, showWave}) => {
+  const icy = useStudentTone();
   const theme = TYPE_THEMES[item.type] || TYPE_THEMES.School;
   const dateParts = parseHolidayDate(item.date);
+
+  if (icy) {
+    return (
+      <AnimatedCard
+        index={animationIndex}
+        entering={getHomeScreenEnter(animationIndex)}
+        style={styles.wrapIcy}>
+        <View style={styles.clipIcy}>
+          <LinearGradient
+            colors={[Colors.bannerIceStart, Colors.bannerIceEnd]}
+            start={GRADIENT_START}
+            end={GRADIENT_END}
+            style={styles.fillIcy}
+          />
+          <View pointerEvents="none" style={styles.waveIcy}>
+            <CardWave
+              variant={SCREEN_WAVES.assignmentIce}
+              color="rgba(91, 156, 255, 0.18)"
+            />
+          </View>
+          <View style={styles.cardInnerIcy}>
+            <View style={styles.icyMain}>
+              <Text style={styles.titleIcy} numberOfLines={2}>
+                {item.title}
+              </Text>
+              {dateParts.dateLine || item.date ? (
+                <Text style={styles.dateIcy} numberOfLines={2}>
+                  {dateParts.dateLine || item.date}
+                </Text>
+              ) : null}
+              {dateParts.dayLine ? (
+                <Text style={styles.dayIcy} numberOfLines={1}>
+                  {dateParts.dayLine}
+                </Text>
+              ) : null}
+              {item.duration ? (
+                <Text style={styles.durationIcy} numberOfLines={1}>
+                  {item.duration}
+                </Text>
+              ) : null}
+            </View>
+            <View style={styles.icyAccent}>
+              {item.type ? (
+                <View style={styles.badgeIcy}>
+                  <Text style={styles.badgeTextIcy}>{item.type}</Text>
+                </View>
+              ) : null}
+              <FeatureArtImage source={EducationIcons.holidays} size={wp(14)} />
+            </View>
+          </View>
+        </View>
+      </AnimatedCard>
+    );
+  }
 
   return (
     <ProfileGradientCard
@@ -93,8 +164,13 @@ const Holidays = () => {
   const dispatch = useDispatch();
   const role = useSelector(state => state.auth.role);
   const isParent = role === 'parent';
+  const icy = !isParent;
+  const bottomPad = useStackBottomPad();
   const {children, selectedChildId: homeChildId} = useSelector(state => state.parentHome);
   const homeStudent = useSelector(state => state.studentHome.student);
+  const unreadNotifications = useSelector(
+    state => state.studentHome?.unreadNotifications || 0,
+  );
   const [studentHolidays, setStudentHolidays] = useState([]);
   const [loading, setLoading] = useState(!isParent);
   const [switchVisible, setSwitchVisible] = useState(false);
@@ -151,8 +227,86 @@ const Holidays = () => {
     };
   }, [dispatch, isParent]);
 
+  const holidayList = loading ? (
+    <ActivityIndicator
+      style={styles.loader}
+      size="large"
+      color={icy ? Colors.brandRoyal : Colors.primary}
+    />
+  ) : holidays.length === 0 ? (
+    <Text style={[styles.empty, icy && styles.emptyIcy]}>No holidays yet.</Text>
+  ) : (
+    holidays.map((item, index) => {
+      const slot = index + 3;
+      return (
+        <HolidayCard
+          key={item.id}
+          item={item}
+          animationIndex={slot}
+          showWave={index === 0}
+        />
+      );
+    })
+  );
+
+  if (icy) {
+    return (
+      <ScreenEnterProvider motion="holidays">
+        <StudentToneProvider active>
+          <EschoolyScreenShell variant="navy-ice">
+            <ScrollEnterScrollView
+              style={styles.scrollArea}
+              contentContainerStyle={[
+                styles.studentScroll,
+                {paddingBottom: bottomPad},
+              ]}
+              showsVerticalScrollIndicator={false}
+              bounces={false}
+              overScrollMode="never"
+              removeClippedSubviews={false}
+              keyboardShouldPersistTaps="handled">
+              <EschoolyScreenShell.Header style={styles.studentBand}>
+                <StudentBrandedHeader
+                  title={Strings.holidays}
+                  unreadCount={unreadNotifications}
+                />
+              </EschoolyScreenShell.Header>
+              <EschoolyScreenShell.Body tuck={false} style={styles.studentBody}>
+                <View style={styles.canvasStage}>
+                  <View pointerEvents="none" style={styles.canvasWave}>
+                    <CardWave
+                      variant={SCREEN_WAVES.assignmentIce}
+                      color="rgba(37, 99, 235, 0.12)"
+                    />
+                  </View>
+                  <View style={styles.canvasForeground}>
+                    <AttendanceStudentDropdown
+                      student={bannerStudent}
+                      premium
+                      embedded
+                      readOnly
+                      look="float"
+                      label={Strings.student}
+                    />
+                    <ProfileSectionTitle
+                      animationIndex={2}
+                      style={styles.sectionIcy}>
+                      {Strings.upcomingHolidays}
+                    </ProfileSectionTitle>
+                    {holidayList}
+                  </View>
+                </View>
+              </EschoolyScreenShell.Body>
+            </ScrollEnterScrollView>
+          </EschoolyScreenShell>
+        </StudentToneProvider>
+      </ScreenEnterProvider>
+    );
+  }
+
   return (
     <ScreenEnterProvider motion="holidays">
+      <StudentToneProvider active={false}>
       <SafeAreaView style={styles.container} edges={['top']}>
         <StatusBar backgroundColor={Colors.parentBg} barStyle="dark-content" />
         <MainHeaderComponent
@@ -161,40 +315,23 @@ const Holidays = () => {
           navyBack
         />
 
-        {isParent ? (
-          <View style={styles.parentChildWrap}>
-            <AnimatedCard
-              index={1}
-              entering={ACADEMICS_PROFILE_ENTERING}
-              style={styles.childCard}>
-              <ParentChildCard
-                child={parentChild}
-                chevron={parentCanSwitch ? 'chevron-down' : undefined}
-                accented
-                solid
-                prominent
-                showWave
-                waveVariant={SCREEN_WAVES.academics}
-                onPress={parentCanSwitch ? () => setSwitchVisible(true) : undefined}
-              />
-            </AnimatedCard>
-          </View>
-        ) : (
-          <View style={styles.dropdownWrap}>
-            <AnimatedCard
-              index={1}
-              entering={ACADEMICS_PROFILE_ENTERING}
-              style={styles.childCard}>
-              <AttendanceStudentDropdown
-                student={bannerStudent}
-                premium
-                embedded
-                readOnly
-                label={Strings.student}
-              />
-            </AnimatedCard>
-          </View>
-        )}
+        <View style={styles.parentChildWrap}>
+          <AnimatedCard
+            index={1}
+            entering={ACADEMICS_PROFILE_ENTERING}
+            style={styles.childCard}>
+            <ParentChildCard
+              child={parentChild}
+              chevron={parentCanSwitch ? 'chevron-down' : undefined}
+              accented
+              solid
+              prominent
+              showWave
+              waveVariant={SCREEN_WAVES.academics}
+              onPress={parentCanSwitch ? () => setSwitchVisible(true) : undefined}
+            />
+          </AnimatedCard>
+        </View>
 
         <ScrollEnterScrollView
           style={styles.scrollArea}
@@ -207,27 +344,10 @@ const Holidays = () => {
           <ProfileSectionTitle animationIndex={2}>
             {Strings.upcomingHolidays}
           </ProfileSectionTitle>
-
-          {loading ? (
-            <ActivityIndicator style={styles.loader} size="large" color={Colors.primary} />
-          ) : holidays.length === 0 ? (
-            <Text style={styles.empty}>No holidays yet.</Text>
-          ) : (
-            holidays.map((item, index) => {
-              const slot = index + 3;
-              return (
-                <HolidayCard
-                  key={item.id}
-                  item={item}
-                  animationIndex={slot}
-                  showWave={index === 0}
-                />
-              );
-            })
-          )}
+          {holidayList}
         </ScrollEnterScrollView>
 
-        {isParent && parentCanSwitch ? (
+        {parentCanSwitch ? (
           <ChildSwitchModal
             visible={switchVisible}
             childrenList={children}
@@ -241,6 +361,7 @@ const Holidays = () => {
           />
         ) : null}
       </SafeAreaView>
+      </StudentToneProvider>
     </ScreenEnterProvider>
   );
 };
@@ -254,6 +375,7 @@ const styles = StyleSheet.create({
   },
   scrollArea: {
     flex: 1,
+    overflow: 'visible',
   },
   parentChildWrap: {
     paddingHorizontal: wp(4),
@@ -329,5 +451,113 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.medium,
     fontSize: Fontsize.xs1,
     marginTop: hp(6),
+  },
+  emptyIcy: {
+    color: Colors.textSecondary,
+  },
+  studentScroll: {
+    flexGrow: 1,
+    backgroundColor: Colors.canvas,
+    overflow: 'visible',
+  },
+  studentBand: {
+    borderBottomLeftRadius: NAVY_ICE_CURVE,
+    paddingBottom: FLOAT_CARD_GAP + FLOAT_CARD_TUCK,
+    overflow: 'visible',
+  },
+  studentBody: {
+    paddingTop: 0,
+    marginTop: -FLOAT_CARD_TUCK,
+    overflow: 'visible',
+  },
+  canvasStage: {
+    position: 'relative',
+    overflow: 'visible',
+    minHeight: hp(62),
+  },
+  canvasWave: {
+    position: 'absolute',
+    top: hp(2),
+    right: -wp(4),
+    left: 0,
+    height: hp(56),
+    zIndex: 0,
+  },
+  canvasForeground: {
+    zIndex: 1,
+  },
+  sectionIcy: {
+    color: Colors.brandNavy,
+    marginTop: hp(0.4),
+  },
+  wrapIcy: {
+    marginBottom: hp(1.2),
+    overflow: 'visible',
+  },
+  clipIcy: {
+    borderRadius: radius.banner,
+    overflow: 'hidden',
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: 'rgba(91, 156, 255, 0.35)',
+    backgroundColor: Colors.bannerIceStart,
+    ...elevation.card,
+  },
+  fillIcy: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  waveIcy: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  cardInnerIcy: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: wp(3.6),
+    paddingVertical: hp(1.5),
+  },
+  icyMain: {
+    flex: 1,
+    minWidth: 0,
+    paddingRight: wp(2),
+  },
+  icyAccent: {
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
+  titleIcy: {
+    color: Colors.brandNavy,
+    fontFamily: Fonts.bold,
+    fontSize: Fontsize.sm,
+  },
+  dateIcy: {
+    color: Colors.textPrimary,
+    fontFamily: Fonts.semibold,
+    fontSize: Fontsize.xs1,
+    marginTop: hp(0.45),
+  },
+  dayIcy: {
+    color: Colors.textSecondary,
+    fontFamily: Fonts.regular,
+    fontSize: Fontsize.xs0,
+    marginTop: hp(0.2),
+  },
+  durationIcy: {
+    color: Colors.textSecondary,
+    fontFamily: Fonts.regular,
+    fontSize: Fontsize.xs0,
+    marginTop: hp(0.7),
+  },
+  badgeIcy: {
+    borderRadius: wp(4),
+    paddingHorizontal: wp(2.6),
+    paddingVertical: hp(0.35),
+    backgroundColor: Colors.hubCard,
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: Colors.borderSubtle,
+    marginBottom: hp(0.6),
+  },
+  badgeTextIcy: {
+    color: Colors.brandRoyal,
+    fontFamily: Fonts.semibold,
+    fontSize: Fontsize.xxm,
   },
 });
