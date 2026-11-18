@@ -2380,6 +2380,26 @@ const parseClassDate = value => {
   return Number.isNaN(date.getTime()) ? null : date;
 };
 
+/** Show the clock written in the API ISO string (17:30), not a timezone-shifted local time. */
+const formatClassClock = value => {
+  const raw = text(value);
+  if (!raw) {
+    return '';
+  }
+  const match = raw.match(/T(\d{2}):(\d{2})/);
+  if (!match) {
+    return clockFromIso(raw);
+  }
+  let hours = Number(match[1]);
+  if (!Number.isFinite(hours)) {
+    return '';
+  }
+  const minutes = match[2];
+  const suffix = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12 || 12;
+  return `${hours}:${minutes} ${suffix}`;
+};
+
 const classDayBadge = date => {
   if (!date) {
     return '';
@@ -2488,10 +2508,19 @@ export const mapStudentOnlineClass = (slot, listStatus = '') => {
   const minutes = Number(row.duration_minutes);
   const duration = Number.isFinite(minutes) && minutes > 0 ? `${minutes} min` : '';
   const joinedCount = Number(row.participants_count);
-  const reminderMinutes = Number(row.reminder_minutes_before);
+  const rawReminder = row.reminder_minutes_before;
+  const reminderMinutes = Number(rawReminder);
+  const reminderSet =
+    rawReminder != null &&
+    rawReminder !== '' &&
+    Number.isFinite(reminderMinutes);
   const meetingUrl = text(row.meeting_url);
   const provider = providerFromSession(row.meeting_provider, meetingUrl);
   const hasRecording = truthyFlag(row.has_recording);
+  const downloadAllowed =
+    row.allow_download == null || row.allow_download === ''
+      ? true
+      : truthyFlag(row.allow_download);
   const detail = [
     recordingDateLabel(scheduled),
     duration,
@@ -2508,21 +2537,45 @@ export const mapStudentOnlineClass = (slot, listStatus = '') => {
     started: classStartedLabel(row.started_at, row.scheduled_at),
     month: scheduled ? text(SHORT_MONTHS[scheduled.getMonth()]).toUpperCase() : '',
     badge: classDayBadge(scheduled),
-    time: clockFromIso(row.scheduled_at),
+    time: formatClassClock(row.scheduled_at),
     duration,
+    scheduledAt: scheduled ? scheduled.getTime() : null,
     zoomLink: meetingHost(meetingUrl),
     meetingUrl,
     providerLabel: provider.label,
     isZoom: provider.isZoom,
     showFooter: true,
-    reminderSet: Number.isFinite(reminderMinutes),
-    reminderMinutes: Number.isFinite(reminderMinutes) ? reminderMinutes : null,
+    reminderSet,
+    reminderMinutes: reminderSet ? reminderMinutes : null,
     status: classStatusLabel(row.status, listStatus),
     detail,
     hasRecording,
     canWatch: hasRecording,
-    canDownload: hasRecording,
+    canDownload: hasRecording && downloadAllowed,
   };
+};
+
+export const sortOnlineClassesNearestFirst = items => {
+  const rows = Array.isArray(items) ? items : [];
+  return rows
+    .map((item, index) => ({item, index}))
+    .sort((left, right) => {
+      const leftTime = left.item?.scheduledAt;
+      const rightTime = right.item?.scheduledAt;
+      const leftValid = Number.isFinite(leftTime);
+      const rightValid = Number.isFinite(rightTime);
+      if (leftValid && rightValid && leftTime !== rightTime) {
+        return leftTime - rightTime;
+      }
+      if (leftValid && !rightValid) {
+        return -1;
+      }
+      if (!leftValid && rightValid) {
+        return 1;
+      }
+      return left.index - right.index;
+    })
+    .map(row => row.item);
 };
 
 export const readOnlineClassPage = (body, listStatus = '') =>

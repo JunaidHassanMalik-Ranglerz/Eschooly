@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  ActivityIndicator,
   Image,
   StyleSheet,
   Text,
@@ -68,7 +69,9 @@ const LiveClassCard = ({
       <View style={styles.identityRow}>
         <View style={styles.copy}>
           {item?.title ? (
-            <Text style={[styles.title, icy && styles.titleIcy]}>
+            <Text
+              style={[styles.title, icy && styles.titleIcy]}
+              numberOfLines={2}>
               {item.title}
             </Text>
           ) : null}
@@ -132,7 +135,11 @@ const LiveClassCard = ({
         activeOpacity={0.85}
         disabled={joining}
         onPress={() => onJoin?.(item)}>
-        <Icon name="videocam" size={wp(4.5)} color={Colors.white} />
+        {joining ? (
+          <ActivityIndicator size="small" color={Colors.white} />
+        ) : (
+          <Icon name="videocam" size={wp(4.5)} color={Colors.white} />
+        )}
         <Text style={styles.joinText} numberOfLines={1}>
           {Strings.joinClass}
         </Text>

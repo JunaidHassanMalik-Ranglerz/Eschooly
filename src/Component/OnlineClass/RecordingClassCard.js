@@ -1,5 +1,12 @@
 import React from 'react';
-import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {
+  ActivityIndicator,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
 import DepthIcon from '../DepthIcon';
@@ -33,6 +40,10 @@ const RecordingClassCard = ({
 }) => {
   const paletteIndex = gradientIndex ?? animationIndex;
   const icy = useStudentTone();
+  const showWatch = icy ? Boolean(item?.canWatch) : item?.canWatch !== false;
+  const showDownload = icy
+    ? Boolean(item?.canDownload)
+    : item?.canDownload !== false;
 
   const body = (
     <>
@@ -55,7 +66,9 @@ const RecordingClassCard = ({
         <View style={styles.info}>
           <View style={styles.titleRow}>
             {item?.title ? (
-              <Text style={[styles.title, icy && styles.titleIcy]}>
+              <Text
+                style={[styles.title, icy && styles.titleIcy]}
+                numberOfLines={2}>
                 {item.title}
               </Text>
             ) : (
@@ -79,15 +92,20 @@ const RecordingClassCard = ({
         </View>
       </View>
 
-      {item?.canWatch !== false || item?.canDownload !== false ? (
+      {showWatch || showDownload ? (
         <View style={styles.btnRow}>
-          {item?.canWatch !== false ? (
+          {showWatch ? (
             <TouchableOpacity
               style={[styles.actionBtn, icy && styles.actionBtnIcy]}
               activeOpacity={0.8}
-              disabled={watching}
+              disabled={watching || (icy && !onWatch)}
               onPress={() => onWatch?.(item)}>
-              {icy ? (
+              {watching ? (
+                <ActivityIndicator
+                  size="small"
+                  color={icy ? Colors.brandRoyal : Colors.white}
+                />
+              ) : icy ? (
                 <Icon
                   name="play-outline"
                   size={wp(4)}
@@ -108,13 +126,18 @@ const RecordingClassCard = ({
             </TouchableOpacity>
           ) : null}
 
-          {item?.canDownload !== false ? (
+          {showDownload ? (
             <TouchableOpacity
               style={[styles.actionBtn, icy && styles.actionBtnIcy]}
               activeOpacity={0.8}
-              disabled={downloading}
+              disabled={downloading || (icy && !onDownload)}
               onPress={() => onDownload?.(item)}>
-              {icy ? (
+              {downloading ? (
+                <ActivityIndicator
+                  size="small"
+                  color={icy ? Colors.brandNavy : Colors.white}
+                />
+              ) : icy ? (
                 <Icon
                   name="download-outline"
                   size={wp(4)}

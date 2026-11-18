@@ -1,5 +1,5 @@
 import React from 'react';
-import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {ActivityIndicator, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
 import ProfileGradientCard from '../Profile/ProfileGradientCard';
@@ -61,10 +61,16 @@ const UpcomingClassCard = ({
       </View>
 
       {item?.title ? (
-        <Text style={[styles.title, icy && styles.textIcy]}>{item.title}</Text>
+        <Text
+          style={[styles.title, icy && styles.textIcy]}
+          numberOfLines={2}>
+          {item.title}
+        </Text>
       ) : null}
       {item?.classInfo ? (
-        <Text style={[styles.classInfo, icy && styles.metaIcy]}>
+        <Text
+          style={[styles.classInfo, icy && styles.metaIcy]}
+          numberOfLines={2}>
           {item.classInfo}
         </Text>
       ) : null}
@@ -105,16 +111,29 @@ const UpcomingClassCard = ({
 
       {item?.showFooter ? (
         <View style={[styles.footer, icy && styles.footerIcy]}>
-          {item?.zoomLink ? (
+          {icy ? (
+            item?.providerLabel ? (
+              <View style={styles.zoomRow}>
+                <Icon
+                  name="videocam-outline"
+                  size={wp(3.5)}
+                  color={Colors.brandRoyal}
+                />
+                <Text style={[styles.zoomLink, styles.metaIcy]} numberOfLines={1}>
+                  {item.providerLabel}
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.zoomRow} />
+            )
+          ) : item?.zoomLink ? (
             <View style={styles.zoomRow}>
               <Icon
                 name="link-outline"
                 size={wp(3.5)}
-                color={icy ? Colors.textSecondary : Colors.whiteMuted85}
+                color={Colors.whiteMuted85}
               />
-              <Text
-                style={[styles.zoomLink, icy && styles.metaIcy]}
-                numberOfLines={1}>
+              <Text style={styles.zoomLink} numberOfLines={1}>
                 {item.zoomLink}
               </Text>
             </View>
@@ -123,13 +142,25 @@ const UpcomingClassCard = ({
           )}
           <TouchableOpacity
             activeOpacity={0.8}
-            disabled={reminding || item?.reminderSet}
-            onPress={() => onReminder?.(item)}>
-            <Text
-              style={[styles.reminderText, icy && styles.reminderIcy]}
-              numberOfLines={1}>
-              {item?.reminderSet ? Strings.reminderSet : Strings.setReminder}
-            </Text>
+            disabled={reminding || item?.reminderSet || (icy && !onReminder)}
+            onPress={() => onReminder?.(item)}
+            style={styles.reminderBtn}>
+            {reminding ? (
+              <ActivityIndicator
+                size="small"
+                color={icy ? Colors.brandRoyal : '#93C5FD'}
+              />
+            ) : (
+              <Text
+                style={[
+                  styles.reminderText,
+                  icy && styles.reminderIcy,
+                  item?.reminderSet && styles.reminderSet,
+                ]}
+                numberOfLines={1}>
+                {item?.reminderSet ? Strings.reminderSet : Strings.setReminder}
+              </Text>
+            )}
           </TouchableOpacity>
         </View>
       ) : null}
@@ -292,10 +323,18 @@ const styles = StyleSheet.create({
     fontSize: Fontsize.xs0,
     flex: 1,
   },
+  reminderBtn: {
+    minHeight: hp(3.2),
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+  },
   reminderText: {
     color: '#93C5FD',
     fontFamily: Fonts.semibold,
     fontSize: Fontsize.xs1,
+  },
+  reminderSet: {
+    opacity: 0.85,
   },
   textIcy: {
     color: Colors.brandNavy,

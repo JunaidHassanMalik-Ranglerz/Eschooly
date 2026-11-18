@@ -5,6 +5,7 @@ import {
   mapStudentOnlineClassJoin,
   mapStudentOnlineClassRecording,
   readOnlineClassPage,
+  sortOnlineClassesNearestFirst,
 } from '../src/services/studentService';
 
 describe('Student online class mapping', () => {
@@ -98,5 +99,59 @@ describe('Student online class mapping', () => {
   it('drops rows without an id or title', () => {
     expect(readOnlineClassPage({data: [{title: 'No id'}]})).toEqual([]);
     expect(readOnlineClassPage({data: [{id: 4}]})).toEqual([]);
+  });
+
+  it('shows the API wall-clock time instead of a timezone-shifted local time', () => {
+    const mapped = mapStudentOnlineClass({
+      id: 19,
+      title: 'Algebra',
+      scheduled_at: '2026-11-18T17:30:00+00:00',
+    });
+    expect(mapped.time).toBe('5:30 PM');
+  });
+
+  it('exposes schedule timestamps and does not treat empty reminder minutes as set', () => {
+    const mapped = mapStudentOnlineClass({
+      id: 21,
+      title: 'Algebra',
+      scheduled_at: '2026-11-20T09:30:00+05:00',
+      meeting_url: 'https://zoom.us/j/555',
+      meeting_provider: 'zoom',
+    });
+    expect(Number.isFinite(mapped.scheduledAt)).toBe(true);
+    expect(mapped.reminderSet).toBe(false);
+    expect(mapped.canWatch).toBe(false);
+    expect(mapped.zoomLink).toBe('zoom.us/j/555');
+  });
+
+  it('marks reminder from explicit minutes and hides download when disallowed', () => {
+    const mapped = mapStudentOnlineClass({
+      id: 22,
+      title: 'Replay',
+      has_recording: '1',
+      allow_download: 0,
+      reminder_minutes_before: 10,
+    });
+    expect(mapped.reminderSet).toBe(true);
+    expect(mapped.reminderMinutes).toBe(10);
+    expect(mapped.hasRecording).toBe(true);
+    expect(mapped.canWatch).toBe(true);
+    expect(mapped.canDownload).toBe(false);
+  });
+
+  it('sorts upcoming classes nearest-first and keeps invalid timestamps stable', () => {
+    const later = mapStudentOnlineClass({
+      id: 2,
+      title: 'Later',
+      scheduled_at: '2026-11-22T10:00:00+05:00',
+    });
+    const sooner = mapStudentOnlineClass({
+      id: 1,
+      title: 'Sooner',
+      scheduled_at: '2026-11-21T08:00:00+05:00',
+    });
+    const missing = mapStudentOnlineClass({id: 3, title: 'No date'});
+    const sorted = sortOnlineClassesNearestFirst([later, missing, sooner]);
+    expect(sorted.map(item => item.id)).toEqual([1, 2, 3]);
   });
 });

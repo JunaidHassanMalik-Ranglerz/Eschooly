@@ -816,9 +816,14 @@ const rejectOnlineClass = (body, fallback, status = null) => ({
 });
 
 const readOnlineClassStatus = async status => {
+  const endpoint = `/student/online-classes?status=${status}`;
   try {
     const response = await getStudentOnlineClasses({status});
     const body = response?.data;
+    console.log('[OnlineClass API] GET', endpoint, {
+      httpStatus: response?.status,
+      body,
+    });
     if (body && body.success === false) {
       return {
         items: [],
@@ -829,8 +834,15 @@ const readOnlineClassStatus = async status => {
         ),
       };
     }
-    return {items: readOnlineClassPage(body, status), error: null};
+    const items = readOnlineClassPage(body, status);
+    console.log('[OnlineClass API] mapped', endpoint, items);
+    return {items, error: null};
   } catch (error) {
+    console.log('[OnlineClass API] GET', endpoint, {
+      error: getApiErrorMessage(error),
+      httpStatus: error?.response?.status ?? null,
+      body: error?.response?.data,
+    });
     return {
       items: [],
       error: {
@@ -857,6 +869,11 @@ export const fetchStudentOnlineClasses = createAsyncThunk(
       live: live.items,
       upcoming: upcoming.items,
       ended: ended.items,
+      errors: {
+        live: live.error,
+        upcoming: upcoming.error,
+        ended: ended.error,
+      },
     };
   },
 );
@@ -867,6 +884,10 @@ export const joinStudentOnlineClassSession = createAsyncThunk(
     try {
       const response = await joinStudentOnlineClass(onlineClassId);
       const body = response?.data;
+      console.log('[OnlineClass API] POST', `/student/online-classes/${onlineClassId}/join`, {
+        httpStatus: response?.status,
+        body,
+      });
       if (body && body.success === false) {
         return rejectWithValue(
           rejectOnlineClass(body, 'Unable to join this class.', response?.status),
@@ -879,6 +900,10 @@ export const joinStudentOnlineClassSession = createAsyncThunk(
       try {
         const detailResponse = await getStudentOnlineClass(onlineClassId);
         const detailBody = detailResponse?.data;
+        console.log('[OnlineClass API] GET', `/student/online-classes/${onlineClassId}`, {
+          httpStatus: detailResponse?.status,
+          body: detailBody,
+        });
         if (detailBody && detailBody.success === false) {
           return joined;
         }
@@ -891,6 +916,11 @@ export const joinStudentOnlineClassSession = createAsyncThunk(
         return joined;
       }
     } catch (error) {
+      console.log('[OnlineClass API] POST', `/student/online-classes/${onlineClassId}/join`, {
+        error: getApiErrorMessage(error),
+        httpStatus: error?.response?.status ?? null,
+        body: error?.response?.data,
+      });
       return rejectWithValue({
         message: getApiErrorMessage(error),
         status: error?.response?.status ?? null,
@@ -908,6 +938,10 @@ export const remindStudentOnlineClassSession = createAsyncThunk(
         minutesBefore,
       );
       const body = response?.data;
+      console.log('[OnlineClass API] POST', `/student/online-classes/${onlineClassId}/reminder`, {
+        httpStatus: response?.status,
+        body,
+      });
       if (body && body.success === false) {
         return rejectWithValue(
           rejectOnlineClass(body, 'Unable to set reminder.', response?.status),
@@ -935,6 +969,10 @@ export const fetchStudentOnlineClassRecording = createAsyncThunk(
     try {
       const response = await getStudentOnlineClassRecording(onlineClassId);
       const body = response?.data;
+      console.log('[OnlineClass API] GET', `/student/online-classes/${onlineClassId}/recording`, {
+        httpStatus: response?.status,
+        body,
+      });
       if (body && body.success === false) {
         return rejectWithValue(
           rejectOnlineClass(body, 'Recording is not available.', response?.status),
@@ -954,8 +992,14 @@ export const downloadStudentOnlineClassSession = createAsyncThunk(
   'studentHome/downloadStudentOnlineClassSession',
   async ({onlineClassId, title}, {rejectWithValue}) => {
     try {
-      return await downloadStudentOnlineClassRecording(onlineClassId, title);
+      const result = await downloadStudentOnlineClassRecording(onlineClassId, title);
+      console.log('[OnlineClass API] GET', `/student/online-classes/${onlineClassId}/recording/download`, result);
+      return result;
     } catch (error) {
+      console.log('[OnlineClass API] GET', `/student/online-classes/${onlineClassId}/recording/download`, {
+        error: getApiErrorMessage(error),
+        httpStatus: error?.response?.status ?? null,
+      });
       return rejectWithValue({
         message: getApiErrorMessage(error),
         status: error?.response?.status ?? null,

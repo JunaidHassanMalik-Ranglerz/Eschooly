@@ -13,7 +13,9 @@ const ClassSectionHeader = props => {
       <Text style={[styles.title, icy && styles.titleIcy]}>{props?.title}</Text>
       {props?.linkText ? (
         <TouchableOpacity activeOpacity={0.8} onPress={props?.onPress}>
-          <Text style={styles.link}>{props?.linkText}</Text>
+          <Text style={[styles.link, icy && styles.linkIcy]}>
+            {props?.linkText}
+          </Text>
         </TouchableOpacity>
       ) : null}
     </View>
@@ -42,5 +44,8 @@ const styles = StyleSheet.create({
     color: Colors.primary,
     fontFamily: Fonts.medium,
     fontSize: Fontsize.xs1,
+  },
+  linkIcy: {
+    color: Colors.brandRoyal,
   },
 });
