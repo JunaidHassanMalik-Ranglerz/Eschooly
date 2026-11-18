@@ -52,7 +52,8 @@ const OptionPickerSheetModal = ({
               ice && styles.rowLabelIce,
               selected && ice && styles.rowLabelSelectedIce,
             ]}
-            numberOfLines={2}>
+            numberOfLines={2}
+            textBreakStrategy="simple">
             {item?.[labelField]}
           </Text>
           <View
@@ -188,8 +189,8 @@ const styles = StyleSheet.create({
     color: Colors.brandNavy,
   },
   radioIce: {
-    borderColor: Colors.borderSubtle,
-    backgroundColor: Colors.surface,
+    borderColor: 'rgba(19, 69, 163, 0.28)',
+    backgroundColor: Colors.bannerIceStart,
     flexShrink: 0,
     marginLeft: wp(1.2),
   },

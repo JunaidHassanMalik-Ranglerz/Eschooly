@@ -10,6 +10,7 @@ import {elevation, radius} from '../../Constants/Theme';
 import {wp, hp} from '../../Constants/Responsive';
 import {EnterView} from '../AnimatedCard';
 import {enterFromBottom} from '../../utils/cardAnimation';
+import CardWave, {SCREEN_WAVES} from '../CardWave';
 
 const ParentSheetModal = ({
   visible,
@@ -81,9 +82,13 @@ const ParentSheetModal = ({
         {ice ? (
           <LinearGradient
             colors={[Colors.bannerIceStart, Colors.bannerIceEnd]}
-            start={{x: 0, y: 0}}
+            start={{x: 0, y: 0.08}}
             end={{x: 1, y: 1}}
             style={styles.sheetFillIce}>
+            <CardWave
+              variant={SCREEN_WAVES.assignmentIce}
+              color="rgba(19, 69, 163, 0.14)"
+            />
             {header}
             {body}
           </LinearGradient>
@@ -199,6 +204,7 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     minHeight: 0,
     maxHeight: hp(58),
+    zIndex: 1,
   },
   bodyTall: {
     flex: 1,
@@ -218,23 +224,25 @@ const styles = StyleSheet.create({
   sheetFillIce: {
     width: '100%',
     maxHeight: '100%',
+    overflow: 'hidden',
+    borderRadius: radius.banner,
   },
   headerIce: {
     alignItems: 'center',
     paddingBottom: hp(1.35),
   },
   titleIce: {
+    color: Colors.textSecondary,
+    fontFamily: Fonts.medium,
+    fontSize: Fontsize.xs0,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+  },
+  subtitleIce: {
     color: Colors.brandNavy,
     fontFamily: Fonts.bold,
     fontSize: Fontsize.sm,
-    letterSpacing: 0,
-    textTransform: 'none',
-  },
-  subtitleIce: {
-    color: Colors.textSecondary,
-    fontFamily: Fonts.medium,
-    fontSize: Fontsize.xs1,
-    marginTop: hp(0.35),
+    marginTop: hp(0.3),
   },
   closeBtnIce: {
     width: wp(9),
