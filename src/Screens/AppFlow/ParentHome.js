@@ -1,28 +1,43 @@
 import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
-import {ActivityIndicator, StatusBar, StyleSheet, Text, View} from 'react-native';
+import {
+  ActivityIndicator,
+  AppState,
+  StatusBar,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import ScrollEnterScrollView from '../../Component/ScrollEnterScrollView';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {useDispatch, useSelector} from 'react-redux';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import Icon from 'react-native-vector-icons/Ionicons';
 import NotificationBell from '../../Component/NotificationBell';
 import SelectedChildBanner from '../../Component/SelectedChildBanner';
 import ChildSwitchModal from '../../Component/Parent/ChildSwitchModal';
 import AnimatedCard from '../../Component/AnimatedCard';
 import ParentStatCard from '../../Component/Parent/ParentStatCard';
 import ScheduleItem from '../../Component/Parent/ScheduleItem';
+import NavyHeaderBand from '../../Component/Glass/NavyHeaderBand';
+import SectionHeader from '../../Component/Glass/SectionHeader';
+import {EducationIcons, getFeatureArt} from '../../Assets/EducationIcons';
 import {Colors} from '../../Constants/Colors';
-import {Fonts} from '../../Constants/Fonts';
-import {Fontsize} from '../../Constants/Fontsize';
+import {Typography} from '../../Constants/Typography';
 import {Strings} from '../../Constants/Strings';
+import {spacing} from '../../Constants/Theme';
 import {wp, hp} from '../../Constants/Responsive';
 import {useGreeting} from '../../utils/getGreeting';
-import {CARD_GRADIENTS} from '../../Constants/CardTheme';
 import {SCREEN_WAVES} from '../../Component/CardWave';
+import {
+  FLOAT_CARD_GAP,
+  FLOAT_CARD_TUCK,
+  NAVY_ICE_CURVE,
+} from '../../Component/Glass/EschoolyScreenShell';
 import {
   ACADEMICS_ENTER_MOTION,
   ScreenEnterProvider,
 } from '../../hooks/useScreenEnterGate';
-import {setDarkStatusBar} from '../../Constants/MyStyling';
+import {setBlueStatusBar} from '../../Constants/MyStyling';
 import {
   ACADEMICS_HEADER_ENTERING,
   ACADEMICS_PROFILE_ENTERING,
@@ -33,6 +48,21 @@ import {
   fetchChildDashboard,
   fetchParentHome,
 } from '../../store/slices/parentHomeSlice';
+
+const paintNavyStatusBar = navigation => {
+  const nativeOptions = {
+    statusBarStyle: 'light',
+    statusBarBackgroundColor: Colors.brandNavy,
+    statusBarTranslucent: false,
+    statusBarAnimation: 'none',
+  };
+  let parent = navigation?.getParent?.();
+  while (parent) {
+    parent.setOptions?.(nativeOptions);
+    parent = typeof parent.getParent === 'function' ? parent.getParent() : null;
+  }
+  setBlueStatusBar();
+};
 
 const ParentHome = () => {
   const navigation = useNavigation();
@@ -102,22 +132,35 @@ const ParentHome = () => {
   }, [dispatch]);
 
   useLayoutEffect(() => {
-    setDarkStatusBar();
-  }, []);
+    paintNavyStatusBar(navigation);
+  }, [navigation]);
 
   useFocusEffect(
     useCallback(() => {
-      setDarkStatusBar();
-    }, []),
+      const paint = () => paintNavyStatusBar(navigation);
+      paint();
+      const later = setTimeout(paint, 80);
+      const sub = AppState.addEventListener('change', next => {
+        if (next === 'active') {
+          paint();
+          setTimeout(paint, 80);
+        }
+      });
+      return () => {
+        clearTimeout(later);
+        sub.remove();
+      };
+    }, [navigation]),
   );
 
   return (
     <ScreenEnterProvider motion={ACADEMICS_ENTER_MOTION}>
       <SafeAreaView style={styles.screen} edges={['top']}>
         <StatusBar
+          animated={false}
           translucent={false}
-          backgroundColor={Colors.parentBg}
-          barStyle="dark-content"
+          backgroundColor={Colors.brandNavy}
+          barStyle="light-content"
         />
 
         <ScrollEnterScrollView
@@ -132,8 +175,22 @@ const ParentHome = () => {
             index={0}
             entering={ACADEMICS_HEADER_ENTERING}
             style={styles.headerShell}>
-            <View style={styles.headerRow}>
-              <View style={styles.headerText}>
+            <NavyHeaderBand
+              style={styles.headerBand}
+              contentStyle={styles.headerContent}>
+              <View style={styles.brandRow}>
+                <View style={styles.brandLeft}>
+                  <Icon name="school" size={wp(5.2)} color={Colors.white} />
+                  <View style={styles.brandRule} />
+                  <Text style={styles.wordmark}>{Strings.eschoolyWordmark}</Text>
+                </View>
+                <NotificationBell
+                  count={Number(dashboard?.unreadNotifications) || 0}
+                  onDark
+                />
+              </View>
+
+              <View style={styles.greetCopy}>
                 <Text style={styles.greeting} numberOfLines={1}>
                   {greeting}
                 </Text>
@@ -144,11 +201,7 @@ const ParentHome = () => {
                   {Strings.whatsHappening}
                 </Text>
               </View>
-              <NotificationBell
-                count={Number(dashboard?.unreadNotifications) || 0}
-                onDark
-              />
-            </View>
+            </NavyHeaderBand>
           </AnimatedCard>
 
           <View style={styles.body}>
@@ -156,156 +209,144 @@ const ParentHome = () => {
               <ActivityIndicator
                 style={styles.loader}
                 size="large"
-                color={Colors.primary}
+                color={Colors.brandNavy}
               />
             ) : null}
             {!homeLoading && activeStudent ? (
-            <AnimatedCard
-              index={1}
-              entering={ACADEMICS_PROFILE_ENTERING}
-              style={styles.dropdownAnchor}>
-              <SelectedChildBanner
-                child={activeStudent}
-                variant="large"
-                waveVariant={SCREEN_WAVES.parentHome}
-                disableEnterAnimation
-                compactMargin
-                canSwitch={canSwitchChild}
-                onSwitchPress={canSwitchChild ? openChildSwitch : undefined}
-              />
-            </AnimatedCard>
+              <AnimatedCard
+                index={1}
+                entering={ACADEMICS_PROFILE_ENTERING}
+                style={styles.dropdownAnchor}>
+                <SelectedChildBanner
+                  child={activeStudent}
+                  variant="large"
+                  icy
+                  disableEnterAnimation
+                  compactMargin
+                  canSwitch={canSwitchChild}
+                  onSwitchPress={canSwitchChild ? openChildSwitch : undefined}
+                />
+              </AnimatedCard>
             ) : null}
             {!homeLoading && !activeStudent ? (
               <Text style={styles.emptyChildren}>No linked children</Text>
             ) : null}
 
             {!homeLoading && activeStudent ? (
-            <View style={styles.statsGrid}>
-              {dashboardLoading ? (
-                <ActivityIndicator
-                  style={styles.dashboardLoader}
-                  size="small"
-                  color={Colors.primary}
+              <View style={styles.statsGrid}>
+                {dashboardLoading ? (
+                  <ActivityIndicator
+                    style={styles.dashboardLoader}
+                    size="small"
+                    color={Colors.brandNavy}
+                  />
+                ) : null}
+                <ParentStatCard
+                  art={getFeatureArt('attendance')}
+                  label={Strings.attendance}
+                  value={dashboard?.attendance || '—'}
+                  hint={Strings.thisMonthShort}
+                  entering={getAcademicsMenuEntering(null, 2)}
+                  animationIndex={2}
+                  onPress={() => navigation.navigate('ParentAttendance')}
                 />
-              ) : null}
-              <ParentStatCard
-                icon="calendar-outline"
-                iconColor={Colors.iconGreen}
-                label={Strings.attendance}
-                value={dashboard?.attendance || '—'}
-                hint={Strings.thisMonthShort}
-                entering={getAcademicsMenuEntering(null, 2)}
-                animationIndex={2}
-                onPress={() => navigation.navigate('ParentAttendance')}
-              />
-              <ParentStatCard
-                icon="library-outline"
-                iconColor={Colors.iconOrange}
-                label={Strings.digitalLibrary}
-                value={dashboard?.libraryCount || '—'}
-                hint={Strings.libraryBooksHint}
-                entering={getAcademicsMenuEntering(null, 3)}
-                animationIndex={3}
-                onPress={() => navigation.navigate('DigitalLibrary')}
-              />
-              <ParentStatCard
-                icon="clipboard-outline"
-                iconColor={Colors.iconPurple}
-                label={Strings.exams}
-                value={dashboard?.exams || '—'}
-                hint={Strings.upcoming}
-                entering={getAcademicsMenuEntering(null, 4)}
-                animationIndex={4}
-                // onPress={() => navigation.navigate('ExamSchedule')}
-              />
-              <ParentStatCard
-                icon="megaphone"
-                iconColor={Colors.iconPink}
-                label={Strings.announcements}
-                value={dashboard?.announcements || '—'}
-                hint={Strings.newLabel}
-                entering={getAcademicsMenuEntering(null, 5)}
-                animationIndex={5}
-                onPress={() => navigation.navigate('Announcements')}
-              />
-            </View>
+                <ParentStatCard
+                  art={getFeatureArt('library')}
+                  label={Strings.digitalLibrary}
+                  value={dashboard?.libraryCount || '—'}
+                  hint={Strings.libraryBooksHint}
+                  entering={getAcademicsMenuEntering(null, 3)}
+                  animationIndex={3}
+                  onPress={() => navigation.navigate('DigitalLibrary')}
+                />
+                <ParentStatCard
+                  art={getFeatureArt('exams')}
+                  label={Strings.exams}
+                  value={dashboard?.exams || '—'}
+                  hint={Strings.upcoming}
+                  entering={getAcademicsMenuEntering(null, 4)}
+                  animationIndex={4}
+                  // onPress={() => navigation.navigate('ExamSchedule')}
+                />
+                <ParentStatCard
+                  art={getFeatureArt('announcements')}
+                  label={Strings.announcements}
+                  value={dashboard?.announcements || '—'}
+                  hint={Strings.newLabel}
+                  entering={getAcademicsMenuEntering(null, 5)}
+                  animationIndex={5}
+                  onPress={() => navigation.navigate('Announcements')}
+                />
+              </View>
             ) : null}
 
             {!homeLoading ? (
-            <>
-            <AnimatedCard
-              index={6}
-              entering={getAcademicsMenuEntering(null, 6)}
-              style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>{Strings.todaySchedule}</Text>
-            </AnimatedCard>
+              <>
+                <AnimatedCard
+                  index={6}
+                  entering={getAcademicsMenuEntering(null, 6)}
+                  style={styles.sectionHeader}>
+                  <SectionHeader title={Strings.todaySchedule} />
+                </AnimatedCard>
 
-            <ScheduleItem
-              item={{
-                subject: Strings.timetable,
-                time: Strings.viewFullWeek,
-                icon: 'time-outline',
-                iconColor: Colors.iconCyan,
-              }}
-              gradientColors={CARD_GRADIENTS.notification}
-              entering={getAcademicsMenuEntering(null, 7)}
-              animationIndex={7}
-              waveVariant="scheduleTimetable"
-              onPress={() => navigation.navigate('Timetable')}
-            />
+                <ScheduleItem
+                  item={{
+                    subject: Strings.timetable,
+                    time: Strings.viewFullWeek,
+                  }}
+                  art={getFeatureArt('timetable')}
+                  entering={getAcademicsMenuEntering(null, 7)}
+                  animationIndex={7}
+                  waveVariant={SCREEN_WAVES.assignmentIce}
+                  onPress={() => navigation.navigate('Timetable')}
+                />
 
-            {todayLesson ? (
-              <ScheduleItem
-                item={todayLesson}
-                gradientColors={CARD_GRADIENTS.notification}
-                entering={getAcademicsMenuEntering(null, 8)}
-                animationIndex={8}
-                waveVariant="scheduleLesson"
-              />
-            ) : null}
+                {todayLesson ? (
+                  <ScheduleItem
+                    item={todayLesson}
+                    art={EducationIcons.subjects}
+                    entering={getAcademicsMenuEntering(null, 8)}
+                    animationIndex={8}
+                    waveVariant={SCREEN_WAVES.assignmentIce}
+                  />
+                ) : null}
 
-            <ScheduleItem
-              item={{
-                subject: Strings.syllabus,
-                time: Strings.syllabusUnits,
-                icon: 'book-outline',
-                iconColor: Colors.iconTeal,
-              }}
-              gradientColors={CARD_GRADIENTS.deep}
-              entering={getAcademicsMenuEntering(null, 9)}
-              animationIndex={9}
-              waveVariant="scheduleTimetable"
-              onPress={() => navigation.navigate('Syllabus')}
-            />
+                <ScheduleItem
+                  item={{
+                    subject: Strings.syllabus,
+                    time: Strings.syllabusUnits,
+                  }}
+                  art={getFeatureArt('syllabus')}
+                  entering={getAcademicsMenuEntering(null, 9)}
+                  animationIndex={9}
+                  waveVariant={SCREEN_WAVES.assignmentIce}
+                  onPress={() => navigation.navigate('Syllabus')}
+                />
 
-            <ScheduleItem
-              item={{
-                subject: Strings.results,
-                time: Strings.resultCardHint,
-                icon: 'trophy-outline',
-                iconColor: Colors.iconTeal,
-              }}
-              gradientColors={CARD_GRADIENTS.royal}
-              entering={getAcademicsMenuEntering(null, 10)}
-              animationIndex={10}
-              waveVariant="scheduleTimetable"
-              onPress={() => navigation.navigate('StudentResults')}
-            />
+                <ScheduleItem
+                  item={{
+                    subject: Strings.results,
+                    time: Strings.resultCardHint,
+                  }}
+                  art={getFeatureArt('results')}
+                  entering={getAcademicsMenuEntering(null, 10)}
+                  animationIndex={10}
+                  waveVariant={SCREEN_WAVES.assignmentIce}
+                  onPress={() => navigation.navigate('StudentResults')}
+                />
 
-            <ScheduleItem
-              item={{
-                subject: Strings.trackChild,
-                time: Strings.trackChildHint,
-                icon: 'bus',
-                iconColor: Colors.iconAmber,
-              }}
-              gradientColors={CARD_GRADIENTS.sapphire}
-              entering={getAcademicsMenuEntering(null, 11)}
-              animationIndex={11}
-              waveVariant="scheduleTimetable"
-              onPress={() => navigation.navigate('ChildTrack')}
-            />
-            </>
+                <ScheduleItem
+                  item={{
+                    subject: Strings.trackChild,
+                    time: Strings.trackChildHint,
+                  }}
+                  art={getFeatureArt('transport')}
+                  entering={getAcademicsMenuEntering(null, 11)}
+                  animationIndex={11}
+                  waveVariant={SCREEN_WAVES.assignmentIce}
+                  onPress={() => navigation.navigate('ChildTrack')}
+                />
+              </>
             ) : null}
           </View>
         </ScrollEnterScrollView>
@@ -330,82 +371,92 @@ export default ParentHome;
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: Colors.parentBg,
+    backgroundColor: Colors.brandNavy,
   },
   scrollArea: {
     flex: 1,
+    backgroundColor: Colors.canvas,
+    overflow: 'visible',
   },
   scroll: {
-    paddingBottom: hp(3),
-    backgroundColor: Colors.parentBg,
     flexGrow: 1,
+    backgroundColor: Colors.canvas,
+    paddingBottom: hp(3),
+    overflow: 'visible',
   },
   headerShell: {
     width: '100%',
-    paddingHorizontal: wp(5),
-    paddingTop: hp(1.5),
-    paddingBottom: hp(7),
-    borderBottomLeftRadius: wp(8),
-    borderBottomRightRadius: wp(8),
-    backgroundColor: Colors.parentHeader,
+    overflow: 'visible',
   },
-  headerRow: {
+  headerBand: {
+    borderBottomLeftRadius: NAVY_ICE_CURVE,
+    paddingBottom: FLOAT_CARD_GAP + FLOAT_CARD_TUCK,
+  },
+  headerContent: {
+    paddingHorizontal: spacing.lg,
+  },
+  brandRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'space-between',
   },
-  headerText: {
-    flex: 1,
-    marginRight: wp(3),
+  brandLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexShrink: 1,
+    marginRight: spacing.sm,
+  },
+  brandRule: {
+    width: StyleSheet.hairlineWidth * 2,
+    height: hp(2),
+    backgroundColor: Colors.borderGlass,
+    marginHorizontal: spacing.sm,
+  },
+  wordmark: {
+    ...Typography.brand,
+    color: Colors.white,
+    letterSpacing: 0.8,
+  },
+  greetCopy: {
+    marginTop: hp(0.7),
+    paddingRight: wp(2),
+  },
+  greeting: {
+    ...Typography.greeting,
+    color: Colors.textOnNavyMuted,
+  },
+  parentName: {
+    ...Typography.displayName,
+    color: Colors.white,
+    marginTop: hp(0.15),
+  },
+  subtitle: {
+    ...Typography.bannerSubtitle,
+    color: Colors.textOnNavyMuted,
+    marginTop: hp(0.35),
   },
   body: {
-    paddingHorizontal: wp(4),
-    marginTop: -hp(4.5),
+    paddingHorizontal: spacing.md,
+    marginTop: -FLOAT_CARD_TUCK,
     overflow: 'visible',
     zIndex: 2,
   },
   dropdownAnchor: {
     width: '100%',
     zIndex: 100,
-    marginBottom: hp(0.4),
     overflow: 'visible',
-  },
-  greeting: {
-    color: Colors.whiteMuted85,
-    fontFamily: Fonts.regular,
-    fontSize: Fontsize.xs1,
-  },
-  parentName: {
-    color: Colors.white,
-    fontFamily: Fonts.bold,
-    fontSize: Fontsize.ml,
-    marginTop: hp(0.3),
-  },
-  subtitle: {
-    color: Colors.whiteMuted75,
-    fontFamily: Fonts.regular,
-    fontSize: Fontsize.xs0,
-    marginTop: hp(0.4),
   },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    marginTop: hp(2),
+    alignItems: 'stretch',
+    marginTop: hp(1.2),
     zIndex: 1,
-    elevation: 1,
   },
   sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: hp(0.5),
-    marginBottom: hp(1.2),
-  },
-  sectionTitle: {
-    color: Colors.black,
-    fontFamily: Fonts.bold,
-    fontSize: Fontsize.sm,
+    marginTop: hp(0.6),
+    marginBottom: hp(0.2),
   },
   loader: {
     marginTop: hp(10),
@@ -416,9 +467,9 @@ const styles = StyleSheet.create({
     marginBottom: hp(1),
   },
   emptyChildren: {
-    color: Colors.black,
-    fontFamily: Fonts.medium,
-    fontSize: Fontsize.xs1,
+    color: Colors.textSecondary,
+    fontFamily: Typography.body.fontFamily,
+    fontSize: Typography.body.fontSize,
     marginTop: hp(1),
     marginBottom: hp(1),
   },
