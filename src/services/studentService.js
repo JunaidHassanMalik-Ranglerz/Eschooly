@@ -2351,12 +2351,16 @@ export const getStudentExam = examId => axiosInstance.get(`/student/exams/${exam
 
 const onlineClassSessions = body => {
   const root = asObject(body) || {};
-  const data = asObject(root.data) || {};
-  if (Array.isArray(data.sessions)) {
-    return data.sessions;
+  const data = root.data;
+  const page = asObject(data) || {};
+  if (Array.isArray(data)) {
+    return data;
   }
-  if (Array.isArray(data.data)) {
-    return data.data;
+  if (Array.isArray(page.sessions)) {
+    return page.sessions;
+  }
+  if (Array.isArray(page.data)) {
+    return page.data;
   }
   if (Array.isArray(root.sessions)) {
     return root.sessions;
@@ -2434,8 +2438,7 @@ const providerFromSession = (provider, url) => {
   if (
     namedProvider.includes('google') ||
     namedProvider.includes('meet') ||
-    href.includes('meet.google') ||
-    href.includes('meet.example')
+    href.includes('meet.google')
   ) {
     return {label: 'GOOGLE MEET', isZoom: false};
   }
@@ -2456,25 +2459,39 @@ const recordingDateLabel = date => {
   return `${month} ${date.getDate()}`;
 };
 
-export const mapStudentOnlineClass = slot => {
+const truthyFlag = value =>
+  value === true || value === 1 || value === '1';
+
+const classStatusLabel = (rowStatus, listStatus) => {
+  const status = text(rowStatus || listStatus).toLowerCase();
+  if (status === 'live') {
+    return Strings.liveBadge;
+  }
+  if (status === 'ended') {
+    return Strings.endedLabel;
+  }
+  return '';
+};
+
+export const mapStudentOnlineClass = (slot, listStatus = '') => {
   const row = asObject(slot) || {};
   const id = row.id;
   if (id == null || id === '') {
     return null;
   }
   const scheduled = parseClassDate(row.scheduled_at);
-  const subject = text(row.subject);
-  const teacher = text(row.teacher);
-  const className = text(row.class) ? `Class ${text(row.class)}` : '';
-  const section = text(row.section);
+  const subject = named(row.subject) || text(row.subject_name);
+  const teacher = named(row.teacher) || named(row.teacher_name);
+  const classValue = named(row.class) || text(row.class_name);
+  const className = classValue ? `Class ${classValue}` : '';
+  const section = named(row.section) || text(row.section_name);
   const minutes = Number(row.duration_minutes);
   const duration = Number.isFinite(minutes) && minutes > 0 ? `${minutes} min` : '';
   const joinedCount = Number(row.participants_count);
   const reminderMinutes = Number(row.reminder_minutes_before);
   const meetingUrl = text(row.meeting_url);
   const provider = providerFromSession(row.meeting_provider, meetingUrl);
-  const status = text(row.status).toLowerCase();
-  const hasRecording = row.has_recording === true;
+  const hasRecording = truthyFlag(row.has_recording);
   const detail = [
     recordingDateLabel(scheduled),
     duration,
@@ -2485,7 +2502,7 @@ export const mapStudentOnlineClass = slot => {
 
   return {
     id,
-    title: text(row.title),
+    title: text(row.title || row.name),
     classInfo: [className, section, subject, teacher].filter(Boolean).join(' · '),
     joined: Number.isFinite(joinedCount) ? `${joinedCount} joined` : '',
     started: classStartedLabel(row.started_at, row.scheduled_at),
@@ -2500,7 +2517,7 @@ export const mapStudentOnlineClass = slot => {
     showFooter: true,
     reminderSet: Number.isFinite(reminderMinutes),
     reminderMinutes: Number.isFinite(reminderMinutes) ? reminderMinutes : null,
-    status: status === 'live' ? Strings.liveBadge : Strings.endedLabel,
+    status: classStatusLabel(row.status, listStatus),
     detail,
     hasRecording,
     canWatch: hasRecording,
@@ -2508,9 +2525,9 @@ export const mapStudentOnlineClass = slot => {
   };
 };
 
-export const readOnlineClassPage = body =>
+export const readOnlineClassPage = (body, listStatus = '') =>
   onlineClassSessions(body)
-    .map(mapStudentOnlineClass)
+    .map(slot => mapStudentOnlineClass(slot, listStatus))
     .filter(item => item?.id != null && item.title);
 
 export const mapStudentOnlineClassDetail = body => {
@@ -2522,19 +2539,21 @@ export const mapStudentOnlineClassDetail = body => {
 export const mapStudentOnlineClassRecording = body => {
   const root = asObject(body) || {};
   const data = asObject(root.data) || root;
+  const session = asObject(data.session) || data;
   return {
-    recordingUrl: text(data.recording_url),
-    allowDownload: data.allow_download !== false,
-    downloadUrl: text(data.download_route),
+    recordingUrl: text(session.recording_url || data.recording_url),
+    allowDownload: session.allow_download !== false && data.allow_download !== false,
+    downloadUrl: text(session.download_route || data.download_route),
   };
 };
 
 export const mapStudentOnlineClassJoin = body => {
   const root = asObject(body) || {};
   const data = asObject(root.data) || root;
+  const session = asObject(data.session) || data;
   return {
-    meetingUrl: text(data.meeting_url),
-    joinedAt: text(data.joined_at),
+    meetingUrl: text(session.meeting_url || data.meeting_url),
+    joinedAt: text(session.joined_at || data.joined_at),
   };
 };
 
@@ -2549,10 +2568,17 @@ export const getStudentOnlineClass = onlineClassId =>
 export const joinStudentOnlineClass = onlineClassId =>
   axiosInstance.post(`/student/online-classes/${onlineClassId}/join`, {});
 
-export const remindStudentOnlineClass = (onlineClassId, minutesBefore = 15) =>
-  axiosInstance.post(`/student/online-classes/${onlineClassId}/reminder`, {
-    minutes_before: minutesBefore,
-  });
+export const remindStudentOnlineClass = (onlineClassId, minutesBefore) => {
+  const payload = {};
+  const minutes = Number(minutesBefore);
+  if (minutesBefore != null && minutesBefore !== '' && Number.isFinite(minutes)) {
+    payload.minutes_before = minutes;
+  }
+  return axiosInstance.post(
+    `/student/online-classes/${onlineClassId}/reminder`,
+    payload,
+  );
+};
 
 export const getStudentOnlineClassRecording = onlineClassId =>
   axiosInstance.get(`/student/online-classes/${onlineClassId}/recording`);

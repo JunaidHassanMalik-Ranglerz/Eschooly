@@ -44,6 +44,7 @@ import {
 } from '../../Component/Glass/StudentTone';
 
 const EMPTY_LIBRARY_ITEMS = [];
+const PREVIEW_COUNT = 4;
 
 const DigitalLibrary = () => {
   const navigation = useNavigation();
@@ -64,6 +65,7 @@ const DigitalLibrary = () => {
   const [downloadingId, setDownloadingId] = useState(null);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
+  const [showAll, setShowAll] = useState(false);
 
   const activeChildId = homeChildId || children[0]?.value || null;
   const parentChild =
@@ -180,6 +182,16 @@ const DigitalLibrary = () => {
     ? getFilteredResources(resources, search, category)
     : resources.filter(item => category === 'all' || item.category === category);
 
+  useEffect(() => {
+    setShowAll(false);
+  }, [search, category]);
+
+  const visibleBooks =
+    showAll || books.length <= PREVIEW_COUNT
+      ? books
+      : books.slice(0, PREVIEW_COUNT);
+  const canSeeAll = books.length > PREVIEW_COUNT && !showAll;
+
   const openStudentFile = async item => {
     if (!item?.id || downloadingId) {
       return;
@@ -243,7 +255,7 @@ const DigitalLibrary = () => {
     <ActivityIndicator style={styles.loader} size="large" color={Colors.primary} />
   ) : (
     <View style={[styles.grid, icy && styles.gridStudent]}>
-      {books.map((item, index) => (
+      {visibleBooks.map((item, index) => (
         <LibraryResourceCard
           key={item.id}
           item={item}
@@ -268,11 +280,19 @@ const DigitalLibrary = () => {
       <Text style={[styles.sectionTitle, icy && styles.sectionTitleStudent]}>
         {Strings.recentlyAdded}
       </Text>
-      <TouchableOpacity activeOpacity={0.8}>
-        <Text style={[styles.seeAll, icy && styles.seeAllStudent]}>
-          {Strings.seeAll}
-        </Text>
-      </TouchableOpacity>
+      {canSeeAll ? (
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => setShowAll(true)}
+          accessibilityRole="button"
+          accessibilityLabel={Strings.seeAll}>
+          <Text style={[styles.seeAll, icy && styles.seeAllStudent]}>
+            {Strings.seeAll}
+          </Text>
+        </TouchableOpacity>
+      ) : (
+        <View />
+      )}
     </View>
   );
 
@@ -358,9 +378,17 @@ const DigitalLibrary = () => {
           </AnimatedCard>
           <AnimatedCard index={4} style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>{Strings.recentlyAdded}</Text>
-            <TouchableOpacity activeOpacity={0.8}>
-              <Text style={styles.seeAll}>{Strings.seeAll}</Text>
-            </TouchableOpacity>
+            {canSeeAll ? (
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => setShowAll(true)}
+                accessibilityRole="button"
+                accessibilityLabel={Strings.seeAll}>
+                <Text style={styles.seeAll}>{Strings.seeAll}</Text>
+              </TouchableOpacity>
+            ) : (
+              <View />
+            )}
           </AnimatedCard>
           {grid}
           {empty}

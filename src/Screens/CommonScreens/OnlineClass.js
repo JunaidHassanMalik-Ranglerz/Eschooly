@@ -6,40 +6,28 @@ import {
   StatusBar,
   StyleSheet,
   Text,
-  View,
 } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
 import {useFocusEffect} from '@react-navigation/native';
 import {useDispatch, useSelector} from 'react-redux';
 import ScrollEnterScrollView from '../../Component/ScrollEnterScrollView';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import MainHeaderComponent from '../../Component/MainHeaderComponent';
-import StudentBrandedHeader from '../../Component/Student/StudentBrandedHeader';
+import AssignmentStudentHeader from '../../Component/Assignment/AssignmentStudentHeader';
 import ClassTabBar from '../../Component/OnlineClass/ClassTabBar';
+import OnlineClassHero from '../../Component/OnlineClass/OnlineClassHero';
 import LiveClassCard from '../../Component/OnlineClass/LiveClassCard';
 import ClassSectionHeader from '../../Component/OnlineClass/ClassSectionHeader';
 import UpcomingClassCard from '../../Component/OnlineClass/UpcomingClassCard';
 import RecordingClassCard from '../../Component/OnlineClass/RecordingClassCard';
 import ZoomInfoBanner from '../../Component/OnlineClass/ZoomInfoBanner';
 import AnimatedCard from '../../Component/AnimatedCard';
-import CardWave, {SCREEN_WAVES} from '../../Component/CardWave';
-import EschoolyScreenShell, {
-  FLOAT_CARD_GAP,
-  FLOAT_CARD_RADIUS,
-  FLOAT_CARD_TUCK,
-  NAVY_ICE_CURVE,
-} from '../../Component/Glass/EschoolyScreenShell';
+import EschoolyScreenShell from '../../Component/Glass/EschoolyScreenShell';
 import {CLASS_TABS} from '../../Constants/OnlineClassData';
 import {Colors} from '../../Constants/Colors';
 import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
-import {elevation} from '../../Constants/Theme';
 import {wp, hp} from '../../Constants/Responsive';
-import {
-  GRADIENT_END,
-  GRADIENT_START,
-} from '../../Component/Profile/ProfileTheme';
 import {
   StudentToneProvider,
   useStackBottomPad,
@@ -77,6 +65,7 @@ const OnlineClass = () => {
   const unreadNotifications = useSelector(
     state => state.studentHome?.unreadNotifications || 0,
   );
+  const homeStudent = useSelector(state => state.studentHome.student);
   const [tab, setTab] = useState('live');
   const [tabReplay, setTabReplay] = useState(0);
   const [live, setLive] = useState([]);
@@ -102,6 +91,7 @@ const OnlineClass = () => {
   const upcomingClasses = isParent
     ? dummy.onlineClasses?.upcoming || []
     : upcoming;
+
   const endedClasses = isParent
     ? dummy.onlineClasses?.recordings || []
     : ended;
@@ -129,8 +119,10 @@ const OnlineClass = () => {
   const loadClasses = useCallback(
     (isRefresh = false) => {
       if (isParent) {
+        console.log('[OnlineClass] skip fetch, parent role');
         return undefined;
       }
+      console.log('[OnlineClass] fetching live/upcoming/ended');
       const requestId = requestRef.current + 1;
       requestRef.current = requestId;
       if (isRefresh) {
@@ -147,6 +139,10 @@ const OnlineClass = () => {
           setLive(payload.live || []);
           setUpcoming(payload.upcoming || []);
           setEnded(payload.ended || []);
+          console.log(
+            '[OnlineClass] upcoming API payload',
+            JSON.stringify(payload.upcoming, null, 2),
+          );
         })
         .catch(error => {
           if (requestRef.current !== requestId) {
@@ -157,6 +153,10 @@ const OnlineClass = () => {
             setUpcoming([]);
             setEnded([]);
           }
+          console.log(
+            '[OnlineClass] fetch error',
+            error?.message || error,
+          );
           showToast({
             type: 'error',
             text1: error?.message || 'Unable to load online classes.',
@@ -189,7 +189,8 @@ const OnlineClass = () => {
     setJoiningId(item.id);
     dispatch(joinStudentOnlineClassSession(item.id))
       .unwrap()
-      .then(payload => openExternalUrl(payload?.meetingUrl || item.meetingUrl))
+      .then(payload => 
+        openExternalUrl(payload?.meetingUrl))
       .catch(error => {
         showToast({
           type: 'error',
@@ -207,7 +208,7 @@ const OnlineClass = () => {
     dispatch(remindStudentOnlineClassSession({onlineClassId: item.id}))
       .unwrap()
       .then(payload => {
-        const minutes = payload?.minutesBefore || 15;
+        const minutes = payload?.minutesBefore;
         const mark = row =>
           row.id === item.id
             ? {...row, reminderSet: true, reminderMinutes: minutes}
@@ -443,57 +444,27 @@ const OnlineClass = () => {
                 colors={[Colors.brandRoyal]}
               />
             }>
-            <EschoolyScreenShell.Header style={styles.studentBand}>
-              <StudentBrandedHeader
-                title={Strings.onlineClass}
+            <EschoolyScreenShell.Header>
+              <AssignmentStudentHeader
+                student={homeStudent}
                 unreadCount={unreadNotifications}
               />
             </EschoolyScreenShell.Header>
-            <EschoolyScreenShell.Body tuck={false} style={styles.studentBody}>
-              <View style={styles.canvasStage}>
-                <View pointerEvents="none" style={styles.canvasWave}>
-                  <CardWave
-                    variant={SCREEN_WAVES.assignmentIce}
-                    color="rgba(37, 99, 235, 0.12)"
-                  />
-                </View>
-                <View style={styles.canvasForeground}>
-                  <AnimatedCard
-                    index={1}
-                    entering={getHomeScreenEnter(1)}
-                    style={styles.filterWrapIcy}>
-                    <View style={styles.filterClipIcy}>
-                      <LinearGradient
-                        colors={[Colors.bannerIceStart, Colors.bannerIceEnd]}
-                        start={GRADIENT_START}
-                        end={GRADIENT_END}
-                        style={styles.filterFillIcy}
-                      />
-                      <View pointerEvents="none" style={styles.filterWaveIcy}>
-                        <CardWave
-                          variant={SCREEN_WAVES.assignmentIce}
-                          color="rgba(91, 156, 255, 0.16)"
-                        />
-                      </View>
-                      <View style={styles.filterInnerIcy}>
-                        <ClassTabBar
-                          tabs={tabs}
-                          selected={tab}
-                          onSelect={selectTab}
-                        />
-                      </View>
-                    </View>
-                  </AnimatedCard>
-                  {classLists}
-                </View>
-              </View>
+            <EschoolyScreenShell.Body>
+              <OnlineClassHero
+                tabs={tabs}
+                selected={tab}
+                onSelect={selectTab}
+                entering={getHomeScreenEnter(1)}
+                replayToken={tabReplay}
+              />
+              {classLists}
             </EschoolyScreenShell.Body>
           </ScrollEnterScrollView>
         </EschoolyScreenShell>
       </StudentToneProvider>
     );
   }
-
   return (
     <StudentToneProvider active={false}>
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -573,57 +544,6 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     backgroundColor: Colors.canvas,
     overflow: 'visible',
-  },
-  studentBand: {
-    borderBottomLeftRadius: NAVY_ICE_CURVE,
-    paddingBottom: FLOAT_CARD_GAP + FLOAT_CARD_TUCK,
-    overflow: 'visible',
-  },
-  studentBody: {
-    paddingTop: 0,
-    marginTop: -FLOAT_CARD_TUCK,
-    overflow: 'visible',
-  },
-  canvasStage: {
-    position: 'relative',
-    overflow: 'visible',
-    minHeight: hp(62),
-  },
-  canvasWave: {
-    position: 'absolute',
-    top: hp(2),
-    right: -wp(4),
-    left: 0,
-    height: hp(56),
-    zIndex: 0,
-  },
-  canvasForeground: {
-    zIndex: 1,
-  },
-  filterWrapIcy: {
-    marginBottom: hp(1.35),
-    zIndex: 2,
-    overflow: 'visible',
-    backgroundColor: Colors.bannerIceStart,
-    borderRadius: FLOAT_CARD_RADIUS,
-    ...elevation.banner,
-  },
-  filterClipIcy: {
-    borderRadius: FLOAT_CARD_RADIUS,
-    overflow: 'hidden',
-    borderWidth: StyleSheet.hairlineWidth * 2,
-    borderColor: 'rgba(91, 156, 255, 0.35)',
-  },
-  filterFillIcy: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  filterWaveIcy: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  filterInnerIcy: {
-    paddingHorizontal: wp(2.2),
-    paddingVertical: hp(1.05),
-    zIndex: 1,
   },
   bannerWrapIcy: {
     overflow: 'visible',

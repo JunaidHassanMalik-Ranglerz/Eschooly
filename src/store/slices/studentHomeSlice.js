@@ -25,9 +25,11 @@ import {
   downloadStudentIdCardFile,
   downloadStudentOnlineClassRecording,
   getStudentLibrary,
+  getStudentOnlineClass,
   getStudentOnlineClassRecording,
   getStudentOnlineClasses,
   joinStudentOnlineClass,
+  mapStudentOnlineClassDetail,
   mapStudentOnlineClassJoin,
   mapStudentOnlineClassRecording,
   readOnlineClassPage,
@@ -813,38 +815,49 @@ const rejectOnlineClass = (body, fallback, status = null) => ({
   status,
 });
 
+const readOnlineClassStatus = async status => {
+  try {
+    const response = await getStudentOnlineClasses({status});
+    const body = response?.data;
+    if (body && body.success === false) {
+      return {
+        items: [],
+        error: rejectOnlineClass(
+          body,
+          'Unable to load online classes.',
+          response?.status,
+        ),
+      };
+    }
+    return {items: readOnlineClassPage(body, status), error: null};
+  } catch (error) {
+    return {
+      items: [],
+      error: {
+        message: getApiErrorMessage(error),
+        status: error?.response?.status ?? null,
+      },
+    };
+  }
+};
+
 export const fetchStudentOnlineClasses = createAsyncThunk(
   'studentHome/fetchStudentOnlineClasses',
   async (_, {rejectWithValue}) => {
-    try {
-      const [liveRes, upcomingRes, endedRes] = await Promise.all([
-        getStudentOnlineClasses({status: 'live'}),
-        getStudentOnlineClasses({status: 'upcoming'}),
-        getStudentOnlineClasses({status: 'ended'}),
-      ]);
-      const failed = [liveRes, upcomingRes, endedRes].find(
-        response => response?.data && response.data.success === false,
-      );
-      if (failed) {
-        return rejectWithValue(
-          rejectOnlineClass(
-            failed.data,
-            'Unable to load online classes.',
-            failed.status,
-          ),
-        );
-      }
-      return {
-        live: readOnlineClassPage(liveRes?.data),
-        upcoming: readOnlineClassPage(upcomingRes?.data),
-        ended: readOnlineClassPage(endedRes?.data),
-      };
-    } catch (error) {
-      return rejectWithValue({
-        message: getApiErrorMessage(error),
-        status: error?.response?.status ?? null,
-      });
+    const [live, upcoming, ended] = await Promise.all([
+      readOnlineClassStatus('live'),
+      readOnlineClassStatus('upcoming'),
+      readOnlineClassStatus('ended'),
+    ]);
+
+    if (live.error && upcoming.error && ended.error) {
+      return rejectWithValue(live.error);
     }
+    return {
+      live: live.items,
+      upcoming: upcoming.items,
+      ended: ended.items,
+    };
   },
 );
 
@@ -859,7 +872,24 @@ export const joinStudentOnlineClassSession = createAsyncThunk(
           rejectOnlineClass(body, 'Unable to join this class.', response?.status),
         );
       }
-      return mapStudentOnlineClassJoin(body);
+      const joined = mapStudentOnlineClassJoin(body);
+      if (joined.meetingUrl) {
+        return joined;
+      }
+      try {
+        const detailResponse = await getStudentOnlineClass(onlineClassId);
+        const detailBody = detailResponse?.data;
+        if (detailBody && detailBody.success === false) {
+          return joined;
+        }
+        const detail = mapStudentOnlineClassDetail(detailBody);
+        return {
+          meetingUrl: detail?.meetingUrl || '',
+          joinedAt: joined.joinedAt,
+        };
+      } catch (error) {
+        return joined;
+      }
     } catch (error) {
       return rejectWithValue({
         message: getApiErrorMessage(error),
@@ -871,19 +901,24 @@ export const joinStudentOnlineClassSession = createAsyncThunk(
 
 export const remindStudentOnlineClassSession = createAsyncThunk(
   'studentHome/remindStudentOnlineClassSession',
-  async ({onlineClassId, minutesBefore = 15}, {rejectWithValue}) => {
+  async ({onlineClassId, minutesBefore}, {rejectWithValue}) => {
     try {
-      const response = await remindStudentOnlineClass(onlineClassId, minutesBefore);
+      const response = await remindStudentOnlineClass(
+        onlineClassId,
+        minutesBefore,
+      );
       const body = response?.data;
       if (body && body.success === false) {
         return rejectWithValue(
           rejectOnlineClass(body, 'Unable to set reminder.', response?.status),
         );
       }
-      const minutes = Number(body?.data?.minutes_before);
+      const minutes = Number(
+        body?.data?.minutes_before ?? body?.minutes_before ?? minutesBefore,
+      );
       return {
         id: onlineClassId,
-        minutesBefore: Number.isFinite(minutes) ? minutes : minutesBefore,
+        minutesBefore: Number.isFinite(minutes) ? minutes : null,
       };
     } catch (error) {
       return rejectWithValue({

@@ -26,7 +26,6 @@ const UpcomingClassCard = ({
 }) => {
   const paletteIndex = gradientIndex ?? animationIndex;
   const icy = useStudentTone();
-
   const body = (
     <>
       <View style={styles.topRow}>
