@@ -4,7 +4,6 @@ import {
   Alert,
   Image,
   RefreshControl,
-  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -12,10 +11,8 @@ import {
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import ScrollEnterScrollView from '../../Component/ScrollEnterScrollView';
-import {useFocusEffect, useNavigation} from '@react-navigation/native';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import {useFocusEffect} from '@react-navigation/native';
 import {useDispatch, useSelector} from 'react-redux';
-import Icon from 'react-native-vector-icons/Ionicons';
 import NotificationCard from '../../Component/NotificationCard';
 import AnimatedCard from '../../Component/AnimatedCard';
 import StudentBrandedHeader from '../../Component/Student/StudentBrandedHeader';
@@ -59,7 +56,6 @@ const TAB_IDLE_TEXT = '#5A6B82';
 const TABS = [Strings.tabAll, Strings.tabUnread];
 
 const NotificationContent = () => {
-  const navigation = useNavigation();
   const dispatch = useDispatch();
   const role = useSelector(state => state.auth.role);
   const isParent = role === 'parent';
@@ -260,10 +256,10 @@ const NotificationContent = () => {
       <ActivityIndicator
         style={styles.loader}
         size="large"
-        color={isParent ? Colors.primary : Colors.brandRoyal}
+        color={Colors.brandRoyal}
       />
     ) : items.length === 0 ? (
-      <Text style={[styles.empty, !isParent && styles.emptyIcy]}>
+      <Text style={[styles.empty, styles.emptyIcy]}>
         {unreadOnly ? Strings.noUnreadNotifications : Strings.noNotifications}
       </Text>
     ) : (
@@ -281,8 +277,7 @@ const NotificationContent = () => {
       })
     );
 
-  if (!isParent) {
-    return (
+  return (
       <StudentToneProvider active>
         <EschoolyScreenShell variant="navy-ice">
           <ScrollEnterScrollView
@@ -297,12 +292,14 @@ const NotificationContent = () => {
             removeClippedSubviews={false}
             keyboardShouldPersistTaps="handled"
             refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={() => loadStudentNotifications(true)}
-                tintColor={Colors.brandRoyal}
-                colors={[Colors.brandRoyal]}
-              />
+              isParent ? undefined : (
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={() => loadStudentNotifications(true)}
+                  tintColor={Colors.brandRoyal}
+                  colors={[Colors.brandRoyal]}
+                />
+              )
             }>
             <EschoolyScreenShell.Header style={styles.studentBand}>
               <StudentBrandedHeader
@@ -348,66 +345,6 @@ const NotificationContent = () => {
         </EschoolyScreenShell>
       </StudentToneProvider>
     );
-  }
-
-  return (
-    <StudentToneProvider active={false}>
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <StatusBar backgroundColor={SCREEN_BG} barStyle="dark-content" />
-
-      <AnimatedCard
-        index={0}
-        entering={getHomeScreenEnter(0)}
-        style={styles.header}>
-        <TouchableOpacity
-          style={styles.backBtn}
-          activeOpacity={0.85}
-          onPress={() => navigation.goBack()}>
-          <Icon name="chevron-back" size={wp(5.5)} color={Colors.white} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{Strings.notifications}</Text>
-        <View style={styles.menuBtn}>
-          <Image
-            source={Images.threeDots}
-            style={styles.menuIcon}
-            resizeMode="contain"
-          />
-        </View>
-      </AnimatedCard>
-
-      <AnimatedCard index={1} entering={getHomeScreenEnter(1)} style={styles.tabsCard}>
-        <View style={styles.tabsRow}>
-          {TABS.map(tab => {
-            const active = tab === activeTab;
-            return (
-              <TouchableOpacity
-                key={tab}
-                style={[styles.tab, active ? styles.tabActive : styles.tabIdle]}
-                activeOpacity={0.85}
-                onPress={() => setActiveTab(tab)}>
-                <Text
-                  style={[styles.tabText, active ? styles.tabTextActive : null]}>
-                  {tab}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      </AnimatedCard>
-
-      <ScrollEnterScrollView
-        style={styles.scrollArea}
-        contentContainerStyle={[styles.list, {paddingBottom: bottomPad}]}
-        showsVerticalScrollIndicator={false}
-        bounces={false}
-        overScrollMode="never"
-        removeClippedSubviews={false}
-        keyboardShouldPersistTaps="handled">
-        {listBody}
-      </ScrollEnterScrollView>
-    </SafeAreaView>
-    </StudentToneProvider>
-  );
 };
 
 const Notification = () => (

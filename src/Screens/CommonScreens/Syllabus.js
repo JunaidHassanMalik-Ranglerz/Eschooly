@@ -170,7 +170,7 @@ const Syllabus = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const {isParent} = useRoleData();
-  const icy = !isParent;
+  const icy = true;
   const bottomPad = useStackBottomPad();
   const {selectedChildId: homeChildId, children} = useSelector(state => state.parentHome);
   const homeStudent = useSelector(state => state.studentHome.student);
@@ -326,7 +326,7 @@ const Syllabus = () => {
           <SelectedChildBanner
             child={parentChild}
             variant="large"
-            waveVariant={SCREEN_WAVES.parentHome}
+            icy
             disableEnterAnimation
             compactMargin
             canSwitch={parentCanSwitch}
@@ -436,6 +436,7 @@ const Syllabus = () => {
       <StudentToneProvider active>
         <EschoolyScreenShell variant="navy-ice">
           {list}
+          {switchModal}
         </EschoolyScreenShell>
       </StudentToneProvider>
     );

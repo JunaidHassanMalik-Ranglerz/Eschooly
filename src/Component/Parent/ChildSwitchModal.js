@@ -20,7 +20,7 @@ const ChildSwitchModal = ({
 }) => {
   const renderItem = useCallback(
     ({item}) => {
-      const selected = item.value === selectedId;
+      const selected = String(item.value) === String(selectedId);
       const classText =
         item.className && item.section
           ? `${item.className} ${item.section}`
@@ -34,9 +34,16 @@ const ChildSwitchModal = ({
             onSelect?.(item.value);
             onClose?.();
           }}>
-          <PersonAvatar person={item} size={wp(11)} />
+          <PersonAvatar
+            person={item}
+            size={wp(11)}
+            borderWidth={StyleSheet.hairlineWidth * 2}
+            borderColor={selected ? Colors.brandRoyal : Colors.borderSubtle}
+          />
           <View style={styles.info}>
-            <Text style={styles.name} numberOfLines={1}>
+            <Text
+              style={[styles.name, selected && styles.nameSelected]}
+              numberOfLines={1}>
               {item.label}
             </Text>
             <Text style={styles.meta} numberOfLines={1}>
@@ -57,10 +64,11 @@ const ChildSwitchModal = ({
   return (
     <ParentSheetModal
       visible={visible}
+      variant="ice"
       onClose={onClose}
       title={Strings.switchStudent}
       subtitle={`${childrenList.length} ${Strings.linked}`}
-      dismissOnBackdropPress={false}
+      dismissOnBackdropPress
       dismissOnBackPress
       tall>
       <FlatList
@@ -82,53 +90,62 @@ export default ChildSwitchModal;
 
 const styles = StyleSheet.create({
   listScroll: {
-    flexGrow: 1,
+    flex: 1,
   },
   listContent: {
-    paddingHorizontal: wp(1),
-    paddingTop: hp(0.4),
-    paddingBottom: hp(2.5),
+    paddingHorizontal: wp(1.6),
+    paddingTop: hp(0.2),
+    paddingBottom: hp(1.6),
     flexGrow: 1,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: wp(3),
-    paddingVertical: hp(1.6),
+    paddingHorizontal: wp(2.6),
+    paddingVertical: hp(1.25),
     minHeight: ROW_HEIGHT,
-    borderRadius: wp(3),
-    marginBottom: hp(0.55),
+    borderRadius: wp(4),
+    marginBottom: hp(0.7),
+    backgroundColor: Colors.bannerIceStart,
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: Colors.borderSubtle,
   },
   rowSelected: {
-    backgroundColor: Colors.whiteOverlay18,
+    backgroundColor: Colors.hubCard,
+    borderColor: Colors.brandRoyal,
   },
   info: {
     flex: 1,
+    minWidth: 0,
     marginLeft: wp(3),
     justifyContent: 'center',
   },
   name: {
-    color: Colors.white,
+    color: Colors.brandNavy,
     fontFamily: Fonts.semibold,
     fontSize: Fontsize.xs5,
   },
+  nameSelected: {
+    fontFamily: Fonts.bold,
+  },
   meta: {
-    color: Colors.whiteMuted75,
+    color: Colors.textSecondary,
     fontFamily: Fonts.regular,
     fontSize: Fontsize.xs0,
     marginTop: hp(0.25),
   },
   radio: {
-    width: wp(5.5),
-    height: wp(5.5),
-    borderRadius: wp(2.75),
+    width: wp(5.6),
+    height: wp(5.6),
+    borderRadius: wp(2.8),
     borderWidth: 1.5,
-    borderColor: Colors.whiteOverlay18,
+    borderColor: Colors.borderSubtle,
+    backgroundColor: Colors.bannerIceStart,
     alignItems: 'center',
     justifyContent: 'center',
   },
   radioSelected: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
+    backgroundColor: Colors.brandRoyal,
+    borderColor: Colors.brandRoyal,
   },
 });

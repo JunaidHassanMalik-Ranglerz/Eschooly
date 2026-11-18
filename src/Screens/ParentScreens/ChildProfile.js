@@ -1,21 +1,11 @@
 import React, {useState} from 'react';
-import {Pressable, StatusBar, StyleSheet, Text, View} from 'react-native';
-import ScrollEnterScrollView from '../../Component/ScrollEnterScrollView';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import {StyleSheet, View} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
-import LinearGradient from 'react-native-linear-gradient';
-import Icon from 'react-native-vector-icons/Ionicons';
-import MainHeaderComponent from '../../Component/MainHeaderComponent';
+import ParentNavyIceLayout from '../../Component/Parent/ParentNavyIceLayout';
+import SelectedChildBanner from '../../Component/SelectedChildBanner';
 import ProfileMenuRow from '../../Component/Profile/ProfileMenuRow';
-import PersonAvatar from '../../Component/Profile/PersonAvatar';
-import AnimatedCard from '../../Component/AnimatedCard';
-import CardWave, {SCREEN_WAVES} from '../../Component/CardWave';
 import {
   CARD_RADIUS,
-  GRADIENT_END,
-  GRADIENT_START,
-  IDENTITY_CARD_SHADOW,
-  PROFILE_GRADIENT,
 } from '../../Component/Profile/ProfileTheme';
 import ChildSwitchModal from '../../Component/Parent/ChildSwitchModal';
 import {Colors} from '../../Constants/Colors';
@@ -91,60 +81,32 @@ const ChildProfile = () => {
     useRoleData();
   const [switchVisible, setSwitchVisible] = useState(false);
 
-  const classText =
-    activeStudent?.classLabel ||
-    (activeStudent?.className && activeStudent?.section
-      ? `${activeStudent.className} ${activeStudent.section}`
-      : activeStudent?.classBadge);
-
   return (
     <ScreenEnterProvider motion="childProfile">
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <StatusBar backgroundColor={Colors.parentBg} barStyle="dark-content" />
-      <MainHeaderComponent title={Strings.childProfile} navyBack />
-
-      <ScrollEnterScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.content}>
-        <AnimatedCard index={0} style={[styles.childCardWrap, IDENTITY_CARD_SHADOW]}>
-          <Pressable
-            onPress={canSwitchChild ? () => setSwitchVisible(true) : undefined}
-            disabled={!canSwitchChild}>
-            <LinearGradient
-              colors={PROFILE_GRADIENT}
-              start={GRADIENT_START}
-              end={GRADIENT_END}
-              style={styles.childCard}>
-              <CardWave variant={SCREEN_WAVES.childProfile} />
-              <View style={styles.avatarWrap}>
-                <PersonAvatar person={activeStudent} size={wp(14)} />
-              </View>
-              <View style={styles.childInfo}>
-                <Text style={styles.childName} numberOfLines={1}>
-                  {activeStudent?.label}
-                </Text>
-                <Text style={styles.childMeta} numberOfLines={1}>
-                  {classText}
-                </Text>
-                {activeStudent?.rollNo ? (
-                  <Text style={styles.childRoll} numberOfLines={1}>
-                    {Strings.rollNo} {activeStudent.rollNo}
-                  </Text>
-                ) : null}
-              </View>
-              {canSwitchChild ? (
-                <View style={styles.chevronWrap}>
-                  <Icon
-                    name="chevron-down"
-                    size={wp(5)}
-                    color={Colors.whiteMuted85}
-                  />
-                </View>
-              ) : null}
-            </LinearGradient>
-          </Pressable>
-        </AnimatedCard>
-
+      <ParentNavyIceLayout
+        title={Strings.childProfile}
+        unreadCount={1}
+        footer={
+          canSwitchChild ? (
+            <ChildSwitchModal
+              visible={switchVisible}
+              childrenList={childList}
+              selectedId={selectedChildId}
+              onSelect={setSelectedChildId}
+              onClose={() => setSwitchVisible(false)}
+            />
+          ) : null
+        }>
+        <SelectedChildBanner
+          child={activeStudent}
+          variant="large"
+          icy
+          compactMargin
+          canSwitch={canSwitchChild}
+          onSwitchPress={
+            canSwitchChild ? () => setSwitchVisible(true) : undefined
+          }
+        />
         <View style={styles.menu}>
           {MENU_ITEMS.map((item, index) => (
             <ProfileMenuRow
@@ -157,18 +119,7 @@ const ChildProfile = () => {
             />
           ))}
         </View>
-      </ScrollEnterScrollView>
-
-      {canSwitchChild ? (
-        <ChildSwitchModal
-          visible={switchVisible}
-          childrenList={childList}
-          selectedId={selectedChildId}
-          onSelect={setSelectedChildId}
-          onClose={() => setSwitchVisible(false)}
-        />
-      ) : null}
-    </SafeAreaView>
+      </ParentNavyIceLayout>
     </ScreenEnterProvider>
   );
 };

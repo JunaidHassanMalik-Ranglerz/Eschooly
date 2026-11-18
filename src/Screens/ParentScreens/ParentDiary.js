@@ -1,12 +1,9 @@
 import React from 'react';
-import {StatusBar, StyleSheet, Text, View} from 'react-native';
-import ScrollEnterFlatList from '../../Component/ScrollEnterFlatList';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import MainHeaderComponent from '../../Component/MainHeaderComponent';
+import {StyleSheet, Text, View} from 'react-native';
+import ParentNavyIceLayout from '../../Component/Parent/ParentNavyIceLayout';
 import SelectedChildBanner from '../../Component/SelectedChildBanner';
 import PersonAvatar from '../../Component/Profile/PersonAvatar';
 import ProfileGradientCard from '../../Component/Profile/ProfileGradientCard';
-import {SCREEN_WAVES} from '../../Component/CardWave';
 import {Colors} from '../../Constants/Colors';
 import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
@@ -38,23 +35,17 @@ const ParentDiary = () => {
 
   return (
     <ScreenEnterProvider motion="diary">
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <StatusBar backgroundColor={Colors.parentBg} barStyle="dark-content" />
-      <MainHeaderComponent title={Strings.diary} navyBack />
-
-      <ScrollEnterFlatList
-        data={diaryEntries}
-        keyExtractor={item => item.id}
-        renderItem={({item, index}) => (
-          <DiaryCard item={item} animationIndex={index + 1} />
-        )}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.list}
-        ListHeaderComponent={
-          <SelectedChildBanner child={activeStudent} waveVariant={SCREEN_WAVES.diary} />
-        }
-      />
-    </SafeAreaView>
+      <ParentNavyIceLayout title={Strings.diary} unreadCount={1}>
+        <SelectedChildBanner
+          child={activeStudent}
+          icy
+          canSwitch={false}
+          compactMargin
+        />
+        {diaryEntries.map((item, index) => (
+          <DiaryCard key={item.id} item={item} animationIndex={index + 1} />
+        ))}
+      </ParentNavyIceLayout>
     </ScreenEnterProvider>
   );
 };

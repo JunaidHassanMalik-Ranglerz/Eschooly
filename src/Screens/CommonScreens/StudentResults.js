@@ -74,7 +74,7 @@ const StudentResults = () => {
   const dispatch = useDispatch();
   const role = useSelector(state => state.auth.role);
   const isParent = role === 'parent';
-  const icy = !isParent;
+  const icy = true;
   const bottomPad = useStackBottomPad(4);
   const {studentLabel} = useRoleData();
   const {selectedChildId: homeChildId, children} = useSelector(state => state.parentHome);
@@ -329,9 +329,18 @@ const StudentResults = () => {
                     student={bannerChild}
                     premium
                     embedded
-                    readOnly
+                    readOnly={!isParent || !parentCanSwitch}
                     look="float"
                     label={studentLabel}
+                    externalPicker={isParent && parentCanSwitch}
+                    onPickerPress={
+                      isParent && parentCanSwitch
+                        ? () => {
+                            setSwitchVisible(true);
+                            setModalReplay(value => value + 1);
+                          }
+                        : undefined
+                    }
                   />
                   <ResultsSummaryBanner
                     childName={shownChild?.label}
@@ -401,6 +410,7 @@ const StudentResults = () => {
               </View>
             </EschoolyScreenShell.Body>
           </ScrollEnterScrollView>
+          {switchModal}
         </EschoolyScreenShell>
       </StudentToneProvider>
     );

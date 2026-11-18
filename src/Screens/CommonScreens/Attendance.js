@@ -66,7 +66,7 @@ const AttendanceContent = () => {
   const dispatch = useDispatch();
   const role = useSelector(state => state.auth.role);
   const isParent = role === 'parent';
-  const icy = !isParent;
+  const icy = true;
   const bottomPad = useStackBottomPad();
   const {children, selectedChildId: homeChildId} = useSelector(state => state.parentHome);
   const homeStudent = useSelector(state => state.studentHome.student);
@@ -313,49 +313,67 @@ const AttendanceContent = () => {
           />
         </View>
         <View style={styles.overviewContent}>
-          <View style={styles.monthHeader}>
-            <Text style={styles.monthTitleIcy} numberOfLines={1}>
-              {Strings.thisMonth}
-            </Text>
-            <Text style={styles.monthTextIcy} numberOfLines={1}>
-              {student.month}
-            </Text>
-          </View>
+          {showDaily ? (
+            <>
+              <Text style={styles.monthTitleIcy} numberOfLines={1}>
+                {Strings.todayAttendance}
+              </Text>
+              <Text style={styles.monthTextIcy} numberOfLines={1}>
+                {student.todayDate}
+              </Text>
+              <Text
+                style={[styles.todayStatusIcy, {color: todayStatusStyle.text}]}
+                numberOfLines={1}>
+                {student.todayStatus}
+              </Text>
+            </>
+          ) : (
+            <>
+              <View style={styles.monthHeader}>
+                <Text style={styles.monthTitleIcy} numberOfLines={1}>
+                  {isParent ? Strings.monthlyAttendance : Strings.thisMonth}
+                </Text>
+                <Text style={styles.monthTextIcy} numberOfLines={1}>
+                  {student.month}
+                </Text>
+              </View>
 
-          <View style={styles.metricsRow}>
-            <View style={styles.metricCol}>
-              <AttendanceStatCard
-                icon="checkmark-circle-outline"
-                label={Strings.present}
-                count={student.present}
-                premium
-              />
-            </View>
-            <View style={styles.metricCol}>
-              <AttendanceStatCard
-                icon="close-circle-outline"
-                label={Strings.absent}
-                count={student.absent}
-                premium
-              />
-            </View>
-            <View style={styles.metricCol}>
-              <AttendanceStatCard
-                icon="remove-circle-outline"
-                label={Strings.leave}
-                count={student.leave}
-                premium
-              />
-            </View>
-          </View>
+              <View style={styles.metricsRow}>
+                <View style={styles.metricCol}>
+                  <AttendanceStatCard
+                    icon="checkmark-circle-outline"
+                    label={Strings.present}
+                    count={student.present}
+                    premium
+                  />
+                </View>
+                <View style={styles.metricCol}>
+                  <AttendanceStatCard
+                    icon="close-circle-outline"
+                    label={Strings.absent}
+                    count={student.absent}
+                    premium
+                  />
+                </View>
+                <View style={styles.metricCol}>
+                  <AttendanceStatCard
+                    icon="remove-circle-outline"
+                    label={isParent ? Strings.late : Strings.leave}
+                    count={isParent ? student.late : student.leave}
+                    premium
+                  />
+                </View>
+              </View>
 
-          <View style={styles.attendanceRateSection}>
-            <AttendanceRateCard
-              rate={student.rate}
-              rateText={student.rateText}
-              premium
-            />
-          </View>
+              <View style={styles.attendanceRateSection}>
+                <AttendanceRateCard
+                  rate={student.rate}
+                  rateText={student.rateText}
+                  premium
+                />
+              </View>
+            </>
+          )}
         </View>
       </View>
     </AnimatedCard>
@@ -412,12 +430,33 @@ const AttendanceContent = () => {
                 <View style={styles.canvasForeground}>
                   <AttendanceStudentDropdown
                     student={student}
+                    students={students}
+                    selectedId={isParent ? String(activeChildId || '') : undefined}
                     premium
                     embedded
-                    readOnly
+                    readOnly={!isParent || dropdownReadOnly}
                     look="float"
                     label={studentLabel}
+                    externalPicker={useExternalSwitch}
+                    onPickerPress={
+                      useExternalSwitch ? () => setSwitchVisible(true) : undefined
+                    }
+                    onSelect={item => {
+                      if (isParent && String(item.value) !== String(activeChildId)) {
+                        dispatch(fetchChildDashboard(item.value));
+                      }
+                    }}
                   />
+                  {isParent ? (
+                    <View style={styles.tabsWrapIcy}>
+                      <SegmentTabs
+                        variant="fee"
+                        tabs={[Strings.daily, Strings.monthly]}
+                        activeTab={viewMode}
+                        onChange={setViewMode}
+                      />
+                    </View>
+                  ) : null}
                   {loading ? (
                     <ActivityIndicator
                       style={styles.loader}
@@ -436,20 +475,22 @@ const AttendanceContent = () => {
                     replayToken={contentReplay}
                     premium
                   />
-                  <TouchableOpacity
-                    style={styles.historyCta}
-                    activeOpacity={0.85}
-                    onPress={() => setShowHistory(!showHistory)}>
-                    <Icon
-                      name={showHistory ? 'eye-off-outline' : 'time-outline'}
-                      size={wp(4.6)}
-                      color={Colors.white}
-                    />
-                    <Text style={styles.historyCtaText}>
-                      {showHistory ? Strings.hideHistory : Strings.seeHistory}
-                    </Text>
-                  </TouchableOpacity>
-                  {!isParent && showHistory ? (
+                  {!isParent ? (
+                    <TouchableOpacity
+                      style={styles.historyCta}
+                      activeOpacity={0.85}
+                      onPress={() => setShowHistory(!showHistory)}>
+                      <Icon
+                        name={showHistory ? 'eye-off-outline' : 'time-outline'}
+                        size={wp(4.6)}
+                        color={Colors.white}
+                      />
+                      <Text style={styles.historyCtaText}>
+                        {showHistory ? Strings.hideHistory : Strings.seeHistory}
+                      </Text>
+                    </TouchableOpacity>
+                  ) : null}
+                  {(isParent || showHistory) ? (
                     <View style={styles.historyHeaderIcy}>
                       <Text style={styles.historyTitleIcy} numberOfLines={1}>
                         {Strings.attendanceHistory}
@@ -461,6 +502,19 @@ const AttendanceContent = () => {
               </View>
             </EschoolyScreenShell.Body>
           </ScrollEnterScrollView>
+          {useExternalSwitch ? (
+            <ChildSwitchModal
+              visible={switchVisible}
+              childrenList={students}
+              selectedId={String(activeChildId || '')}
+              onSelect={nextId => {
+                if (String(nextId) !== String(activeChildId)) {
+                  dispatch(fetchChildDashboard(nextId));
+                }
+              }}
+              onClose={() => setSwitchVisible(false)}
+            />
+          ) : null}
         </EschoolyScreenShell>
       </StudentToneProvider>
     );
@@ -753,6 +807,14 @@ const styles = StyleSheet.create({
     marginBottom: hp(1.8),
     borderRadius: wp(8),
     overflow: 'hidden',
+  },
+  tabsWrapIcy: {
+    marginBottom: hp(1.2),
+  },
+  todayStatusIcy: {
+    marginTop: hp(0.8),
+    fontFamily: Fonts.bold,
+    fontSize: Fontsize.md,
   },
   historyBtnWrap: {
     marginTop: hp(0.5),

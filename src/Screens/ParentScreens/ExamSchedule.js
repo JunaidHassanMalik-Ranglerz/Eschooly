@@ -1,10 +1,9 @@
 import React, {useEffect, useState} from 'react';
-import {ActivityIndicator, StatusBar, StyleSheet, Text, View} from 'react-native';
-import ScrollEnterScrollView from '../../Component/ScrollEnterScrollView';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import {ActivityIndicator, StyleSheet, Text, View} from 'react-native';
 import AnimatedCard from '../../Component/AnimatedCard';
 import Icon from 'react-native-vector-icons/Ionicons';
-import MainHeaderComponent from '../../Component/MainHeaderComponent';
+import ParentNavyIceLayout from '../../Component/Parent/ParentNavyIceLayout';
+import SelectedChildBanner from '../../Component/SelectedChildBanner';
 import ProfileGradientCard from '../../Component/Profile/ProfileGradientCard';
 import ProfileSectionTitle from '../../Component/Profile/ProfileSectionTitle';
 import {Colors} from '../../Constants/Colors';
@@ -154,26 +153,18 @@ const ExamSchedule = () => {
   }, [dispatch, isParent, selectedChildId]);
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <StatusBar backgroundColor={Colors.parentBg} barStyle="dark-content" />
-      <MainHeaderComponent
-        title={Strings.examSchedule}
-        notificationCount={1}
-        navyBack
-      />
-
-      <ScrollEnterScrollView
-        style={styles.scrollArea}
-        contentContainerStyle={styles.list}
-        showsVerticalScrollIndicator={false}
-        bounces={false}
-        overScrollMode="never"
-        removeClippedSubviews={false}
-        keyboardShouldPersistTaps="handled">
+    <ParentNavyIceLayout title={Strings.examSchedule} unreadCount={1}>
+        <SelectedChildBanner
+          child={shownChild}
+          icy
+          canSwitch={false}
+          compactMargin
+          animationIndex={1}
+        />
         <ProfileGradientCard
           innerStyle={styles.headerInner}
-          animationIndex={1}
-          entering={getHomeScreenEnter(1)}>
+          animationIndex={2}
+          entering={getHomeScreenEnter(2)}>
           <Text style={styles.headerTitle}>{Strings.upcomingExamsTitle}</Text>
           <Text style={styles.headerChild} numberOfLines={1}>
             {shownChild?.label} · {classLabel}
@@ -209,8 +200,7 @@ const ExamSchedule = () => {
             );
           })
         )}
-      </ScrollEnterScrollView>
-    </SafeAreaView>
+    </ParentNavyIceLayout>
   );
 };
 

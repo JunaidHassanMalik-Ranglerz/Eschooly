@@ -164,7 +164,7 @@ const Holidays = () => {
   const dispatch = useDispatch();
   const role = useSelector(state => state.auth.role);
   const isParent = role === 'parent';
-  const icy = !isParent;
+  const icy = true;
   const bottomPad = useStackBottomPad();
   const {children, selectedChildId: homeChildId} = useSelector(state => state.parentHome);
   const homeStudent = useSelector(state => state.studentHome.student);
@@ -179,13 +179,15 @@ const Holidays = () => {
     children.find(item => item.value === String(activeChildId)) || children[0] || null;
   const parentCanSwitch = children.length > 1;
   const holidays = isParent ? HOLIDAY_LIST : studentHolidays;
-  const bannerStudent = {
-    label: homeStudent?.label || '',
-    classInfo: homeStudent?.className || homeStudent?.classLabel || '',
-    classLabel: homeStudent?.classLabel || homeStudent?.className || '',
-    className: homeStudent?.className || '',
-    photoUrl: homeStudent?.photoUrl || '',
-  };
+  const bannerStudent = isParent
+    ? parentChild
+    : {
+        label: homeStudent?.label || '',
+        classInfo: homeStudent?.className || homeStudent?.classLabel || '',
+        classLabel: homeStudent?.classLabel || homeStudent?.className || '',
+        className: homeStudent?.className || '',
+        photoUrl: homeStudent?.photoUrl || '',
+      };
 
   useEffect(() => {
     if (!isParent || homeChildId || children.length) {
@@ -284,9 +286,15 @@ const Holidays = () => {
                       student={bannerStudent}
                       premium
                       embedded
-                      readOnly
+                      readOnly={!isParent || !parentCanSwitch}
                       look="float"
-                      label={Strings.student}
+                      label={isParent ? Strings.child : Strings.student}
+                      externalPicker={isParent && parentCanSwitch}
+                      onPickerPress={
+                        isParent && parentCanSwitch
+                          ? () => setSwitchVisible(true)
+                          : undefined
+                      }
                     />
                     <ProfileSectionTitle
                       animationIndex={2}
@@ -298,6 +306,19 @@ const Holidays = () => {
                 </View>
               </EschoolyScreenShell.Body>
             </ScrollEnterScrollView>
+            {isParent && parentCanSwitch ? (
+              <ChildSwitchModal
+                visible={switchVisible}
+                childrenList={children}
+                selectedId={String(activeChildId || '')}
+                onSelect={nextId => {
+                  if (String(nextId) !== String(activeChildId)) {
+                    dispatch(fetchChildDashboard(nextId));
+                  }
+                }}
+                onClose={() => setSwitchVisible(false)}
+              />
+            ) : null}
           </EschoolyScreenShell>
         </StudentToneProvider>
       </ScreenEnterProvider>

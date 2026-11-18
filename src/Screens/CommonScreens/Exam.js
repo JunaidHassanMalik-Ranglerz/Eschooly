@@ -60,7 +60,7 @@ const Exam = () => {
   const dispatch = useDispatch();
   const role = useSelector(state => state.auth.role);
   const isParent = role === 'parent';
-  const icy = !isParent;
+  const icy = true;
   const bottomPad = useStackBottomPad();
   const homeStudent = useSelector(state => state.studentHome.student);
   const unreadNotifications = useSelector(
@@ -309,11 +309,14 @@ const Exam = () => {
                   <AttendanceStudentDropdown
                     animationIndex={1}
                     student={bannerStudent}
+                    students={students}
+                    selectedId={isParent ? pickedChildId : undefined}
                     premium
                     embedded
-                    readOnly
+                    readOnly={!isParent || students.length <= 1}
                     look="float"
                     label={studentLabel}
+                    onSelect={isParent ? item => setPickedChildId(item.value) : undefined}
                   />
                   <ProfileSectionTitle animationIndex={2} style={styles.sectionIcy}>
                     {Strings.examOverview}

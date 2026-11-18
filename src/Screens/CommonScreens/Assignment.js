@@ -20,7 +20,6 @@ import AssignmentOverviewCard from '../../Component/Assignment/AssignmentOvervie
 import AssignmentSubjectCard from '../../Component/Assignment/AssignmentSubjectCard';
 import AssignmentHeroBanner from '../../Component/Assignment/AssignmentHeroBanner';
 import AssignmentStudentHeader from '../../Component/Assignment/AssignmentStudentHeader';
-import AttendanceStudentDropdown from '../../Component/AttendanceStudentDropdown';
 import SelectedChildBanner from '../../Component/SelectedChildBanner';
 import {Colors} from '../../Constants/Colors';
 import {Strings} from '../../Constants/Strings';
@@ -47,7 +46,7 @@ const Assignment = () => {
   const dispatch = useDispatch();
   const role = useSelector(state => state.auth.role);
   const isParent = role === 'parent';
-  const icy = !isParent;
+  const icy = true;
   const bottomPad = useStackBottomPad();
   const homeStudent = useSelector(state => state.studentHome.student);
   const unreadNotifications = useSelector(
@@ -58,7 +57,6 @@ const Assignment = () => {
     assignmentSubjects,
     assignmentOverview,
     canSwitchChild,
-    studentLabel,
   } = useRoleData();
   const [openSubjectId, setOpenSubjectId] = useState(null);
   const [openAssignmentId, setOpenAssignmentId] = useState(null);
@@ -75,15 +73,6 @@ const Assignment = () => {
   const listRef = useRef(null);
   const overview = isParent ? assignmentOverview : studentOverview;
   const subjects = isParent ? assignmentSubjects : studentSubjects;
-  const bannerChild = {
-    label: homeStudent?.label || '',
-    classInfo: homeStudent?.className || homeStudent?.classLabel || '',
-    classLabel: homeStudent?.classLabel || homeStudent?.className || '',
-    className: homeStudent?.className || '',
-    photoUrl: homeStudent?.photoUrl || '',
-    rollNo: homeStudent?.rollNo || '',
-  };
-
   const loadAssignments = useCallback(
     (isRefresh = false) => {
       if (isParent) {
@@ -349,20 +338,22 @@ const Assignment = () => {
             <>
               <EschoolyScreenShell.Header>
                 <AssignmentStudentHeader
-                  student={homeStudent}
+                  student={isParent ? activeStudent : homeStudent}
                   unreadCount={unreadNotifications}
+                  roleLabel={isParent ? Strings.child : undefined}
                 />
               </EschoolyScreenShell.Header>
               <EschoolyScreenShell.Body>
                 <AssignmentHeroBanner />
-                {/* <AttendanceStudentDropdown
-                  student={bannerChild}
-                  premium
-                  embedded
-                  readOnly
-                  label={studentLabel}
-                  look="flyer"
-                /> */}
+                {isParent ? (
+                  <SelectedChildBanner
+                    child={activeStudent}
+                    icy
+                    canSwitch={false}
+                    compactMargin
+                    animationIndex={1}
+                  />
+                ) : null}
                 {loading ? (
                   <ActivityIndicator
                     style={styles.loader}

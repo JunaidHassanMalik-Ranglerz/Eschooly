@@ -18,6 +18,7 @@ import EschoolyScreenShell from '../../Component/Glass/EschoolyScreenShell';
 import CardWave, {SCREEN_WAVES} from '../../Component/CardWave';
 import TimetableStudentHeader from '../../Component/Timetable/TimetableStudentHeader';
 import TimetablePeriodCard from '../../Component/Timetable/TimetablePeriodCard';
+import SelectedChildBanner from '../../Component/SelectedChildBanner';
 import {CARD_GRADIENTS} from '../../Constants/CardTheme';
 import {Colors} from '../../Constants/Colors';
 import {Fonts} from '../../Constants/Fonts';
@@ -84,7 +85,7 @@ const buildWeek = date => {
 const Timetable = () => {
   const dispatch = useDispatch();
   const {isParent} = useRoleData();
-  const icy = !isParent;
+  const icy = true;
   const bottomPad = useStackBottomPad();
   const {selectedChildId, children} = useSelector(state => state.parentHome);
   const unreadNotifications = useSelector(
@@ -366,6 +367,15 @@ const Timetable = () => {
                   />
                 </View>
                 <View style={styles.canvasForeground}>
+                  {isParent ? (
+                    <SelectedChildBanner
+                      child={parentChild}
+                      icy
+                      canSwitch={false}
+                      compactMargin
+                      animationIndex={1}
+                    />
+                  ) : null}
                   {modeToggle}
                   <View style={styles.calCard}>
                     {monthNav}

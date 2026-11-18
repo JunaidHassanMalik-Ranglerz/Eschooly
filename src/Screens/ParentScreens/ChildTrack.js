@@ -1,11 +1,9 @@
 import React, {useCallback, useEffect, useState} from 'react';
-import {ActivityIndicator, Image, StatusBar, StyleSheet, Text, useWindowDimensions, View} from 'react-native';
+import {ActivityIndicator, Image, StyleSheet, Text, useWindowDimensions, View} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
-import ScrollEnterScrollView from '../../Component/ScrollEnterScrollView';
-import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
-import MainHeaderComponent from '../../Component/MainHeaderComponent';
+import ParentNavyIceLayout from '../../Component/Parent/ParentNavyIceLayout';
 import SelectedChildBanner from '../../Component/SelectedChildBanner';
 import ChildSwitchModal from '../../Component/Parent/ChildSwitchModal';
 import AnimatedCard from '../../Component/AnimatedCard';
@@ -79,7 +77,6 @@ const ChildTrack = () => {
   const [switchVisible, setSwitchVisible] = useState(false);
   const [modalReplay, setModalReplay] = useState(0);
   const {width, height} = useWindowDimensions();
-  const insets = useSafeAreaInsets();
   const mapHeight = Math.min(width * 0.62, height * 0.34);
   const activeChildId = homeChildId || children[0]?.value || null;
   const parentChild =
@@ -138,32 +135,38 @@ const ChildTrack = () => {
   }, []);
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <StatusBar backgroundColor={Colors.parentBg} barStyle="dark-content" />
-      <MainHeaderComponent title={Strings.trackChild} notificationCount={1} />
-
-      <ScrollEnterScrollView
-        style={styles.scrollArea}
-        contentContainerStyle={[
-          styles.content,
-          {paddingBottom: hp(2) + insets.bottom},
-        ]}
-        showsVerticalScrollIndicator={false}
-        bounces={false}
-        overScrollMode="never"
-        removeClippedSubviews={false}
-        keyboardShouldPersistTaps="handled">
-        <AnimatedCard index={1} entering={getHomeScreenEnter(1)}>
-          <SelectedChildBanner
-            child={shownChild}
-            variant="large"
-            waveVariant={SCREEN_WAVES.parentHome}
-            disableEnterAnimation
-            compactMargin
-            canSwitch={canSwitchChild}
-            onSwitchPress={canSwitchChild ? openSwitch : undefined}
+    <ParentNavyIceLayout
+      title={Strings.trackChild}
+      unreadCount={1}
+      footer={
+        canSwitchChild ? (
+          <ChildSwitchModal
+            visible={switchVisible}
+            childrenList={isParent ? children : childList}
+            selectedId={isParent ? String(activeChildId || '') : roleChildId}
+            onSelect={nextId => {
+              if (isParent) {
+                if (String(nextId) !== String(activeChildId)) {
+                  dispatch(fetchChildDashboard(nextId));
+                }
+                return;
+              }
+              setSelectedChildId(nextId);
+            }}
+            onClose={() => setSwitchVisible(false)}
+            replayToken={modalReplay}
           />
-        </AnimatedCard>
+        ) : null
+      }>
+        <SelectedChildBanner
+          child={shownChild}
+          variant="large"
+          icy
+          disableEnterAnimation
+          compactMargin
+          canSwitch={canSwitchChild}
+          onSwitchPress={canSwitchChild ? openSwitch : undefined}
+        />
 
         <AnimatedCard
           index={2}
@@ -207,27 +210,7 @@ const ChildTrack = () => {
             />
           </>
         )}
-      </ScrollEnterScrollView>
-
-      {canSwitchChild ? (
-        <ChildSwitchModal
-          visible={switchVisible}
-          childrenList={isParent ? children : childList}
-          selectedId={isParent ? String(activeChildId || '') : roleChildId}
-          onSelect={nextId => {
-            if (isParent) {
-              if (String(nextId) !== String(activeChildId)) {
-                dispatch(fetchChildDashboard(nextId));
-              }
-              return;
-            }
-            setSelectedChildId(nextId);
-          }}
-          onClose={() => setSwitchVisible(false)}
-          replayToken={modalReplay}
-        />
-      ) : null}
-    </SafeAreaView>
+    </ParentNavyIceLayout>
   );
 };
 

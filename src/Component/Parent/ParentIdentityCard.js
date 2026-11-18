@@ -1,22 +1,35 @@
 import React from 'react';
-import {StyleSheet, Text, View} from 'react-native';
+import {Image, StyleSheet, Text, View} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
 import PersonAvatar from '../Profile/PersonAvatar';
 import AnimatedCard from '../AnimatedCard';
 import CardWave, {SCREEN_WAVES} from '../CardWave';
-import {
-  CARD_RADIUS,
-  GRADIENT_END,
-  GRADIENT_START,
-  IDENTITY_CARD_SHADOW,
-  PROFILE_GRADIENT,
-} from '../Profile/ProfileTheme';
+import {Images} from '../../Assets';
 import {Colors} from '../../Constants/Colors';
 import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
+import {elevation} from '../../Constants/Theme';
 import {wp, hp} from '../../Constants/Responsive';
+import {FLOAT_CARD_RADIUS} from '../Glass/EschoolyScreenShell';
+
+const ICE_STRIP = [Colors.brandNavy, Colors.brandRoyal];
+const ICE_WAVE = 'rgba(19, 69, 163, 0.16)';
+const AVATAR = wp(15.5);
+
+const textValue = value => (value == null ? '' : String(value).trim());
+
+const isVerifiedPerson = person => {
+  if (person?.verified === true || person?.verified === 1) {
+    return true;
+  }
+  const raw = String(person?.verified ?? person?.status ?? '').trim().toLowerCase();
+  if (!raw) {
+    return true;
+  }
+  return ['verified', 'active', '1', 'true', 'parent account'].includes(raw);
+};
 
 const ParentIdentityCard = ({
   person,
@@ -24,99 +37,164 @@ const ParentIdentityCard = ({
   entering,
   replayToken = 0,
 }) => {
+  const verified = isVerifiedPerson(person);
+  const fatherName = textValue(person?.fatherName);
+  const gender = textValue(person?.gender);
+  const cnic = textValue(person?.cnic);
+  const issued = textValue(person?.dateOfIssue);
+  const validUntil = textValue(person?.validUntil);
+  const address = textValue(person?.address);
+
   return (
     <AnimatedCard
       index={animationIndex}
       entering={entering}
       replayToken={replayToken}
       style={styles.wrap}>
-      <View style={styles.titleRow}>
-        <Text style={styles.sectionTitle}>{Strings.identityCard}</Text>
-        <View style={styles.liveBadge}>
-          <Icon name="shield-checkmark" size={wp(3.6)} color={Colors.iconGreen} />
-          <Text style={styles.liveText}>{Strings.verifiedParent}</Text>
-        </View>
-      </View>
-
-      <View style={[styles.card, IDENTITY_CARD_SHADOW]}>
-        <LinearGradient
-          colors={PROFILE_GRADIENT}
-          start={GRADIENT_START}
-          end={GRADIENT_END}
-          style={styles.cardFace}>
-          <CardWave variant={SCREEN_WAVES.parentProfile} />
-          <View style={styles.watermark} />
-          <View style={styles.watermarkSmall} />
-
-          <View style={styles.headerTop}>
+      <View style={styles.shell}>
+        <View style={styles.clip}>
+          <LinearGradient
+            colors={ICE_STRIP}
+            start={{x: 0, y: 0}}
+            end={{x: 1, y: 0}}
+            style={styles.strip}>
             <View style={styles.brandRow}>
               <View style={styles.logoBox}>
-                <Icon name="school" size={wp(5)} color={Colors.white} />
+                <Image
+                  source={Images.cap}
+                  style={styles.logoIcon}
+                  resizeMode="contain"
+                />
               </View>
-              <View>
-                <Text style={styles.schoolName}>{Strings.eschool}</Text>
-                <Text style={styles.cardType}>{Strings.parentIdCard}</Text>
+              <View style={styles.brandCopy}>
+                <Text style={styles.schoolName} numberOfLines={1}>
+                  {Strings.eschool}
+                </Text>
+                <Text style={styles.cardType} numberOfLines={1}>
+                  {Strings.parentIdCard}
+                </Text>
               </View>
             </View>
             <View style={styles.chip}>
-              <Icon name="hardware-chip-outline" size={wp(5.5)} color="#F5D76E" />
+              <Icon
+                name="hardware-chip-outline"
+                size={wp(5)}
+                color={Colors.white}
+              />
             </View>
-          </View>
+          </LinearGradient>
 
-          <View style={styles.profileRow}>
-            <PersonAvatar
-              person={person}
-              size={wp(18)}
-              variant="identity"
-              borderColor="rgba(245, 215, 110, 0.7)"
-              borderWidth={2}
-              style={styles.photoFrame}
+          <View style={styles.body}>
+            <LinearGradient
+              colors={[Colors.bannerIceStart, Colors.bannerIceEnd]}
+              start={{x: 0, y: 0.08}}
+              end={{x: 1, y: 1}}
+              style={styles.bodyFill}
             />
-            <View style={styles.nameCol}>
-              <Text style={styles.name}>{person?.label}</Text>
-              <Text style={styles.role}>{Strings.guardianRole}</Text>
-              <View style={styles.metaLine}>
-                <Text style={styles.metaKey}>{Strings.fatherName}</Text>
-                <Text style={styles.metaVal}>{person?.fatherName}</Text>
+            <CardWave variant={SCREEN_WAVES.assignmentIce} color={ICE_WAVE} />
+            <View style={styles.bodyContent}>
+              <View style={styles.captionRow}>
+                <Text style={styles.caption} numberOfLines={1}>
+                  {Strings.identityCard}
+                </Text>
+                {verified ? (
+                  <View style={styles.liveBadge}>
+                    <Icon
+                      name="shield-checkmark"
+                      size={wp(3.4)}
+                      color={Colors.iconGreen}
+                    />
+                    <Text style={styles.liveText} numberOfLines={1}>
+                      {Strings.verifiedParent}
+                    </Text>
+                  </View>
+                ) : null}
               </View>
-              <View style={styles.metaLine}>
-                <Text style={styles.metaKey}>{Strings.gender}</Text>
-                <Text style={styles.metaVal}>{person?.gender}</Text>
+
+              <View style={styles.identityRow}>
+                <PersonAvatar
+                  person={person}
+                  size={AVATAR}
+                  variant="identity"
+                  borderWidth={StyleSheet.hairlineWidth * 2}
+                  borderColor={Colors.borderSubtle}
+                  style={styles.photo}
+                />
+                <View style={styles.nameCol}>
+                  <Text style={styles.name} numberOfLines={2}>
+                    {person?.label}
+                  </Text>
+                  <Text style={styles.role} numberOfLines={1}>
+                    {Strings.guardianRole}
+                  </Text>
+                </View>
+              </View>
+
+              {fatherName || gender ? (
+                <View style={styles.stats}>
+                  <View style={styles.stat}>
+                    <Text style={styles.statLabel} numberOfLines={1}>
+                      {Strings.fatherName}
+                    </Text>
+                    <Text style={styles.statValue} numberOfLines={2}>
+                      {fatherName}
+                    </Text>
+                  </View>
+                  <View style={styles.statRule} />
+                  <View style={styles.stat}>
+                    <Text style={styles.statLabel} numberOfLines={1}>
+                      {Strings.gender}
+                    </Text>
+                    <Text style={styles.statValue} numberOfLines={1}>
+                      {gender}
+                    </Text>
+                  </View>
+                </View>
+              ) : null}
+
+              {cnic ? (
+                <View style={styles.cnicPanel}>
+                  <Text style={styles.fieldLabel}>{Strings.identityNumber}</Text>
+                  <Text style={styles.cnicValue}>{cnic}</Text>
+                </View>
+              ) : null}
+
+              {issued || validUntil ? (
+                <View style={styles.datesRow}>
+                  <View style={styles.dateBox}>
+                    <Text style={styles.fieldLabel}>{Strings.dateOfIssue}</Text>
+                    <Text style={styles.fieldValue}>{issued}</Text>
+                  </View>
+                  <View style={styles.dateBox}>
+                    <Text style={styles.fieldLabel}>{Strings.validUntil}</Text>
+                    <Text style={styles.fieldValue}>{validUntil}</Text>
+                  </View>
+                </View>
+              ) : null}
+
+              <View style={styles.footer}>
+                <Icon
+                  name="location-outline"
+                  size={wp(3.8)}
+                  color={Colors.brandRoyal}
+                />
+                <Text style={styles.footerNote} numberOfLines={2}>
+                  {address}
+                </Text>
+                {verified ? (
+                  <View style={styles.verifiedRow}>
+                    <Icon
+                      name="checkmark-circle"
+                      size={wp(4)}
+                      color={Colors.iconGreen}
+                    />
+                    <Text style={styles.verifiedText}>{Strings.verified}</Text>
+                  </View>
+                ) : null}
               </View>
             </View>
           </View>
-
-          <View style={styles.sectionDivider} />
-
-          <View style={styles.cnicPanel}>
-            <Text style={styles.metaKey}>{Strings.identityNumber}</Text>
-            <Text style={styles.cnicNumber}>{person?.cnic}</Text>
-          </View>
-
-          <View style={styles.datesRow}>
-            <View style={styles.dateBox}>
-              <Text style={styles.metaKey}>{Strings.dateOfIssue}</Text>
-              <Text style={styles.metaVal}>{person?.dateOfIssue}</Text>
-            </View>
-            <View style={styles.dateBox}>
-              <Text style={styles.metaKey}>{Strings.validUntil}</Text>
-              <Text style={styles.metaVal}>{person?.validUntil}</Text>
-            </View>
-          </View>
-
-          <View style={styles.footer}>
-            <Icon
-              name="location-outline"
-              size={wp(3.8)}
-              color={Colors.whiteMuted85}
-            />
-            <Text style={styles.footerNote}>{person?.address}</Text>
-            <View style={styles.verifiedRow}>
-              <Icon name="checkmark-circle" size={wp(4)} color={Colors.iconGreen} />
-              <Text style={styles.verifiedText}>{Strings.verified}</Text>
-            </View>
-          </View>
-        </LinearGradient>
+        </View>
       </View>
     </AnimatedCard>
   );
@@ -126,81 +204,53 @@ export default ParentIdentityCard;
 
 const styles = StyleSheet.create({
   wrap: {
-    marginBottom: hp(2.4),
+    marginBottom: hp(1.35),
+    zIndex: 2,
+    overflow: 'visible',
   },
-  titleRow: {
+  shell: {
+    borderRadius: FLOAT_CARD_RADIUS,
+    backgroundColor: Colors.bannerIceStart,
+    overflow: 'visible',
+    ...elevation.banner,
+  },
+  clip: {
+    borderRadius: FLOAT_CARD_RADIUS,
+    overflow: 'hidden',
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: 'rgba(91, 156, 255, 0.35)',
+    backgroundColor: Colors.bannerIceStart,
+  },
+  strip: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: hp(1.3),
-  },
-  sectionTitle: {
-    color: Colors.black,
-    fontFamily: Fonts.bold,
-    fontSize: Fontsize.sm,
-  },
-  liveBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.greenSoft,
-    borderRadius: wp(5),
-    paddingHorizontal: wp(2.4),
-    paddingVertical: hp(0.45),
-  },
-  liveText: {
-    color: Colors.iconGreen,
-    fontFamily: Fonts.semibold,
-    fontSize: Fontsize.xxm,
-    marginLeft: wp(1.2),
-  },
-  card: {
-    borderRadius: CARD_RADIUS,
-    overflow: 'hidden',
-  },
-  cardFace: {
-    paddingHorizontal: wp(4.5),
-    paddingTop: hp(1.8),
-    paddingBottom: hp(1.6),
-    overflow: 'hidden',
-  },
-  watermark: {
-    position: 'absolute',
-    width: wp(42),
-    height: wp(42),
-    borderRadius: wp(21),
-    borderWidth: 18,
-    borderColor: 'rgba(255,255,255,0.07)',
-    right: -wp(10),
-    top: -wp(14),
-  },
-  watermarkSmall: {
-    position: 'absolute',
-    width: wp(18),
-    height: wp(18),
-    borderRadius: wp(9),
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    left: wp(28),
-    bottom: hp(8),
-  },
-  headerTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: hp(2),
+    paddingHorizontal: wp(3.6),
+    paddingVertical: hp(1.05),
   },
   brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+    minWidth: 0,
+    marginRight: wp(2),
   },
   logoBox: {
-    width: wp(10),
-    height: wp(10),
-    borderRadius: wp(3),
-    backgroundColor: Colors.whiteOverlay22,
+    width: wp(9),
+    height: wp(9),
+    borderRadius: wp(2.5),
+    backgroundColor: Colors.whiteOverlay20,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: wp(2.5),
+  },
+  logoIcon: {
+    width: wp(5),
+    height: wp(5),
+  },
+  brandCopy: {
+    flex: 1,
+    minWidth: 0,
   },
   schoolName: {
     color: Colors.white,
@@ -211,99 +261,178 @@ const styles = StyleSheet.create({
     color: Colors.whiteMuted85,
     fontFamily: Fonts.medium,
     fontSize: Fontsize.xxm,
-    marginTop: hp(0.15),
-    letterSpacing: 0.7,
+    marginTop: hp(0.12),
+    letterSpacing: 0.6,
     textTransform: 'uppercase',
   },
   chip: {
-    width: wp(10),
-    height: wp(10),
+    width: wp(9),
+    height: wp(9),
     borderRadius: wp(2.5),
-    backgroundColor: 'rgba(245, 215, 110, 0.16)',
+    backgroundColor: Colors.whiteOverlay22,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  profileRow: {
+  body: {
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  bodyFill: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  bodyContent: {
+    zIndex: 1,
+  },
+  captionRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: wp(3.8),
+    paddingTop: hp(1.15),
+    paddingBottom: hp(0.9),
+    gap: wp(2),
   },
-  photoFrame: {
-    marginRight: wp(3.2),
+  caption: {
+    flex: 1,
+    minWidth: 0,
+    color: Colors.brandNavy,
+    fontFamily: Fonts.semibold,
+    fontSize: Fontsize.xs0,
+    letterSpacing: 0.9,
+    textTransform: 'uppercase',
+  },
+  liveBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.greenSoft,
+    borderRadius: wp(5),
+    paddingHorizontal: wp(2.2),
+    paddingVertical: hp(0.35),
+    maxWidth: wp(42),
+  },
+  liveText: {
+    color: Colors.iconGreen,
+    fontFamily: Fonts.semibold,
+    fontSize: Fontsize.xxm,
+    marginLeft: wp(1),
+    flexShrink: 1,
+  },
+  identityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: wp(3.8),
+    marginBottom: hp(1.15),
+  },
+  photo: {
+    marginRight: wp(3),
   },
   nameCol: {
     flex: 1,
+    minWidth: 0,
   },
   name: {
-    color: Colors.white,
+    color: Colors.brandNavy,
     fontFamily: Fonts.bold,
     fontSize: Fontsize.sm,
   },
   role: {
-    color: Colors.whiteMuted85,
+    color: Colors.textSecondary,
     fontFamily: Fonts.regular,
     fontSize: Fontsize.xs0,
     marginTop: hp(0.2),
-    marginBottom: hp(0.9),
   },
-  metaLine: {
-    marginBottom: hp(0.35),
+  stats: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    marginHorizontal: wp(3.8),
+    marginBottom: hp(1.1),
+    backgroundColor: Colors.hubCard,
+    borderRadius: wp(3.2),
+    paddingVertical: hp(0.95),
+    paddingHorizontal: wp(1.2),
   },
-  metaKey: {
-    color: Colors.whiteMuted75,
+  stat: {
+    flex: 1,
+    minWidth: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: wp(1.4),
+  },
+  statRule: {
+    width: StyleSheet.hairlineWidth * 2,
+    backgroundColor: Colors.borderSubtle,
+    marginVertical: hp(0.2),
+  },
+  statLabel: {
+    color: Colors.textSecondary,
     fontFamily: Fonts.medium,
     fontSize: Fontsize.xxm,
     letterSpacing: 0.4,
+    marginBottom: hp(0.2),
   },
-  metaVal: {
-    color: Colors.white,
-    fontFamily: Fonts.semibold,
+  statValue: {
+    color: Colors.brandNavy,
+    fontFamily: Fonts.bold,
     fontSize: Fontsize.xs1,
-    marginTop: hp(0.08),
-  },
-  sectionDivider: {
-    height: 1,
-    backgroundColor: Colors.whiteOverlay18,
-    marginTop: hp(1.8),
-    marginBottom: hp(1.4),
+    textAlign: 'center',
   },
   cnicPanel: {
-    backgroundColor: Colors.whiteOverlay18,
-    borderRadius: wp(4),
-    paddingHorizontal: wp(3.5),
-    paddingVertical: hp(1.3),
-    marginBottom: hp(1.2),
+    marginHorizontal: wp(3.8),
+    marginBottom: hp(1),
+    backgroundColor: Colors.hubCard,
+    borderRadius: wp(3.2),
+    paddingHorizontal: wp(3.2),
+    paddingVertical: hp(1),
   },
-  cnicNumber: {
-    color: Colors.white,
+  fieldLabel: {
+    color: Colors.textSecondary,
+    fontFamily: Fonts.medium,
+    fontSize: Fontsize.xxm,
+    letterSpacing: 0.3,
+  },
+  cnicValue: {
+    color: Colors.brandNavy,
     fontFamily: Fonts.bold,
     fontSize: Fontsize.sm,
-    letterSpacing: 0.6,
-    marginTop: hp(0.35),
+    letterSpacing: 0.4,
+    marginTop: hp(0.28),
   },
   datesRow: {
     flexDirection: 'row',
-    gap: wp(2.5),
-    marginBottom: hp(1.2),
+    marginHorizontal: wp(3.8),
+    gap: wp(2),
+    marginBottom: hp(0.4),
   },
   dateBox: {
     flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.10)',
-    borderRadius: wp(3.5),
+    minWidth: 0,
+    backgroundColor: Colors.hubCard,
+    borderRadius: wp(3.2),
     paddingHorizontal: wp(3),
     paddingVertical: hp(1),
+  },
+  fieldValue: {
+    color: Colors.brandNavy,
+    fontFamily: Fonts.semibold,
+    fontSize: Fontsize.xs1,
+    marginTop: hp(0.2),
   },
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: Colors.whiteOverlay18,
-    paddingTop: hp(1.2),
+    backgroundColor: Colors.hubCard,
+    borderTopWidth: StyleSheet.hairlineWidth * 2,
+    borderTopColor: Colors.borderSubtle,
+    paddingHorizontal: wp(3.8),
+    paddingVertical: hp(1.15),
+    marginTop: hp(0.85),
   },
   footerNote: {
     flex: 1,
-    color: Colors.whiteMuted85,
+    minWidth: 0,
+    color: Colors.textSecondary,
     fontFamily: Fonts.regular,
-    fontSize: Fontsize.xxm,
+    fontSize: Fontsize.xs1,
     marginHorizontal: wp(2),
   },
   verifiedRow: {

@@ -1,7 +1,9 @@
 import React from 'react';
 import {ScrollView, StyleSheet, Text, View} from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
 import AnimatedCard from '../AnimatedCard';
+import CardWave, {SCREEN_WAVES} from '../CardWave';
 import ParentSheetModal from './ParentSheetModal';
 import PersonAvatar from '../Profile/PersonAvatar';
 import {Colors} from '../../Constants/Colors';
@@ -9,29 +11,30 @@ import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
 import {PARENT_DATA} from '../../Constants/dummydata';
+import {elevation, radius} from '../../Constants/Theme';
 import {wp, hp} from '../../Constants/Responsive';
 import {getHomeScreenEnter} from '../../utils/cardAnimation';
 
 const DETAIL_ICONS = {
-  cnic: {icon: 'card-outline', color: Colors.iconSky},
-  email: {icon: 'mail-outline', color: Colors.iconPurple},
-  phone: {icon: 'call-outline', color: Colors.iconGreen},
-  mobile: {icon: 'call-outline', color: Colors.iconGreen},
-  address: {icon: 'location-outline', color: Colors.iconOrange},
-  father_name: {icon: 'person-outline', color: Colors.iconSky},
-  gender: {icon: 'male-female-outline', color: Colors.iconPurple},
-  occupation: {icon: 'briefcase-outline', color: Colors.iconOrange},
-  emergency_contact: {icon: 'call-outline', color: Colors.iconGreen},
-  emergency_phone: {icon: 'call-outline', color: Colors.iconGreen},
-  children: {icon: 'people-outline', color: Colors.iconTeal},
-  created_at: {icon: 'calendar-outline', color: Colors.iconPink},
-  last_login_at: {icon: 'time-outline', color: Colors.iconPink},
-  nationality: {icon: 'earth-outline', color: Colors.iconCyan},
-  family_id: {icon: 'id-card-outline', color: Colors.iconSky},
-  status: {icon: 'checkmark-circle-outline', color: Colors.iconGreen},
-  school: {icon: 'school-outline', color: Colors.iconTeal},
-  date_of_issue: {icon: 'calendar-outline', color: Colors.iconPink},
-  valid_until: {icon: 'calendar-outline', color: Colors.iconCyan},
+  cnic: 'card-outline',
+  email: 'mail-outline',
+  phone: 'call-outline',
+  mobile: 'call-outline',
+  address: 'location-outline',
+  father_name: 'person-outline',
+  gender: 'male-female-outline',
+  occupation: 'briefcase-outline',
+  emergency_contact: 'call-outline',
+  emergency_phone: 'call-outline',
+  children: 'people-outline',
+  created_at: 'calendar-outline',
+  last_login_at: 'time-outline',
+  nationality: 'earth-outline',
+  family_id: 'id-card-outline',
+  status: 'checkmark-circle-outline',
+  school: 'school-outline',
+  date_of_issue: 'calendar-outline',
+  valid_until: 'calendar-outline',
 };
 
 const ParentMoreInfoModal = ({
@@ -51,10 +54,11 @@ const ParentMoreInfoModal = ({
   return (
     <ParentSheetModal
       visible
+      variant="ice"
       onClose={onClose}
       title={Strings.moreInfo}
       subtitle={person?.label}
-      dismissOnBackdropPress={false}
+      dismissOnBackdropPress
       dismissOnBackPress
       tall>
       <ScrollView
@@ -69,40 +73,57 @@ const ParentMoreInfoModal = ({
           entering={getHomeScreenEnter(1)}
           replayToken={replayToken}
           style={styles.profileEnter}>
-          <View style={styles.profileRow}>
-            <PersonAvatar person={person} size={wp(14)} />
-            <View style={styles.profileText}>
-              <Text style={styles.profileName}>{person?.label}</Text>
-              <Text style={styles.profileRole}>
-                {person?.status || person?.classBadge}
-              </Text>
+          <View style={styles.profileShell}>
+            <LinearGradient
+              colors={[Colors.bannerIceStart, Colors.bannerIceEnd]}
+              start={{x: 0, y: 0.08}}
+              end={{x: 1, y: 1}}
+              style={styles.profileFill}
+            />
+            <CardWave
+              variant={SCREEN_WAVES.assignmentIce}
+              color="rgba(19, 69, 163, 0.14)"
+            />
+            <View style={styles.profileRow}>
+              <PersonAvatar
+                person={person}
+                size={wp(14)}
+                borderWidth={StyleSheet.hairlineWidth * 2}
+                borderColor={Colors.borderSubtle}
+              />
+              <View style={styles.profileText}>
+                <Text style={styles.profileName} numberOfLines={2}>
+                  {person?.label}
+                </Text>
+                <Text style={styles.profileRole} numberOfLines={1}>
+                  {person?.status || person?.classBadge || Strings.parentAccount}
+                </Text>
+              </View>
             </View>
           </View>
         </AnimatedCard>
 
-        {rows.map((row, index) => {
-          const slot = index + 2;
-          const icon = DETAIL_ICONS[row.key] || {
-            icon: 'information-circle-outline',
-            color: Colors.iconSky,
-          };
-          return (
-            <AnimatedCard
-              key={row.key}
-              index={slot}
-              entering={getHomeScreenEnter(slot)}
-              replayToken={replayToken}
-              style={styles.rowEnter}>
-              <View style={styles.row}>
-                <Icon name={icon.icon} size={wp(5)} color={icon.color} />
+        <View style={styles.listCard}>
+          {rows.map((row, index) => {
+            const icon = DETAIL_ICONS[row.key] || 'information-circle-outline';
+            const last = index === rows.length - 1;
+            return (
+              <View
+                key={row.key}
+                style={[styles.row, last && styles.rowLast]}>
+                <View style={styles.iconWrap}>
+                  <Icon name={icon} size={wp(4.6)} color={Colors.brandRoyal} />
+                </View>
                 <View style={styles.rowText}>
-                  <Text style={styles.rowLabel}>{row.label}</Text>
+                  <Text style={styles.rowLabel} numberOfLines={1}>
+                    {row.label}
+                  </Text>
                   <Text style={styles.rowValue}>{row.value}</Text>
                 </View>
               </View>
-            </AnimatedCard>
-          );
-        })}
+            );
+          })}
+        </View>
       </ScrollView>
     </ParentSheetModal>
   );
@@ -112,62 +133,92 @@ export default ParentMoreInfoModal;
 
 const styles = StyleSheet.create({
   scroll: {
-    flexGrow: 0,
+    flex: 1,
   },
   content: {
-    paddingHorizontal: wp(3),
+    paddingHorizontal: wp(2.2),
     paddingBottom: hp(1.5),
   },
   profileEnter: {
     marginBottom: hp(1.2),
+    overflow: 'visible',
+    ...elevation.card,
+  },
+  profileShell: {
+    borderRadius: radius.banner,
+    overflow: 'hidden',
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: 'rgba(91, 156, 255, 0.35)',
+    backgroundColor: Colors.bannerIceStart,
+  },
+  profileFill: {
+    ...StyleSheet.absoluteFillObject,
   },
   profileRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.whiteOverlay18,
-    borderRadius: wp(3),
-    paddingHorizontal: wp(3),
-    paddingVertical: hp(1.4),
+    paddingHorizontal: wp(3.2),
+    paddingVertical: hp(1.35),
+    zIndex: 1,
   },
   profileText: {
     flex: 1,
+    minWidth: 0,
     marginLeft: wp(3),
   },
   profileName: {
-    color: Colors.white,
+    color: Colors.brandNavy,
     fontFamily: Fonts.bold,
     fontSize: Fontsize.sm,
   },
   profileRole: {
-    color: Colors.whiteMuted75,
+    color: Colors.textSecondary,
     fontFamily: Fonts.regular,
     fontSize: Fontsize.xs0,
     marginTop: hp(0.2),
   },
-  rowEnter: {
-    marginBottom: 0,
+  listCard: {
+    borderRadius: radius.banner,
+    overflow: 'hidden',
+    backgroundColor: Colors.bannerIceStart,
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: 'rgba(91, 156, 255, 0.28)',
+    paddingHorizontal: wp(2.4),
   },
   row: {
     flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingVertical: hp(1.25),
+    borderBottomWidth: StyleSheet.hairlineWidth * 2,
+    borderBottomColor: Colors.borderSubtle,
+  },
+  rowLast: {
+    borderBottomWidth: 0,
+  },
+  iconWrap: {
+    width: wp(9),
+    height: wp(9),
+    borderRadius: wp(4.5),
+    backgroundColor: Colors.hubCard,
     alignItems: 'center',
-    paddingVertical: hp(1.2),
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.whiteOverlay18,
+    justifyContent: 'center',
+    marginRight: wp(2.6),
   },
   rowText: {
     flex: 1,
-    marginLeft: wp(3),
+    minWidth: 0,
+    paddingTop: hp(0.15),
   },
   rowLabel: {
-    color: Colors.whiteMuted75,
+    color: Colors.textSecondary,
     fontFamily: Fonts.medium,
     fontSize: Fontsize.xxm,
     letterSpacing: 0.3,
   },
   rowValue: {
-    color: Colors.white,
+    color: Colors.brandNavy,
     fontFamily: Fonts.semibold,
     fontSize: Fontsize.xs1,
-    marginTop: hp(0.15),
+    marginTop: hp(0.18),
   },
 });

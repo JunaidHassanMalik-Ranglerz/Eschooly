@@ -70,7 +70,7 @@ const OnlineClass = () => {
   const dispatch = useDispatch();
   const role = useSelector(state => state.auth.role);
   const isParent = role === 'parent';
-  const icy = !isParent;
+  const icy = true;
   const bottomPad = useStackBottomPad();
   const dummy = useRoleData();
   const unreadNotifications = useSelector(
@@ -572,17 +572,20 @@ const OnlineClass = () => {
             removeClippedSubviews={false}
             keyboardShouldPersistTaps="handled"
             refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={() => loadClasses(true)}
-                tintColor={Colors.brandRoyal}
-                colors={[Colors.brandRoyal]}
-              />
+              isParent ? undefined : (
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={() => loadClasses(true)}
+                  tintColor={Colors.brandRoyal}
+                  colors={[Colors.brandRoyal]}
+                />
+              )
             }>
             <EschoolyScreenShell.Header>
               <AssignmentStudentHeader
-                student={homeStudent}
+                student={isParent ? dummy.activeStudent : homeStudent}
                 unreadCount={unreadNotifications}
+                roleLabel={isParent ? Strings.child : undefined}
               />
             </EschoolyScreenShell.Header>
             <EschoolyScreenShell.Body>

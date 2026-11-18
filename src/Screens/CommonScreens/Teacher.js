@@ -37,7 +37,7 @@ const Teacher = () => {
   const dispatch = useDispatch();
   const role = useSelector(state => state.auth.role);
   const isParent = role === 'parent';
-  const icy = !isParent;
+  const icy = true;
   const bottomPad = useStackBottomPad();
   const homeStudent = useSelector(state => state.studentHome.student);
   const unreadNotifications = useSelector(

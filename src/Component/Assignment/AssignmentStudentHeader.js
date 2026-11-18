@@ -3,7 +3,6 @@ import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import NotificationBell from '../NotificationBell';
-import HomeSearchField from '../Glass/HomeSearchField';
 import StudentChip from '../Student/StudentChip';
 import {Colors} from '../../Constants/Colors';
 import {Strings} from '../../Constants/Strings';
@@ -30,24 +29,24 @@ const classIncludesSection = (className, section) => {
   return compact.endsWith(compactSec) && compact.length > compactSec.length;
 };
 
-const chipLabelFor = student => {
+const chipLabelFor = (student, roleLabel = Strings.student) => {
   const className = String(
     student?.className || student?.classLabel || student?.classInfo || '',
   ).trim();
   const section = String(student?.sectionName || '').trim();
   if (!className && !section) {
-    return Strings.student;
+    return roleLabel;
   }
   if (!section) {
-    return `${Strings.student} · ${className}`;
+    return `${roleLabel} · ${className}`;
   }
   if (!className || classIncludesSection(className, section)) {
-    return `${Strings.student} · ${className || section}`;
+    return `${roleLabel} · ${className || section}`;
   }
-  return `${Strings.student} · ${className} ${section}`;
+  return `${roleLabel} · ${className} ${section}`;
 };
 
-const AssignmentStudentHeader = ({student, unreadCount}) => {
+const AssignmentStudentHeader = ({student, unreadCount, roleLabel}) => {
   const navigation = useNavigation();
   const greeting = useGreeting();
 
@@ -83,7 +82,7 @@ const AssignmentStudentHeader = ({student, unreadCount}) => {
       </View>
 
       {student ? (
-        <StudentChip label={chipLabelFor(student)} style={styles.chip} />
+        <StudentChip label={chipLabelFor(student, roleLabel)} style={styles.chip} />
       ) : null}
     </>
   );

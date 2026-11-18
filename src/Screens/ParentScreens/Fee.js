@@ -1,15 +1,13 @@
 import React, {useCallback, useState} from 'react';
-import {Image, StatusBar, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import ScrollEnterScrollView from '../../Component/ScrollEnterScrollView';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import LinearGradient from 'react-native-linear-gradient';
 import AnimatedCard from '../../Component/AnimatedCard';
-import CardWave, {SCREEN_WAVES} from '../../Component/CardWave';
+import {SCREEN_WAVES} from '../../Component/CardWave';
 import {Images} from '../../Assets';
-import MainHeaderComponent from '../../Component/MainHeaderComponent';
-import PersonAvatar from '../../Component/Profile/PersonAvatar';
+import ParentNavyIceLayout from '../../Component/Parent/ParentNavyIceLayout';
+import SelectedChildBanner from '../../Component/SelectedChildBanner';
 import ProfileGradientCard from '../../Component/Profile/ProfileGradientCard';
 import {
   CARD_RADIUS,
@@ -118,7 +116,7 @@ const getStatusStyle = status => {
 
 const Fee = () => {
   const navigation = useNavigation();
-  const {activeStudent, feeDetails, unreadNotificationCount, classLabel} = useRoleData();
+  const {activeStudent, feeDetails, unreadNotificationCount} = useRoleData();
   const fee = feeDetails || {};
   const [feeTab, setFeeTab] = useState('school');
   const [viewMode, setViewMode] = useState('home');
@@ -158,27 +156,13 @@ const Fee = () => {
 
   const renderHome = () => (
     <>
-      <AnimatedCard
-        index={1}
-        entering={getHomeScreenEnter(1)}
-        replayToken={viewReplay}
-        style={[styles.studentWrap, IDENTITY_CARD_SHADOW]}>
-        <LinearGradient
-          colors={PROFILE_GRADIENT}
-          start={GRADIENT_START}
-          end={GRADIENT_END}
-          style={styles.studentCard}>
-          <PersonAvatar person={activeStudent} size={wp(13)} />
-          <View style={styles.studentInfo}>
-            <Text style={styles.studentName} numberOfLines={1}>
-              {activeStudent?.label}
-            </Text>
-            <Text style={styles.studentClass} numberOfLines={1}>
-              {classLabel}
-            </Text>
-          </View>
-        </LinearGradient>
-      </AnimatedCard>
+      <SelectedChildBanner
+        child={activeStudent}
+        icy
+        canSwitch={false}
+        compactMargin
+        animationIndex={1}
+      />
 
       <AnimatedCard
         index={2}
@@ -409,28 +393,17 @@ const Fee = () => {
     );
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <StatusBar backgroundColor={Colors.parentBg} barStyle="dark-content" />
-      <MainHeaderComponent
-        title={headerTitle}
-        notificationCount={unreadNotificationCount || 1}
-        onBackPress={viewMode === 'home' ? undefined : () => setFeeViewMode('home')}
-      />
-
-      <ScrollEnterScrollView
-        style={styles.scrollArea}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        bounces={false}
-        overScrollMode="never"
-        removeClippedSubviews={false}
-        keyboardShouldPersistTaps="handled">
-        {viewMode === 'home' && renderHome()}
-        {viewMode === 'details' && renderDetails()}
-        {viewMode === 'history' && renderHistory()}
-        {viewMode === 'receipts' && renderReceipts()}
-      </ScrollEnterScrollView>
-    </SafeAreaView>
+    <ParentNavyIceLayout
+      title={headerTitle}
+      unreadCount={unreadNotificationCount || 1}
+      onBackPress={
+        viewMode === 'home' ? undefined : () => setFeeViewMode('home')
+      }>
+      {viewMode === 'home' && renderHome()}
+      {viewMode === 'details' && renderDetails()}
+      {viewMode === 'history' && renderHistory()}
+      {viewMode === 'receipts' && renderReceipts()}
+    </ParentNavyIceLayout>
   );
 };
 

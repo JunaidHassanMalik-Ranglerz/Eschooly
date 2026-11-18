@@ -99,7 +99,7 @@ const UpdatePassword = () => {
   const saving = useSelector(state => state.auth.loading);
   const submitLock = useRef(false);
   const {isParent} = useRole();
-  const icy = !isParent;
+  const icy = true;
   const bottomPad = useStackBottomPad(4);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');

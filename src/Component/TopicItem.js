@@ -22,6 +22,10 @@ const TopicItem = props => {
           status === 'completed' && styles.checkboxDone,
           status === 'in_progress' && styles.checkboxProgress,
           status === 'pending' && styles.checkboxPending,
+          icy && styles.checkboxIcy,
+          icy && status === 'completed' && styles.checkboxDoneIcy,
+          icy && status === 'in_progress' && styles.checkboxProgressIcy,
+          icy && status === 'pending' && styles.checkboxPendingIcy,
         ]}>
         {status === 'completed' && (
           <Icon name="checkmark" size={wp(3.5)} color={Colors.white} />
@@ -39,10 +43,20 @@ const TopicItem = props => {
             <Icon
               name="time-outline"
               size={wp(3.2)}
-              color={premium ? Colors.whiteMuted75 : Colors.grayText}
+              color={
+                icy
+                  ? Colors.textSecondary
+                  : premium
+                    ? Colors.whiteMuted75
+                    : Colors.grayText
+              }
             />
             <Text
-              style={[styles.duration, premium && styles.durationPremium]}
+              style={[
+                styles.duration,
+                premium && styles.durationPremium,
+                icy && styles.durationIcy,
+              ]}
               numberOfLines={1}>
               {props?.topic?.duration}
             </Text>
@@ -114,6 +128,7 @@ const styles = StyleSheet.create({
   },
   info: {
     flex: 1,
+    minWidth: 0,
   },
   title: {
     color: Colors.black,
@@ -194,5 +209,26 @@ const styles = StyleSheet.create({
   },
   pendingTextIcy: {
     color: Colors.textSecondary,
+  },
+  durationIcy: {
+    color: Colors.textSecondary,
+    width: undefined,
+    flexShrink: 1,
+  },
+  checkboxIcy: {
+    backgroundColor: Colors.surface,
+    borderColor: Colors.borderSubtle,
+  },
+  checkboxDoneIcy: {
+    backgroundColor: '#16A34A',
+    borderColor: '#16A34A',
+  },
+  checkboxProgressIcy: {
+    borderColor: Colors.brandRoyal,
+    backgroundColor: Colors.hubCard,
+  },
+  checkboxPendingIcy: {
+    borderColor: Colors.borderSubtle,
+    backgroundColor: Colors.surface,
   },
 });

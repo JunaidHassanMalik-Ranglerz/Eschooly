@@ -80,18 +80,21 @@ const ParentSheetModal = ({
           compact && styles.sheetCompact,
         ]}>
         {ice ? (
-          <LinearGradient
-            colors={[Colors.bannerIceStart, Colors.bannerIceEnd]}
-            start={{x: 0, y: 0.08}}
-            end={{x: 1, y: 1}}
-            style={styles.sheetFillIce}>
+          <View style={styles.sheetFillIce}>
+            <LinearGradient
+              colors={[Colors.bannerIceStart, Colors.bannerIceEnd]}
+              start={{x: 0, y: 0.08}}
+              end={{x: 1, y: 1}}
+              pointerEvents="none"
+              style={StyleSheet.absoluteFill}
+            />
             <CardWave
               variant={SCREEN_WAVES.assignmentIce}
               color="rgba(19, 69, 163, 0.14)"
             />
             {header}
             {body}
-          </LinearGradient>
+          </View>
         ) : (
           <>
             {header}
@@ -175,6 +178,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(3),
     paddingBottom: hp(1.2),
     zIndex: 2,
+    flexShrink: 0,
   },
   headerText: {
     flex: 1,
@@ -219,11 +223,14 @@ const styles = StyleSheet.create({
     paddingTop: hp(1.6),
     paddingBottom: hp(1.6),
     paddingHorizontal: wp(2.2),
+    overflow: 'hidden',
     ...elevation.banner,
   },
   sheetFillIce: {
+    flex: 1,
+    minHeight: 0,
     width: '100%',
-    maxHeight: '100%',
+    alignSelf: 'stretch',
     overflow: 'hidden',
     borderRadius: radius.banner,
   },

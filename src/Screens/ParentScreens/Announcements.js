@@ -77,7 +77,7 @@ const AnnouncementsScreen = () => {
     canSwitchChild,
     studentLabel,
   } = useRoleData();
-  const icy = !isParent;
+  const icy = true;
   const bottomPad = useStackBottomPad();
   const {selectedChildId: homeChildId, children} = useSelector(state => state.parentHome);
   const homeStudent = useSelector(state => state.studentHome.student);
@@ -110,13 +110,13 @@ const AnnouncementsScreen = () => {
         photoUrl: homeStudent?.photoUrl || '',
         sectionName: homeStudent?.sectionName || '',
       };
-  const studentIdentity = icy
-    ? {
+  const studentIdentity = isParent
+    ? bannerChild
+    : {
         ...bannerChild,
         classInfo: formatStudentClassLabel(homeStudent) || bannerChild.classInfo,
         classLabel: formatStudentClassLabel(homeStudent) || bannerChild.classLabel,
-      }
-    : bannerChild;
+      };
   const parentCanSwitch = children.length > 1;
 
   const childKey = String(isParent ? activeChildId : selectedChildId ?? activeStudent?.value ?? '');
@@ -323,10 +323,19 @@ const AnnouncementsScreen = () => {
                     student={studentIdentity}
                     premium
                     embedded
-                    readOnly
-                    look="flyer"
+                    readOnly={!isParent || !parentCanSwitch}
+                    look={isParent ? 'float' : 'flyer'}
                     label={studentLabel}
                     containerStyle={styles.identityTuck}
+                    externalPicker={isParent && parentCanSwitch}
+                    onPickerPress={
+                      isParent && parentCanSwitch
+                        ? () => {
+                            setSwitchVisible(true);
+                            setModalReplay(value => value + 1);
+                          }
+                        : undefined
+                    }
                   />
                   {announcementList}
                 </View>

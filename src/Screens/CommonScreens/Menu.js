@@ -39,7 +39,7 @@ const Menu = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const {isParent, studentLabel} = useRoleData();
-  const icy = !isParent;
+  const icy = true;
   const bottomPad = useStackBottomPad();
   const {children, selectedChildId: homeChildId} = useSelector(state => state.parentHome);
   const homeStudent = useSelector(state => state.studentHome.student);
@@ -50,14 +50,16 @@ const Menu = () => {
   const parentChild =
     children.find(item => item.value === String(homeChildId)) || children[0] || null;
   const parentCanSwitch = children.length > 1;
-  const bannerStudent = {
-    label: homeStudent?.label || '',
-    classInfo: homeStudent?.className || homeStudent?.classLabel || '',
-    classLabel: homeStudent?.classLabel || homeStudent?.className || '',
-    className: homeStudent?.className || '',
-    photoUrl: homeStudent?.photoUrl || '',
-    rollNo: homeStudent?.rollNo || '',
-  };
+  const bannerStudent = isParent
+    ? parentChild
+    : {
+        label: homeStudent?.label || '',
+        classInfo: homeStudent?.className || homeStudent?.classLabel || '',
+        classLabel: homeStudent?.classLabel || homeStudent?.className || '',
+        className: homeStudent?.className || '',
+        photoUrl: homeStudent?.photoUrl || '',
+        rollNo: homeStudent?.rollNo || '',
+      };
 
   useEffect(() => {
     if (!isParent || homeChildId || children.length) {
@@ -160,15 +162,30 @@ const Menu = () => {
                       student={bannerStudent}
                       premium
                       embedded
-                      readOnly
+                      readOnly={!isParent || !parentCanSwitch}
                       look="float"
                       label={studentLabel}
+                      externalPicker={isParent && parentCanSwitch}
+                      onPickerPress={
+                        isParent && parentCanSwitch
+                          ? () => setSwitchVisible(true)
+                          : undefined
+                      }
                     />
                     {menuCards}
                   </View>
                 </View>
               </EschoolyScreenShell.Body>
             </ScrollEnterScrollView>
+            {isParent && parentCanSwitch ? (
+              <ChildSwitchModal
+                visible={switchVisible}
+                childrenList={children}
+                selectedId={String(homeChildId || '')}
+                onSelect={handleSelectChild}
+                onClose={() => setSwitchVisible(false)}
+              />
+            ) : null}
           </EschoolyScreenShell>
         </StudentToneProvider>
       </ScreenEnterProvider>

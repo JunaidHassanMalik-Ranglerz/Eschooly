@@ -50,7 +50,7 @@ const DigitalLibrary = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const {isParent} = useRoleData();
-  const icy = !isParent;
+  const icy = true;
   const bottomPad = useStackBottomPad();
   const {selectedChildId: homeChildId, children} = useSelector(
     state => state.parentHome,

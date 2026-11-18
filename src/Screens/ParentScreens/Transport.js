@@ -1,20 +1,17 @@
 import React from 'react';
-import {Image, StatusBar, StyleSheet, Text, View} from 'react-native';
-import ScrollEnterScrollView from '../../Component/ScrollEnterScrollView';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import {Image, StyleSheet, Text, View} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import DepthIcon from '../../Component/DepthIcon';
 import AnimatedCard from '../../Component/AnimatedCard';
 import CardWave, {SCREEN_WAVES} from '../../Component/CardWave';
 import {Images} from '../../Assets';
-import MainHeaderComponent from '../../Component/MainHeaderComponent';
-import PersonAvatar from '../../Component/Profile/PersonAvatar';
+import ParentNavyIceLayout from '../../Component/Parent/ParentNavyIceLayout';
+import SelectedChildBanner from '../../Component/SelectedChildBanner';
 import {
   CARD_RADIUS,
   GRADIENT_END,
   GRADIENT_START,
   IDENTITY_CARD_SHADOW,
-  PROFILE_GRADIENT,
 } from '../../Component/Profile/ProfileTheme';
 import {Colors} from '../../Constants/Colors';
 import {Fonts} from '../../Constants/Fonts';
@@ -35,42 +32,18 @@ const INFO_ROWS = [
 ];
 
 const Transport = () => {
-  const {activeStudent, transportDetails, classLabel} = useRoleData();
+  const {activeStudent, transportDetails} = useRoleData();
   const transport = transportDetails || {};
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <StatusBar backgroundColor={Colors.parentBg} barStyle="dark-content" />
-      <MainHeaderComponent title={Strings.transport} notificationCount={1} />
-
-      <ScrollEnterScrollView
-        style={styles.scrollArea}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        bounces={false}
-        overScrollMode="never"
-        removeClippedSubviews={false}
-        keyboardShouldPersistTaps="handled">
-        <AnimatedCard
-          index={1}
-          entering={getHomeScreenEnter(1)}
-          style={[styles.studentWrap, IDENTITY_CARD_SHADOW]}>
-          <LinearGradient
-            colors={PROFILE_GRADIENT}
-            start={GRADIENT_START}
-            end={GRADIENT_END}
-            style={styles.studentCard}>
-            <PersonAvatar person={activeStudent} size={wp(13)} />
-            <View style={styles.studentInfo}>
-              <Text style={styles.studentName} numberOfLines={1}>
-                {activeStudent?.label}
-              </Text>
-              <Text style={styles.studentClass} numberOfLines={1}>
-                {classLabel}
-              </Text>
-            </View>
-          </LinearGradient>
-        </AnimatedCard>
+    <ParentNavyIceLayout title={Strings.transport} unreadCount={1}>
+        <SelectedChildBanner
+          child={activeStudent}
+          icy
+          canSwitch={false}
+          compactMargin
+          animationIndex={1}
+        />
 
         <AnimatedCard
           index={2}
@@ -128,8 +101,7 @@ const Transport = () => {
             <Text style={styles.notifyText}>{Strings.busNotify}</Text>
           </LinearGradient>
         </AnimatedCard>
-      </ScrollEnterScrollView>
-    </SafeAreaView>
+    </ParentNavyIceLayout>
   );
 };
 

@@ -107,7 +107,7 @@ const MyProfile = ({isTab = false}) => {
   const logoutLock = useRef(false);
 
   const {profilePerson, profileDetails, isParent} = useProfileStudent();
-  const icy = !isParent;
+  const icy = true;
   const stackPad = useStackBottomPad();
   const bottomPad = isTab ? hp(3) : stackPad;
   const unreadNotifications = useSelector(
@@ -334,7 +334,13 @@ const MyProfile = ({isTab = false}) => {
                   />
                 </View>
                 <View style={styles.canvasForeground}>
-                  {studentCard ? (
+                  {isParent ? (
+                    <ParentIdentityCard
+                      person={parentPerson}
+                      animationIndex={1}
+                      entering={getHomeScreenEnter(1)}
+                    />
+                  ) : studentCard ? (
                     <AnimatedCard
                       index={1}
                       entering={getHomeScreenEnter(1)}
@@ -414,11 +420,29 @@ const MyProfile = ({isTab = false}) => {
                     </>
                   ) : null}
 
+                  {isParent ? (
+                    <ProfileActionCard
+                      icon="information-circle-outline"
+                      iconColor={ACTION_ICON_COLOR.moreInfo}
+                      title={Strings.moreInfo}
+                      onPress={openMoreInfo}
+                      animationIndex={4}
+                      entering={getHomeScreenEnter(4)}
+                    />
+                  ) : null}
                   {studentActions}
                 </View>
               </View>
             </EschoolyScreenShell.Body>
           </ScrollEnterScrollView>
+          {isParent && moreInfoVisible ? (
+            <ParentMoreInfoModal
+              visible
+              person={parentPerson}
+              replayToken={modalReplay}
+              onClose={closeMoreInfo}
+            />
+          ) : null}
           {logoutModal}
         </EschoolyScreenShell>
       </StudentToneProvider>
