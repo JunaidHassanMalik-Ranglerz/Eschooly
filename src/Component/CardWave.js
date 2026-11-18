@@ -15,6 +15,7 @@ export const SCREEN_WAVES = {
   announcements: 'announcement',
   notifications: 'notification',
   assignment: 'assignment',
+  assignmentIce: 'assignmentIce',
   syllabus: 'syllabus',
   attendance: 'attendanceHero',
   fees: 'feeHero',
@@ -219,6 +220,14 @@ const VARIANTS = {
   // Screen aliases (all right-side)
   syllabus: {style: RIGHT('50%'), viewBox: '0 0 200 72', paths: [{d: 'M80 72 C102 64 118 28 148 12 L200 72 Z', opacity: 0.65}]},
   assignment: {style: RIGHT('52%'), viewBox: '0 0 200 72', paths: [{d: 'M88 72 C110 58 126 24 158 10 L200 72 Z', opacity: 0.62}]},
+  assignmentIce: {
+    style: RIGHT('70%'),
+    viewBox: '0 0 200 72',
+    paths: [
+      {d: 'M28 72 C62 70 92 30 128 12 C156 2 180 0 200 0 L200 72 Z', opacity: 0.52},
+      {d: 'M78 72 C108 60 136 26 166 10 C184 3 194 1 200 0 L200 72 Z', opacity: 0.34},
+    ],
+  },
   teachers: {style: RIGHT('48%'), viewBox: '0 0 200 72', paths: [{d: 'M96 72 L200 34 L200 72 Z', opacity: 0.58}]},
   attendance: {style: RIGHT('62%'), viewBox: '0 0 200 72', paths: [{d: 'M60 72 C82 66 100 24 136 10 L200 72 Z', opacity: 0.65}]},
   fees: {style: RIGHT('58%'), viewBox: '0 0 200 72', paths: [{d: 'M72 72 C94 58 118 22 150 10 L200 72 Z', opacity: 0.6}]},

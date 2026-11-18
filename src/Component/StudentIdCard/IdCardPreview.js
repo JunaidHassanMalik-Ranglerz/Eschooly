@@ -29,126 +29,128 @@ const HEADER_H = hp(7.5);
 
 const textValue = value => (value == null ? '' : String(value).trim());
 
+const ICE_WAVE_COLOR = 'rgba(19, 69, 163, 0.16)';
+
 const IceIdCardFront = ({data}) => (
   <View style={styles.iceWrap}>
     <View style={styles.iceShell}>
       <View style={styles.iceClip}>
         <LinearGradient
-          colors={[Colors.bannerIceStart, Colors.bannerIceEnd]}
-          start={{x: 0, y: 0.08}}
-          end={{x: 1, y: 1}}
-          style={styles.iceFill}
-        />
-        <View pointerEvents="none" style={styles.iceWave}>
-          <CardWave
-            variant={SCREEN_WAVES.assignmentIce}
-            color="rgba(91, 156, 255, 0.16)"
-          />
-        </View>
-        <View style={styles.iceFace}>
-          <LinearGradient
-            colors={ICE_STRIP}
-            start={{x: 0, y: 0}}
-            end={{x: 1, y: 0}}
-            style={styles.iceStrip}>
-            <View style={styles.headerLeft}>
-              <View style={styles.logoBox}>
-                <Image
-                  source={Images.cap}
-                  style={styles.logoIcon}
-                  resizeMode="contain"
-                />
-              </View>
-              <View style={styles.schoolCopy}>
-                <Text style={styles.schoolName}>{data.schoolName}</Text>
-                {textValue(data.schoolTagline) ? (
-                  <Text style={styles.schoolTag}>{data.schoolTagline}</Text>
-                ) : null}
-              </View>
+          colors={ICE_STRIP}
+          start={{x: 0, y: 0}}
+          end={{x: 1, y: 0}}
+          style={styles.iceStrip}>
+          <View style={styles.headerLeft}>
+            <View style={styles.logoBox}>
+              <Image
+                source={Images.cap}
+                style={styles.logoIcon}
+                resizeMode="contain"
+              />
             </View>
-            {textValue(data.academicYear) ? (
-              <Text style={styles.year}>{data.academicYear}</Text>
-            ) : null}
-          </LinearGradient>
-
-          <Text style={styles.iceCaption}>{Strings.idCardPreviewFront}</Text>
-
-          <View style={styles.iceIdentity}>
-            <PersonAvatar
-              person={{
-                value: data.value,
-                label: data.name,
-                name: data.name,
-                initials: data.initials,
-                gender: data.gender,
-                photo: data.photo,
-                photoUrl: data.photoUrl,
-                className: data.class,
-                classBadge: data.classBadge,
-                classInfo: data.classInfo,
-              }}
-              size={ICE_AVATAR}
-              borderColor={Colors.borderSubtle}
-              borderWidth={StyleSheet.hairlineWidth * 2}
-              style={styles.iceAvatar}
-            />
-            <View style={styles.iceNameCol}>
-              <Text style={styles.iceName}>{data.name}</Text>
-              {textValue(data.role) ? (
-                <Text style={styles.iceRole}>{data.role}</Text>
+            <View style={styles.schoolCopy}>
+              <Text style={styles.schoolName}>{data.schoolName}</Text>
+              {textValue(data.schoolTagline) ? (
+                <Text style={styles.schoolTag}>{data.schoolTagline}</Text>
               ) : null}
             </View>
           </View>
+          {textValue(data.academicYear) ? (
+            <Text style={styles.year}>{data.academicYear}</Text>
+          ) : null}
+        </LinearGradient>
 
-          <View style={styles.iceStats}>
-            <IceStat label={Strings.classShort} value={data.class} />
-            <View style={styles.iceStatRule} />
-            <IceStat label={Strings.sectionShort} value={data.section} />
-            <View style={styles.iceStatRule} />
-            <IceStat label={Strings.rollShort} value={data.rollNo} />
-          </View>
+        <View style={styles.iceBody}>
+          <LinearGradient
+            colors={[Colors.bannerIceStart, Colors.bannerIceEnd]}
+            start={{x: 0, y: 0.08}}
+            end={{x: 1, y: 1}}
+            style={styles.iceFill}
+          />
+          <CardWave
+            variant={SCREEN_WAVES.assignmentIce}
+            color={ICE_WAVE_COLOR}
+          />
+          <View style={styles.iceBodyContent}>
+            <Text style={styles.iceCaption}>{Strings.idCardPreviewFront}</Text>
 
-          <View style={styles.iceDetails}>
-            {textValue(data.studentId) ? (
-              <View style={styles.iceIdBadge}>
-                <Text style={styles.iceIdText}>{data.studentId}</Text>
-              </View>
-            ) : null}
-            {textValue(data.schoolLine) ? (
-              <Text style={styles.iceMeta}>{data.schoolLine}</Text>
-            ) : null}
-            {textValue(data.cityLine) ? (
-              <Text style={styles.iceMeta}>{data.cityLine}</Text>
-            ) : null}
-            <IceField
-              icon="call-outline"
-              label={Strings.phone}
-              value={data.phone}
-            />
-            <IceField
-              icon="location-outline"
-              label={Strings.address}
-              value={data.address}
-            />
-            <IceField
-              icon="calendar-outline"
-              label={Strings.validUntil}
-              value={data.validUntil}
-            />
-          </View>
-
-          <View style={styles.iceFooter}>
-            <Text style={styles.iceFooterText}>
-              {Strings.authorizedSignature}
-            </Text>
-            <View style={styles.verifiedRow}>
-              <Icon
-                name="checkmark-circle"
-                size={wp(4)}
-                color={Colors.brandRoyal}
+            <View style={styles.iceIdentity}>
+              <PersonAvatar
+                person={{
+                  value: data.value,
+                  label: data.name,
+                  name: data.name,
+                  initials: data.initials,
+                  gender: data.gender,
+                  photo: data.photo,
+                  photoUrl: data.photoUrl,
+                  className: data.class,
+                  classBadge: data.classBadge,
+                  classInfo: data.classInfo,
+                }}
+                size={ICE_AVATAR}
+                borderColor={Colors.borderSubtle}
+                borderWidth={StyleSheet.hairlineWidth * 2}
+                style={styles.iceAvatar}
               />
-              <Text style={styles.iceVerified}>{Strings.verified}</Text>
+              <View style={styles.iceNameCol}>
+                <Text style={styles.iceName}>{data.name}</Text>
+                {textValue(data.role) ? (
+                  <Text style={styles.iceRole}>{data.role}</Text>
+                ) : null}
+              </View>
             </View>
+
+            <View style={styles.iceStats}>
+              <IceStat label={Strings.classShort} value={data.class} />
+              <View style={styles.iceStatRule} />
+              <IceStat label={Strings.sectionShort} value={data.section} />
+              <View style={styles.iceStatRule} />
+              <IceStat label={Strings.rollShort} value={data.rollNo} />
+            </View>
+
+            <View style={styles.iceDetails}>
+              {textValue(data.studentId) ? (
+                <View style={styles.iceIdBadge}>
+                  <Text style={styles.iceIdText}>{data.studentId}</Text>
+                </View>
+              ) : null}
+              {textValue(data.schoolLine) ? (
+                <Text style={styles.iceMeta}>{data.schoolLine}</Text>
+              ) : null}
+              {textValue(data.cityLine) ? (
+                <Text style={styles.iceMeta}>{data.cityLine}</Text>
+              ) : null}
+              <IceField
+                icon="call-outline"
+                label={Strings.phone}
+                value={data.phone}
+              />
+              <IceField
+                icon="location-outline"
+                label={Strings.address}
+                value={data.address}
+              />
+              <IceField
+                icon="calendar-outline"
+                label={Strings.validUntil}
+                value={data.validUntil}
+              />
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.iceFooter}>
+          <Text style={styles.iceFooterText}>
+            {Strings.authorizedSignature}
+          </Text>
+          <View style={styles.verifiedRow}>
+            <Icon
+              name="checkmark-circle"
+              size={wp(4)}
+              color={Colors.brandRoyal}
+            />
+            <Text style={styles.iceVerified}>{Strings.verified}</Text>
           </View>
         </View>
       </View>
@@ -755,14 +757,16 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth * 2,
     borderColor: 'rgba(91, 156, 255, 0.35)',
+    backgroundColor: Colors.bannerIceStart,
+  },
+  iceBody: {
+    position: 'relative',
+    overflow: 'hidden',
   },
   iceFill: {
     ...StyleSheet.absoluteFillObject,
   },
-  iceWave: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  iceFace: {
+  iceBodyContent: {
     zIndex: 1,
   },
   iceStrip: {

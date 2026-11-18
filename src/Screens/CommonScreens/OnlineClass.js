@@ -6,12 +6,15 @@ import {
   StatusBar,
   StyleSheet,
   Text,
+  View,
 } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import {useFocusEffect} from '@react-navigation/native';
 import {useDispatch, useSelector} from 'react-redux';
 import ScrollEnterScrollView from '../../Component/ScrollEnterScrollView';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import MainHeaderComponent from '../../Component/MainHeaderComponent';
+import StudentBrandedHeader from '../../Component/Student/StudentBrandedHeader';
 import ClassTabBar from '../../Component/OnlineClass/ClassTabBar';
 import LiveClassCard from '../../Component/OnlineClass/LiveClassCard';
 import ClassSectionHeader from '../../Component/OnlineClass/ClassSectionHeader';
@@ -19,12 +22,28 @@ import UpcomingClassCard from '../../Component/OnlineClass/UpcomingClassCard';
 import RecordingClassCard from '../../Component/OnlineClass/RecordingClassCard';
 import ZoomInfoBanner from '../../Component/OnlineClass/ZoomInfoBanner';
 import AnimatedCard from '../../Component/AnimatedCard';
+import CardWave, {SCREEN_WAVES} from '../../Component/CardWave';
+import EschoolyScreenShell, {
+  FLOAT_CARD_GAP,
+  FLOAT_CARD_RADIUS,
+  FLOAT_CARD_TUCK,
+  NAVY_ICE_CURVE,
+} from '../../Component/Glass/EschoolyScreenShell';
 import {CLASS_TABS} from '../../Constants/OnlineClassData';
 import {Colors} from '../../Constants/Colors';
 import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
+import {elevation} from '../../Constants/Theme';
 import {wp, hp} from '../../Constants/Responsive';
+import {
+  GRADIENT_END,
+  GRADIENT_START,
+} from '../../Component/Profile/ProfileTheme';
+import {
+  StudentToneProvider,
+  useStackBottomPad,
+} from '../../Component/Glass/StudentTone';
 import {useRoleData} from '../../hooks/useRoleData';
 import {withScreenEnter} from '../../hooks/useScreenEnterGate';
 import {getHomeScreenEnter} from '../../utils/cardAnimation';
@@ -52,7 +71,12 @@ const OnlineClass = () => {
   const dispatch = useDispatch();
   const role = useSelector(state => state.auth.role);
   const isParent = role === 'parent';
+  const icy = !isParent;
+  const bottomPad = useStackBottomPad();
   const dummy = useRoleData();
+  const unreadNotifications = useSelector(
+    state => state.studentHome?.unreadNotifications || 0,
+  );
   const [tab, setTab] = useState('live');
   const [tabReplay, setTabReplay] = useState(0);
   const [live, setLive] = useState([]);
@@ -288,9 +312,195 @@ const OnlineClass = () => {
     !isParent && showLive && upcomingClasses.length === 0;
   const hideEndedSection = !isParent && showLive && recordings.length === 0;
 
+  const classLists = loading && !isParent ? (
+    <ActivityIndicator
+      style={styles.loader}
+      size="large"
+      color={icy ? Colors.brandRoyal : Colors.primary}
+    />
+  ) : (
+    <>
+      {showLive
+        ? liveClasses.map((item, index) => (
+            <LiveClassCard
+              key={item.id || `live-${index}`}
+              item={item}
+              animationIndex={slots.liveSlot + index}
+              entering={getHomeScreenEnter(slots.liveSlot + index)}
+              replayToken={tabReplay}
+              joining={joiningId === item.id}
+              onJoin={isParent ? undefined : handleJoin}
+            />
+          ))
+        : null}
+
+      {showLive && !liveClasses.length && !isParent ? (
+        <Text style={[styles.emptyInline, icy && styles.emptyIcy]}>
+          {Strings.noLiveClasses}
+        </Text>
+      ) : null}
+
+      {showUpcoming && !hideUpcomingSection ? (
+        <>
+          <AnimatedCard
+            index={slots.upcomingHeaderSlot}
+            entering={getHomeScreenEnter(slots.upcomingHeaderSlot)}
+            replayToken={tabReplay}
+            style={styles.sectionEnter}>
+            <ClassSectionHeader title={Strings.upcomingSessions} />
+          </AnimatedCard>
+          {upcomingClasses.length ? (
+            upcomingClasses.map((item, index) => {
+              const slot = slots.upcomingListStart + index;
+              return (
+                <UpcomingClassCard
+                  key={item.id}
+                  item={item}
+                  animationIndex={slot}
+                  gradientIndex={0}
+                  entering={getHomeScreenEnter(slot)}
+                  replayToken={tabReplay}
+                  reminding={remindingId === item.id}
+                  onReminder={isParent ? undefined : handleReminder}
+                />
+              );
+            })
+          ) : (
+            <Text style={[styles.emptyInline, icy && styles.emptyIcy]}>
+              {Strings.noUpcomingClasses}
+            </Text>
+          )}
+        </>
+      ) : null}
+
+      {showEnded && !hideEndedSection ? (
+        <>
+          <AnimatedCard
+            index={slots.recordingHeaderSlot}
+            entering={getHomeScreenEnter(slots.recordingHeaderSlot)}
+            replayToken={tabReplay}
+            style={styles.sectionEnter}>
+            <ClassSectionHeader title={Strings.recentRecordings} />
+          </AnimatedCard>
+          {endedForTab.length ? (
+            endedForTab.map((item, index) => {
+              const slot = slots.recordingListStart + index;
+              return (
+                <RecordingClassCard
+                  key={item.id}
+                  item={item}
+                  animationIndex={slot}
+                  gradientIndex={0}
+                  entering={getHomeScreenEnter(slot)}
+                  replayToken={tabReplay}
+                  watching={watchingId === item.id}
+                  downloading={downloadingId === item.id}
+                  onWatch={isParent ? undefined : handleWatch}
+                  onDownload={isParent ? undefined : handleDownload}
+                />
+              );
+            })
+          ) : (
+            <Text style={[styles.emptyInline, icy && styles.emptyIcy]}>
+              {tab === 'ended' ? Strings.noEndedClasses : Strings.noRecordings}
+            </Text>
+          )}
+        </>
+      ) : null}
+
+      {showZoomBanner ? (
+        <AnimatedCard
+          index={slots.bannerSlot}
+          entering={getHomeScreenEnter(slots.bannerSlot)}
+          replayToken={tabReplay}
+          style={icy ? styles.bannerWrapIcy : styles.bannerWrap}>
+          <ZoomInfoBanner />
+        </AnimatedCard>
+      ) : null}
+    </>
+  );
+
+  if (icy) {
+    return (
+      <StudentToneProvider active>
+        <EschoolyScreenShell variant="navy-ice">
+          <ScrollEnterScrollView
+            style={styles.scroll}
+            contentContainerStyle={[
+              styles.studentScroll,
+              {paddingBottom: bottomPad},
+            ]}
+            showsVerticalScrollIndicator={false}
+            bounces
+            overScrollMode="auto"
+            removeClippedSubviews={false}
+            keyboardShouldPersistTaps="handled"
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={() => loadClasses(true)}
+                tintColor={Colors.brandRoyal}
+                colors={[Colors.brandRoyal]}
+              />
+            }>
+            <EschoolyScreenShell.Header style={styles.studentBand}>
+              <StudentBrandedHeader
+                title={Strings.onlineClass}
+                unreadCount={unreadNotifications}
+              />
+            </EschoolyScreenShell.Header>
+            <EschoolyScreenShell.Body tuck={false} style={styles.studentBody}>
+              <View style={styles.canvasStage}>
+                <View pointerEvents="none" style={styles.canvasWave}>
+                  <CardWave
+                    variant={SCREEN_WAVES.assignmentIce}
+                    color="rgba(37, 99, 235, 0.12)"
+                  />
+                </View>
+                <View style={styles.canvasForeground}>
+                  <AnimatedCard
+                    index={1}
+                    entering={getHomeScreenEnter(1)}
+                    style={styles.filterWrapIcy}>
+                    <View style={styles.filterClipIcy}>
+                      <LinearGradient
+                        colors={[Colors.bannerIceStart, Colors.bannerIceEnd]}
+                        start={GRADIENT_START}
+                        end={GRADIENT_END}
+                        style={styles.filterFillIcy}
+                      />
+                      <View pointerEvents="none" style={styles.filterWaveIcy}>
+                        <CardWave
+                          variant={SCREEN_WAVES.assignmentIce}
+                          color="rgba(91, 156, 255, 0.16)"
+                        />
+                      </View>
+                      <View style={styles.filterInnerIcy}>
+                        <ClassTabBar
+                          tabs={tabs}
+                          selected={tab}
+                          onSelect={selectTab}
+                        />
+                      </View>
+                    </View>
+                  </AnimatedCard>
+                  {classLists}
+                </View>
+              </View>
+            </EschoolyScreenShell.Body>
+          </ScrollEnterScrollView>
+        </EschoolyScreenShell>
+      </StudentToneProvider>
+    );
+  }
+
   return (
+    <StudentToneProvider active={false}>
     <SafeAreaView style={styles.container} edges={['top']}>
-      <StatusBar backgroundColor={Colors.parentBg} barStyle="dark-content" />
+      <StatusBar
+        backgroundColor={Colors.parentBg}
+        barStyle="dark-content"
+      />
       <MainHeaderComponent
         title={Strings.onlineClass}
         notificationCount={1}
@@ -299,138 +509,22 @@ const OnlineClass = () => {
 
       <ScrollEnterScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, {paddingBottom: bottomPad}]}
         showsVerticalScrollIndicator={false}
-        bounces={!isParent}
-        overScrollMode={isParent ? 'never' : 'auto'}
+        bounces={false}
+        overScrollMode="never"
         removeClippedSubviews={false}
-        keyboardShouldPersistTaps="handled"
-        refreshControl={
-          isParent ? undefined : (
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={() => loadClasses(true)}
-              tintColor={Colors.primary}
-              colors={[Colors.primary]}
-            />
-          )
-        }>
+        keyboardShouldPersistTaps="handled">
         <AnimatedCard
           index={1}
           entering={getHomeScreenEnter(1)}
           style={styles.tabBarCard}>
           <ClassTabBar tabs={tabs} selected={tab} onSelect={selectTab} />
         </AnimatedCard>
-
-        {loading && !isParent ? (
-          <ActivityIndicator
-            style={styles.loader}
-            size="large"
-            color={Colors.primary}
-          />
-        ) : (
-          <>
-            {showLive
-              ? liveClasses.map((item, index) => (
-                  <LiveClassCard
-                    key={item.id || `live-${index}`}
-                    item={item}
-                    animationIndex={slots.liveSlot + index}
-                    entering={getHomeScreenEnter(slots.liveSlot + index)}
-                    replayToken={tabReplay}
-                    joining={joiningId === item.id}
-                    onJoin={isParent ? undefined : handleJoin}
-                  />
-                ))
-              : null}
-
-            {showLive && !liveClasses.length && !isParent ? (
-              <Text style={styles.emptyInline}>{Strings.noLiveClasses}</Text>
-            ) : null}
-
-            {showUpcoming && !hideUpcomingSection ? (
-              <>
-                <AnimatedCard
-                  index={slots.upcomingHeaderSlot}
-                  entering={getHomeScreenEnter(slots.upcomingHeaderSlot)}
-                  replayToken={tabReplay}
-                  style={styles.sectionEnter}>
-                  <ClassSectionHeader title={Strings.upcomingSessions} />
-                </AnimatedCard>
-                {upcomingClasses.length ? (
-                  upcomingClasses.map((item, index) => {
-                    const slot = slots.upcomingListStart + index;
-                    return (
-                      <UpcomingClassCard
-                        key={item.id}
-                        item={item}
-                        animationIndex={slot}
-                        gradientIndex={0}
-                        entering={getHomeScreenEnter(slot)}
-                        replayToken={tabReplay}
-                        reminding={remindingId === item.id}
-                        onReminder={isParent ? undefined : handleReminder}
-                      />
-                    );
-                  })
-                ) : (
-                  <Text style={styles.emptyInline}>
-                    {Strings.noUpcomingClasses}
-                  </Text>
-                )}
-              </>
-            ) : null}
-
-            {showEnded && !hideEndedSection ? (
-              <>
-                <AnimatedCard
-                  index={slots.recordingHeaderSlot}
-                  entering={getHomeScreenEnter(slots.recordingHeaderSlot)}
-                  replayToken={tabReplay}
-                  style={styles.sectionEnter}>
-                  <ClassSectionHeader title={Strings.recentRecordings} />
-                </AnimatedCard>
-                {endedForTab.length ? (
-                  endedForTab.map((item, index) => {
-                    const slot = slots.recordingListStart + index;
-                    return (
-                      <RecordingClassCard
-                        key={item.id}
-                        item={item}
-                        animationIndex={slot}
-                        gradientIndex={0}
-                        entering={getHomeScreenEnter(slot)}
-                        replayToken={tabReplay}
-                        watching={watchingId === item.id}
-                        downloading={downloadingId === item.id}
-                        onWatch={isParent ? undefined : handleWatch}
-                        onDownload={isParent ? undefined : handleDownload}
-                      />
-                    );
-                  })
-                ) : (
-                  <Text style={styles.emptyInline}>
-                    {tab === 'ended'
-                      ? Strings.noEndedClasses
-                      : Strings.noRecordings}
-                  </Text>
-                )}
-              </>
-            ) : null}
-
-            {showZoomBanner ? (
-              <AnimatedCard
-                index={slots.bannerSlot}
-                entering={getHomeScreenEnter(slots.bannerSlot)}
-                replayToken={tabReplay}
-                style={styles.bannerWrap}>
-                <ZoomInfoBanner />
-              </AnimatedCard>
-            ) : null}
-          </>
-        )}
+        {classLists}
       </ScrollEnterScrollView>
     </SafeAreaView>
+    </StudentToneProvider>
   );
 };
 
@@ -471,5 +565,68 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.regular,
     fontSize: Fontsize.xs1,
     marginVertical: hp(1.2),
+  },
+  emptyIcy: {
+    color: Colors.textSecondary,
+  },
+  studentScroll: {
+    flexGrow: 1,
+    backgroundColor: Colors.canvas,
+    overflow: 'visible',
+  },
+  studentBand: {
+    borderBottomLeftRadius: NAVY_ICE_CURVE,
+    paddingBottom: FLOAT_CARD_GAP + FLOAT_CARD_TUCK,
+    overflow: 'visible',
+  },
+  studentBody: {
+    paddingTop: 0,
+    marginTop: -FLOAT_CARD_TUCK,
+    overflow: 'visible',
+  },
+  canvasStage: {
+    position: 'relative',
+    overflow: 'visible',
+    minHeight: hp(62),
+  },
+  canvasWave: {
+    position: 'absolute',
+    top: hp(2),
+    right: -wp(4),
+    left: 0,
+    height: hp(56),
+    zIndex: 0,
+  },
+  canvasForeground: {
+    zIndex: 1,
+  },
+  filterWrapIcy: {
+    marginBottom: hp(1.35),
+    zIndex: 2,
+    overflow: 'visible',
+    backgroundColor: Colors.bannerIceStart,
+    borderRadius: FLOAT_CARD_RADIUS,
+    ...elevation.banner,
+  },
+  filterClipIcy: {
+    borderRadius: FLOAT_CARD_RADIUS,
+    overflow: 'hidden',
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: 'rgba(91, 156, 255, 0.35)',
+  },
+  filterFillIcy: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  filterWaveIcy: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  filterInnerIcy: {
+    paddingHorizontal: wp(2.2),
+    paddingVertical: hp(1.05),
+    zIndex: 1,
+  },
+  bannerWrapIcy: {
+    overflow: 'visible',
+    marginTop: hp(0.4),
   },
 });

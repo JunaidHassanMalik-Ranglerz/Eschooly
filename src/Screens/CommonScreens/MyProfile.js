@@ -366,16 +366,14 @@ const MyProfile = ({isTab = false}) => {
                         <View style={styles.detailsClipIcy}>
                           <LinearGradient
                             colors={[Colors.bannerIceStart, Colors.bannerIceEnd]}
-                            start={GRADIENT_START}
-                            end={GRADIENT_END}
+                            start={{x: 0, y: 0.08}}
+                            end={{x: 1, y: 1}}
                             style={styles.detailsFillIcy}
                           />
-                          <View pointerEvents="none" style={styles.detailsWaveIcy}>
-                            <CardWave
-                              variant={SCREEN_WAVES.assignmentIce}
-                              color="rgba(91, 156, 255, 0.16)"
-                            />
-                          </View>
+                          <CardWave
+                            variant={SCREEN_WAVES.assignmentIce}
+                            color="rgba(19, 69, 163, 0.16)"
+                          />
                           <View style={styles.detailsInnerIcy}>
                             {shownDetails.map((item, index) => (
                               <View
@@ -811,15 +809,13 @@ const styles = StyleSheet.create({
     ...elevation.card,
   },
   detailsClipIcy: {
-    borderRadius: radius.banner,
+    position: 'relative',
     overflow: 'hidden',
+    borderRadius: radius.banner,
     borderWidth: StyleSheet.hairlineWidth * 2,
     borderColor: 'rgba(91, 156, 255, 0.35)',
   },
   detailsFillIcy: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  detailsWaveIcy: {
     ...StyleSheet.absoluteFillObject,
   },
   detailsInnerIcy: {

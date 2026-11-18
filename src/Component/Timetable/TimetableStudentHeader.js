@@ -70,8 +70,7 @@ const styles = StyleSheet.create({
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: hp(0.7),
-    marginBottom: hp(0.4),
+    marginTop: hp(0.5),
   },
   backBtn: {
     width: wp(8.5),

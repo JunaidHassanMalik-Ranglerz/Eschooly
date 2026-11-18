@@ -354,10 +354,10 @@ const Timetable = () => {
             overScrollMode="never"
             keyboardShouldPersistTaps="handled"
             removeClippedSubviews={false}>
-            <EschoolyScreenShell.Header style={styles.studentBand}>
+            <EschoolyScreenShell.Header>
               <TimetableStudentHeader unreadCount={unreadNotifications} />
             </EschoolyScreenShell.Header>
-            <EschoolyScreenShell.Body tuck={false} style={styles.studentBody}>
+            <EschoolyScreenShell.Body style={styles.studentBody}>
               <View style={styles.canvasStage}>
                 <View pointerEvents="none" style={styles.canvasWave}>
                   <CardWave
@@ -432,11 +432,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.canvas,
     overflow: 'visible',
   },
-  studentBand: {
-    paddingBottom: hp(1.5),
-  },
   studentBody: {
-    paddingTop: hp(1.35),
+    overflow: 'visible',
   },
   canvasStage: {
     position: 'relative',
@@ -455,10 +452,12 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   toggleWrapStudent: {
-    backgroundColor: Colors.hubCard,
-    borderColor: Colors.borderSubtle,
+    backgroundColor: Colors.bannerIceStart,
+    borderColor: Colors.borderGlass,
     marginBottom: hp(1.45),
-    ...elevation.card,
+    overflow: 'visible',
+    zIndex: 2,
+    ...elevation.banner,
   },
   toggleBtnActiveStudent: {
     backgroundColor: Colors.brandNavy,

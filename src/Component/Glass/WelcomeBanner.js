@@ -2,6 +2,7 @@ import React from 'react';
 import {StyleSheet, Text, View} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import FeatureArtImage from './FeatureArtImage';
+import CardWave, {SCREEN_WAVES} from '../CardWave';
 import {EducationIcons} from '../../Assets/EducationIcons';
 import {Colors} from '../../Constants/Colors';
 import {Strings} from '../../Constants/Strings';
@@ -9,6 +10,8 @@ import {Typography} from '../../Constants/Typography';
 import {Fontsize} from '../../Constants/Fontsize';
 import {elevation, spacing} from '../../Constants/Theme';
 import {hp, wp} from '../../Constants/Responsive';
+
+const WAVE_COLOR = 'rgba(19, 69, 163, 0.16)';
 
 export const WELCOME_BANNER_HEIGHT = hp(16.8);
 
@@ -28,6 +31,10 @@ const WelcomeBanner = ({firstName, title, subtitle, art, style}) => {
         start={{x: 0, y: 0.08}}
         end={{x: 1, y: 1}}
         style={styles.gradient}>
+        <CardWave
+          variant={SCREEN_WAVES.assignmentIce}
+          color={WAVE_COLOR}
+        />
         <View style={styles.copy}>
           <Text style={styles.title} numberOfLines={2}>
             {headline}
@@ -76,6 +83,7 @@ const styles = StyleSheet.create({
     minWidth: 0,
     paddingRight: wp(2),
     justifyContent: 'center',
+    zIndex: 2,
   },
   title: {
     ...Typography.bannerTitle,
@@ -100,5 +108,6 @@ const styles = StyleSheet.create({
     height: ART_SIZE,
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 1,
   },
 });

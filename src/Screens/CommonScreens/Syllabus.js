@@ -12,7 +12,11 @@ import ChapterCard from '../../Component/ChapterCard';
 import SelectedChildBanner from '../../Component/SelectedChildBanner';
 import ChildSwitchModal from '../../Component/Parent/ChildSwitchModal';
 import AnimatedCard from '../../Component/AnimatedCard';
-import EschoolyScreenShell from '../../Component/Glass/EschoolyScreenShell';
+import EschoolyScreenShell, {
+  FLOAT_CARD_GAP,
+  FLOAT_CARD_TUCK,
+  NAVY_ICE_CURVE,
+} from '../../Component/Glass/EschoolyScreenShell';
 import CardWave, {SCREEN_WAVES} from '../../Component/CardWave';
 import FeatureArtImage from '../../Component/Glass/FeatureArtImage';
 import {EducationIcons} from '../../Assets/EducationIcons';
@@ -100,9 +104,11 @@ const statHintText = (label, hint) => {
 const StudentMetric = ({item, value, hint, showDivider}) => {
   const support = statHintText(item.label, hint);
   const pillIcon = PILL_ICONS[item.key];
+  const labelLines = item.key === 'total' ? 2 : 1;
 
   return (
-    <View style={[styles.studentMetric, showDivider && styles.studentMetricDivider]}>
+    <View
+      style={[styles.studentMetric, showDivider && styles.studentMetricDivider]}>
       <View style={styles.studentMetricTile}>
         <FeatureArtImage
           source={STUDENT_STAT_ART[item.key]}
@@ -110,34 +116,37 @@ const StudentMetric = ({item, value, hint, showDivider}) => {
           height={STAT_ART_SIZE}
         />
       </View>
-      <View style={styles.studentMetricInfo}>
+      <View style={styles.studentMetricLabelSlot}>
         <Text
           style={styles.studentMetricLabel}
-          numberOfLines={2}
-          textBreakStrategy="simple">
+          numberOfLines={labelLines}
+          textBreakStrategy="simple"
+          maxFontSizeMultiplier={1.2}>
           {item.label}
         </Text>
-        <View style={styles.studentMetricValueSlot}>
-          <Text style={styles.studentMetricValue} numberOfLines={1}>
-            {value}
-          </Text>
-        </View>
-        <View style={styles.studentMetricPillSlot}>
-          {support ? (
-            <View style={styles.studentMetricPill}>
-              {pillIcon ? (
-                <Icon
-                  name={pillIcon}
-                  size={wp(2.8)}
-                  color={Colors.brandRoyal}
-                />
-              ) : null}
-              <Text style={styles.studentMetricHint} numberOfLines={1}>
-                {support}
-              </Text>
-            </View>
-          ) : null}
-        </View>
+      </View>
+      <View style={styles.studentMetricValueSlot}>
+        <Text
+          style={styles.studentMetricValue}
+          numberOfLines={1}
+          maxFontSizeMultiplier={1.2}>
+          {value}
+        </Text>
+      </View>
+      <View style={styles.studentMetricPillSlot}>
+        {support ? (
+          <View style={styles.studentMetricPill}>
+            {pillIcon ? (
+              <Icon name={pillIcon} size={wp(2.8)} color={Colors.brandRoyal} />
+            ) : null}
+            <Text
+              style={styles.studentMetricHint}
+              numberOfLines={1}
+              maxFontSizeMultiplier={1.15}>
+              {support}
+            </Text>
+          </View>
+        ) : null}
       </View>
     </View>
   );
@@ -474,10 +483,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   studentBand: {
-    paddingBottom: hp(1.5),
+    borderBottomLeftRadius: NAVY_ICE_CURVE,
+    paddingBottom: FLOAT_CARD_GAP + FLOAT_CARD_TUCK,
+    overflow: 'visible',
   },
   studentBody: {
-    paddingTop: hp(1.35),
+    paddingTop: 0,
+    marginTop: -FLOAT_CARD_TUCK,
+    overflow: 'visible',
   },
   canvasStage: {
     position: 'relative',
@@ -507,6 +520,8 @@ const styles = StyleSheet.create({
     marginBottom: hp(1.35),
     borderRadius: radius.pill,
     backgroundColor: Colors.bannerIceStart,
+    overflow: 'visible',
+    zIndex: 2,
     ...elevation.card,
   },
   statsClip: {
@@ -528,9 +543,8 @@ const styles = StyleSheet.create({
   studentMetric: {
     flex: 1,
     minWidth: 0,
-    flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: wp(1.15),
+    paddingHorizontal: wp(1.4),
   },
   studentMetricDivider: {
     borderLeftWidth: StyleSheet.hairlineWidth,
@@ -543,21 +557,21 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(220, 235, 253, 0.92)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: wp(1.3),
+    marginBottom: hp(0.7),
   },
-  studentMetricInfo: {
-    flex: 1,
-    minWidth: 0,
+  studentMetricLabelSlot: {
+    width: '100%',
+    minHeight: Fontsize.xs1 * 2.5,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
+    marginBottom: hp(0.25),
   },
   studentMetricLabel: {
     width: '100%',
-    minHeight: Fontsize.xs0 * 2 + 2,
-    color: Colors.textPrimary,
-    fontFamily: Fonts.bold,
-    fontSize: Fontsize.xs0,
-    lineHeight: Fontsize.xs0 + 3,
+    color: Colors.brandNavy,
+    fontFamily: Fonts.medium,
+    fontSize: Fontsize.xs1,
+    lineHeight: Fontsize.xs1 * 1.25,
     textAlign: 'center',
     includeFontPadding: false,
   },
@@ -569,7 +583,7 @@ const styles = StyleSheet.create({
   },
   studentMetricValue: {
     width: '100%',
-    color: Colors.textPrimary,
+    color: Colors.brandNavy,
     fontFamily: Fonts.bold,
     fontSize: Fontsize.ml,
     lineHeight: Fontsize.ml + 2,
@@ -579,19 +593,20 @@ const styles = StyleSheet.create({
   },
   studentMetricPillSlot: {
     width: '100%',
-    minHeight: hp(2.2),
+    minHeight: hp(2.35),
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: hp(0.12),
+    marginTop: hp(0.35),
   },
   studentMetricPill: {
     maxWidth: '100%',
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: Colors.hubCard,
     borderRadius: radius.pill,
-    paddingHorizontal: wp(1.6),
-    paddingVertical: hp(0.22),
+    paddingHorizontal: wp(1.8),
+    paddingVertical: hp(0.28),
   },
   studentMetricHint: {
     flexShrink: 1,
