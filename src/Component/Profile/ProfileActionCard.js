@@ -3,9 +3,12 @@ import {ActivityIndicator, Pressable, StyleSheet, Text, View} from 'react-native
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
 import AnimatedCard from '../AnimatedCard';
+import CardWave, {SCREEN_WAVES} from '../CardWave';
+import {useStudentTone} from '../Glass/StudentTone';
 import {Colors} from '../../Constants/Colors';
 import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
+import {elevation, radius} from '../../Constants/Theme';
 import {wp, hp} from '../../Constants/Responsive';
 import {
   CARD_RADIUS,
@@ -26,35 +29,73 @@ const ProfileActionCard = ({
   entering,
   replayToken = 0,
   loading = false,
-}) => (
-  <AnimatedCard
-    index={animationIndex}
-    entering={entering}
-    replayToken={replayToken}
-    style={[styles.wrap, IDENTITY_CARD_SHADOW, style]}>
-    <Pressable
-      onPress={loading ? undefined : onPress}
-      disabled={loading}
-      android_ripple={{color: Colors.whiteOverlay18}}
-      style={styles.press}>
-      <LinearGradient
-        colors={PROFILE_GRADIENT}
-        start={GRADIENT_START}
-        end={GRADIENT_END}
-        style={styles.card}>
-        <View style={styles.iconWrap}>
-          <Icon name={icon} size={wp(5)} color={iconColor} />
-        </View>
-        <Text style={styles.title}>{title}</Text>
-        {loading ? (
-          <ActivityIndicator size="small" color={Colors.white} />
+}) => {
+  const icy = useStudentTone();
+  const content = (
+    <>
+      <View style={[styles.iconWrap, icy && styles.iconWrapIcy]}>
+        <Icon
+          name={icon}
+          size={wp(5)}
+          color={icy ? Colors.brandRoyal : iconColor}
+        />
+      </View>
+      <Text style={[styles.title, icy && styles.titleIcy]}>{title}</Text>
+      {loading ? (
+        <ActivityIndicator
+          size="small"
+          color={icy ? Colors.brandRoyal : Colors.white}
+        />
+      ) : (
+        <Icon
+          name={arrowIcon}
+          size={wp(5)}
+          color={icy ? Colors.brandRoyal : Colors.whiteMuted85}
+        />
+      )}
+    </>
+  );
+
+  return (
+    <AnimatedCard
+      index={animationIndex}
+      entering={entering}
+      replayToken={replayToken}
+      style={[styles.wrap, icy ? styles.wrapIcy : IDENTITY_CARD_SHADOW, style]}>
+      <Pressable
+        onPress={loading ? undefined : onPress}
+        disabled={loading}
+        android_ripple={{color: icy ? Colors.tabActivePill : Colors.whiteOverlay18}}
+        style={[styles.press, icy && styles.pressIcy]}>
+        {icy ? (
+          <View style={styles.clipIcy}>
+            <LinearGradient
+              colors={[Colors.bannerIceStart, Colors.bannerIceEnd]}
+              start={GRADIENT_START}
+              end={GRADIENT_END}
+              style={styles.fillIcy}
+            />
+            <View pointerEvents="none" style={styles.waveIcy}>
+              <CardWave
+                variant={SCREEN_WAVES.assignmentIce}
+                color="rgba(91, 156, 255, 0.16)"
+              />
+            </View>
+            <View style={styles.cardIcyInner}>{content}</View>
+          </View>
         ) : (
-          <Icon name={arrowIcon} size={wp(5)} color={Colors.whiteMuted85} />
+          <LinearGradient
+            colors={PROFILE_GRADIENT}
+            start={GRADIENT_START}
+            end={GRADIENT_END}
+            style={styles.card}>
+            {content}
+          </LinearGradient>
         )}
-      </LinearGradient>
-    </Pressable>
-  </AnimatedCard>
-);
+      </Pressable>
+    </AnimatedCard>
+  );
+};
 
 export default ProfileActionCard;
 
@@ -64,9 +105,18 @@ const styles = StyleSheet.create({
     borderRadius: CARD_RADIUS,
     overflow: 'hidden',
   },
+  wrapIcy: {
+    overflow: 'visible',
+    backgroundColor: Colors.bannerIceStart,
+    ...elevation.card,
+  },
   press: {
     borderRadius: CARD_RADIUS,
     overflow: 'hidden',
+  },
+  pressIcy: {
+    borderRadius: radius.banner,
+    overflow: 'visible',
   },
   card: {
     flexDirection: 'row',
@@ -81,10 +131,42 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: wp(3),
   },
+  iconWrapIcy: {
+    width: wp(10),
+    height: wp(10),
+    borderRadius: wp(5),
+    backgroundColor: Colors.hubCard,
+    marginRight: wp(3.2),
+  },
   title: {
     flex: 1,
     color: Colors.white,
     fontFamily: Fonts.semibold,
     fontSize: Fontsize.xs1,
+  },
+  titleIcy: {
+    color: Colors.brandNavy,
+    fontFamily: Fonts.semibold,
+    fontSize: Fontsize.sm1,
+  },
+  clipIcy: {
+    borderRadius: radius.banner,
+    overflow: 'hidden',
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: 'rgba(91, 156, 255, 0.35)',
+  },
+  fillIcy: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  waveIcy: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  cardIcyInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: wp(3.6),
+    paddingVertical: hp(1.35),
+    minHeight: hp(6.4),
+    zIndex: 1,
   },
 });

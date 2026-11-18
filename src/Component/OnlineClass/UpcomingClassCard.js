@@ -1,14 +1,19 @@
 import React from 'react';
 import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
 import ProfileGradientCard from '../Profile/ProfileGradientCard';
-import {SCREEN_WAVES} from '../CardWave';
+import AnimatedCard from '../AnimatedCard';
+import CardWave, {SCREEN_WAVES} from '../CardWave';
 import {Colors} from '../../Constants/Colors';
 import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
 import {getSubjectGradient} from '../../Constants/CardTheme';
+import {elevation, radius} from '../../Constants/Theme';
 import {wp, hp} from '../../Constants/Responsive';
+import {useStudentTone} from '../Glass/StudentTone';
+import {GRADIENT_END, GRADIENT_START} from '../Profile/ProfileTheme';
 
 const UpcomingClassCard = ({
   item,
@@ -20,94 +25,156 @@ const UpcomingClassCard = ({
   onReminder,
 }) => {
   const paletteIndex = gradientIndex ?? animationIndex;
-  return (
-  <ProfileGradientCard
-    innerStyle={styles.inner}
-    animationIndex={animationIndex}
-    entering={entering}
-    replayToken={replayToken}
-    colors={getSubjectGradient(paletteIndex)}
-    waveVariant={paletteIndex === 0 ? SCREEN_WAVES.onlineClass : null}>
-    <View style={styles.topRow}>
-      {item?.month ? (
-        <View style={[styles.monthBadge, {backgroundColor: Colors.whiteOverlay22}]}>
-          <Text style={styles.month} numberOfLines={1}>
-            {item.month}
-          </Text>
-        </View>
-      ) : (
-        <View />
-      )}
+  const icy = useStudentTone();
 
-      {item?.badge ? (
-        <View style={[styles.badge, {backgroundColor: Colors.whiteOverlay18}]}>
-          <Text style={styles.badgeText} numberOfLines={1}>
-            {item.badge}
-          </Text>
-        </View>
-      ) : null}
-    </View>
-
-    {item?.title ? (
-      <Text style={styles.title} numberOfLines={2}>
-        {item.title}
-      </Text>
-    ) : null}
-    {item?.classInfo ? (
-      <Text style={styles.classInfo} numberOfLines={1}>
-        {item.classInfo}
-      </Text>
-    ) : null}
-
-    {item?.time || item?.duration ? (
-      <View style={styles.infoRow}>
-        {item?.time ? (
-          <>
-            <Icon name="time-outline" size={wp(3.5)} color={Colors.whiteMuted85} />
-            <Text style={styles.infoText} numberOfLines={1}>
-              {item.time}
-            </Text>
-          </>
-        ) : null}
-        {item?.duration ? (
-          <>
-            <Icon
-              name="hourglass-outline"
-              size={wp(3.5)}
-              color={Colors.whiteMuted85}
-              style={styles.hourIcon}
-            />
-            <Text style={styles.infoText} numberOfLines={1}>
-              {item.duration}
-            </Text>
-          </>
-        ) : null}
-      </View>
-    ) : null}
-
-    {item?.showFooter ? (
-      <View style={styles.footer}>
-        {item?.zoomLink ? (
-          <View style={styles.zoomRow}>
-            <Icon name="link-outline" size={wp(3.5)} color={Colors.whiteMuted85} />
-            <Text style={styles.zoomLink} numberOfLines={1}>
-              {item.zoomLink}
+  const body = (
+    <>
+      <View style={styles.topRow}>
+        {item?.month ? (
+          <View
+            style={[
+              styles.monthBadge,
+              {backgroundColor: icy ? Colors.hubCard : Colors.whiteOverlay22},
+            ]}>
+            <Text
+              style={[styles.month, icy && styles.textIcy]}
+              numberOfLines={1}>
+              {item.month}
             </Text>
           </View>
         ) : (
-          <View style={styles.zoomRow} />
+          <View />
         )}
-        <TouchableOpacity
-          activeOpacity={0.8}
-          disabled={reminding || item?.reminderSet}
-          onPress={() => onReminder?.(item)}>
-          <Text style={styles.reminderText} numberOfLines={1}>
-            {item?.reminderSet ? Strings.reminderSet : Strings.setReminder}
-          </Text>
-        </TouchableOpacity>
+
+        {item?.badge ? (
+          <View
+            style={[
+              styles.badge,
+              {backgroundColor: icy ? Colors.hubCard : Colors.whiteOverlay18},
+            ]}>
+            <Text
+              style={[styles.badgeText, icy && styles.metaIcy]}
+              numberOfLines={1}>
+              {item.badge}
+            </Text>
+          </View>
+        ) : null}
       </View>
-    ) : null}
-  </ProfileGradientCard>
+
+      {item?.title ? (
+        <Text style={[styles.title, icy && styles.textIcy]}>{item.title}</Text>
+      ) : null}
+      {item?.classInfo ? (
+        <Text style={[styles.classInfo, icy && styles.metaIcy]}>
+          {item.classInfo}
+        </Text>
+      ) : null}
+
+      {item?.time || item?.duration ? (
+        <View style={styles.infoRow}>
+          {item?.time ? (
+            <>
+              <Icon
+                name="time-outline"
+                size={wp(3.5)}
+                color={icy ? Colors.brandRoyal : Colors.whiteMuted85}
+              />
+              <Text
+                style={[styles.infoText, icy && styles.metaIcy]}
+                numberOfLines={1}>
+                {item.time}
+              </Text>
+            </>
+          ) : null}
+          {item?.duration ? (
+            <>
+              <Icon
+                name="hourglass-outline"
+                size={wp(3.5)}
+                color={icy ? Colors.brandRoyal : Colors.whiteMuted85}
+                style={styles.hourIcon}
+              />
+              <Text
+                style={[styles.infoText, icy && styles.metaIcy]}
+                numberOfLines={1}>
+                {item.duration}
+              </Text>
+            </>
+          ) : null}
+        </View>
+      ) : null}
+
+      {item?.showFooter ? (
+        <View style={[styles.footer, icy && styles.footerIcy]}>
+          {item?.zoomLink ? (
+            <View style={styles.zoomRow}>
+              <Icon
+                name="link-outline"
+                size={wp(3.5)}
+                color={icy ? Colors.textSecondary : Colors.whiteMuted85}
+              />
+              <Text
+                style={[styles.zoomLink, icy && styles.metaIcy]}
+                numberOfLines={1}>
+                {item.zoomLink}
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.zoomRow} />
+          )}
+          <TouchableOpacity
+            activeOpacity={0.8}
+            disabled={reminding || item?.reminderSet}
+            onPress={() => onReminder?.(item)}>
+            <Text
+              style={[styles.reminderText, icy && styles.reminderIcy]}
+              numberOfLines={1}>
+              {item?.reminderSet ? Strings.reminderSet : Strings.setReminder}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      ) : null}
+    </>
+  );
+
+  if (icy) {
+    return (
+      <AnimatedCard
+        index={animationIndex}
+        entering={entering}
+        replayToken={replayToken}
+        style={styles.wrapIcy}>
+        <View style={styles.pressIcy}>
+          <View style={styles.clipIcy}>
+            <LinearGradient
+              colors={[Colors.bannerIceStart, Colors.bannerIceEnd]}
+              start={GRADIENT_START}
+              end={GRADIENT_END}
+              style={styles.fillIcy}
+            />
+            <View pointerEvents="none" style={styles.waveIcy}>
+              <CardWave
+                variant={SCREEN_WAVES.assignmentIce}
+                color="rgba(91, 156, 255, 0.14)"
+              />
+            </View>
+            <View style={styles.innerIcy}>{body}</View>
+          </View>
+        </View>
+      </AnimatedCard>
+    );
+  }
+
+  return (
+    <ProfileGradientCard
+      innerStyle={styles.inner}
+      animationIndex={animationIndex}
+      entering={entering}
+      replayToken={replayToken}
+      colors={getSubjectGradient(paletteIndex)}
+      waveVariant={paletteIndex === 0 ? SCREEN_WAVES.onlineClass : null}>
+      {body}
+    </ProfileGradientCard>
   );
 };
 
@@ -116,6 +183,33 @@ export default UpcomingClassCard;
 const styles = StyleSheet.create({
   inner: {
     paddingVertical: hp(1.3),
+  },
+  wrapIcy: {
+    marginBottom: hp(1.2),
+    overflow: 'visible',
+  },
+  pressIcy: {
+    borderRadius: radius.banner,
+    overflow: 'visible',
+    backgroundColor: Colors.bannerIceStart,
+    ...elevation.card,
+  },
+  clipIcy: {
+    borderRadius: radius.banner,
+    overflow: 'hidden',
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: 'rgba(91, 156, 255, 0.35)',
+  },
+  fillIcy: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  waveIcy: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  innerIcy: {
+    paddingHorizontal: wp(3.6),
+    paddingVertical: hp(1.3),
+    zIndex: 1,
   },
   topRow: {
     flexDirection: 'row',
@@ -190,15 +284,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: wp(1.5),
     flex: 1,
+    minWidth: 0,
+    marginRight: wp(2),
   },
   zoomLink: {
     color: Colors.whiteMuted75,
     fontFamily: Fonts.regular,
     fontSize: Fontsize.xs0,
+    flex: 1,
   },
   reminderText: {
     color: '#93C5FD',
     fontFamily: Fonts.semibold,
     fontSize: Fontsize.xs1,
+  },
+  textIcy: {
+    color: Colors.brandNavy,
+  },
+  metaIcy: {
+    color: Colors.textSecondary,
+  },
+  reminderIcy: {
+    color: Colors.brandRoyal,
+  },
+  footerIcy: {
+    borderTopColor: Colors.borderSubtle,
   },
 });

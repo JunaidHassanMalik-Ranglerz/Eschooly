@@ -1,9 +1,6 @@
 import React, {useCallback, useMemo, useState} from 'react';
 import {Dimensions, ScrollView, StyleSheet, View} from 'react-native';
-import WelcomeBanner, {
-  WELCOME_ART_OVERFLOW,
-  WELCOME_BANNER_HEIGHT,
-} from './WelcomeBanner';
+import WelcomeBanner from './WelcomeBanner';
 import {Colors} from '../../Constants/Colors';
 import {spacing} from '../../Constants/Theme';
 import {hp, wp} from '../../Constants/Responsive';
@@ -85,13 +82,11 @@ export default WelcomeCarousel;
 const styles = StyleSheet.create({
   wrap: {
     marginHorizontal: -spacing.md,
-    overflow: 'visible',
   },
   page: {
+    marginBottom: hp(1.5),
     width: SCREEN_W,
     paddingHorizontal: spacing.md,
-    height: WELCOME_BANNER_HEIGHT + WELCOME_ART_OVERFLOW,
-    overflow: 'visible',
   },
   dots: {
     flexDirection: 'row',

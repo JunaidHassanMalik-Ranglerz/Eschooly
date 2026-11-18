@@ -16,6 +16,12 @@ import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
 
 import MainHeaderComponent from '../../Component/MainHeaderComponent';
+import StudentBrandedHeader from '../../Component/Student/StudentBrandedHeader';
+import EschoolyScreenShell, {
+  FLOAT_CARD_GAP,
+  FLOAT_CARD_TUCK,
+  NAVY_ICE_CURVE,
+} from '../../Component/Glass/EschoolyScreenShell';
 
 import ParentIdentityCard from '../../Component/Parent/ParentIdentityCard';
 
@@ -56,6 +62,11 @@ import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
 
 import {wp, hp} from '../../Constants/Responsive';
+import {elevation, radius} from '../../Constants/Theme';
+import {
+  StudentToneProvider,
+  useStackBottomPad,
+} from '../../Component/Glass/StudentTone';
 import {withScreenEnter} from '../../hooks/useScreenEnterGate';
 import {getHomeScreenEnter} from '../../utils/cardAnimation';
 
@@ -96,6 +107,12 @@ const MyProfile = ({isTab = false}) => {
   const logoutLock = useRef(false);
 
   const {profilePerson, profileDetails, isParent} = useProfileStudent();
+  const icy = !isParent;
+  const stackPad = useStackBottomPad();
+  const bottomPad = isTab ? hp(3) : stackPad;
+  const unreadNotifications = useSelector(
+    state => state.studentHome?.unreadNotifications || 0,
+  );
   const canDownloadIdCard = authRole === 'student' && !isParent;
   const [moreInfoVisible, setMoreInfoVisible] = useState(false);
   const [modalReplay, setModalReplay] = useState(0);
@@ -208,75 +225,244 @@ const MyProfile = ({isTab = false}) => {
     handleLogout();
   };
 
+  const studentActions = (
+    <>
+      {canDownloadIdCard ? (
+        <ProfileActionCard
+          icon="download-outline"
+          iconColor={ACTION_ICON_COLOR.idCard}
+          title={Strings.downloadIdCard}
+          onPress={handleDownloadIdCard}
+          animationIndex={4}
+          entering={getHomeScreenEnter(4)}
+        />
+      ) : null}
+      <ProfileActionCard
+        icon="lock-closed-outline"
+        iconColor={ACTION_ICON_COLOR.updatePassword}
+        title={Strings.updatePassword}
+        onPress={openUpdatePassword}
+        animationIndex={5}
+        entering={getHomeScreenEnter(5)}
+      />
+      <ProfileActionCard
+        icon="log-out-outline"
+        iconColor={ACTION_ICON_COLOR.logout}
+        title={Strings.logout}
+        onPress={onLogoutPress}
+        loading={loggingOut}
+        animationIndex={6}
+        entering={getHomeScreenEnter(6)}
+      />
+    </>
+  );
 
+  const logoutModal = (
+    <Modal
+      visible={logoutConfirmVisible}
+      transparent
+      animationType="fade"
+      statusBarTranslucent
+      onRequestClose={() => {
+        if (!loggingOut) {
+          setLogoutConfirmVisible(false);
+        }
+      }}>
+      <View style={styles.confirmOverlay}>
+        <View style={[styles.confirmCard, icy && styles.confirmCardIcy]}>
+          <Text style={[styles.confirmTitle, icy && styles.confirmTitleIcy]}>
+            {Strings.logout}
+          </Text>
+          <Text style={[styles.confirmMessage, icy && styles.confirmMessageIcy]}>
+            Are you sure you want to logout?
+          </Text>
+          <View style={styles.confirmActions}>
+            <Pressable
+              style={[styles.confirmNo, icy && styles.confirmNoIcy]}
+              disabled={loggingOut}
+              onPress={() => setLogoutConfirmVisible(false)}>
+              <Text style={[styles.confirmNoText, icy && styles.confirmNoTextIcy]}>
+                No
+              </Text>
+            </Pressable>
+            <Pressable
+              style={[styles.confirmYes, icy && styles.confirmYesIcy]}
+              disabled={loggingOut}
+              onPress={handleLogout}>
+              {loggingOut ? (
+                <ActivityIndicator size="small" color={Colors.white} />
+              ) : (
+                <Text style={styles.confirmYesText}>Yes</Text>
+              )}
+            </Pressable>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+
+  if (icy) {
+    return (
+      <StudentToneProvider active>
+        <EschoolyScreenShell variant="navy-ice">
+          <ScrollEnterScrollView
+            style={styles.scrollArea}
+            contentContainerStyle={[
+              styles.studentScroll,
+              {paddingBottom: bottomPad},
+            ]}
+            showsVerticalScrollIndicator={false}
+            bounces={false}
+            overScrollMode="never"
+            removeClippedSubviews={false}
+            keyboardShouldPersistTaps="handled">
+            <EschoolyScreenShell.Header style={styles.studentBand}>
+              <StudentBrandedHeader
+                title={title}
+                unreadCount={unreadNotifications}
+                onBackPress={
+                  isTab ? () => navigation.navigate('Home') : undefined
+                }
+              />
+            </EschoolyScreenShell.Header>
+            <EschoolyScreenShell.Body tuck={false} style={styles.studentBody}>
+              <View style={styles.canvasStage}>
+                <View pointerEvents="none" style={styles.canvasWave}>
+                  <CardWave
+                    variant={SCREEN_WAVES.assignmentIce}
+                    color="rgba(37, 99, 235, 0.12)"
+                  />
+                </View>
+                <View style={styles.canvasForeground}>
+                  {studentCard ? (
+                    <AnimatedCard
+                      index={1}
+                      entering={getHomeScreenEnter(1)}
+                      style={styles.idPreviewWrapIcy}>
+                      <IdCardPreview data={studentCard} variant="ice" />
+                    </AnimatedCard>
+                  ) : profileLoading ? (
+                    <ActivityIndicator
+                      style={styles.profileLoader}
+                      size="large"
+                      color={Colors.brandRoyal}
+                    />
+                  ) : null}
+
+                  {shownDetails.length > 0 ? (
+                    <>
+                      <AnimatedCard
+                        index={2}
+                        entering={getHomeScreenEnter(2)}
+                        style={styles.sectionTitleEnter}>
+                        <Text style={styles.cardDetailsSectionTitleIcy}>
+                          {Strings.cardDetailsTitle}
+                        </Text>
+                      </AnimatedCard>
+                      <AnimatedCard
+                        index={3}
+                        entering={getHomeScreenEnter(3)}
+                        style={styles.detailsWrapIcy}>
+                        <View style={styles.detailsClipIcy}>
+                          <LinearGradient
+                            colors={[Colors.bannerIceStart, Colors.bannerIceEnd]}
+                            start={GRADIENT_START}
+                            end={GRADIENT_END}
+                            style={styles.detailsFillIcy}
+                          />
+                          <View pointerEvents="none" style={styles.detailsWaveIcy}>
+                            <CardWave
+                              variant={SCREEN_WAVES.assignmentIce}
+                              color="rgba(91, 156, 255, 0.16)"
+                            />
+                          </View>
+                          <View style={styles.detailsInnerIcy}>
+                            {shownDetails.map((item, index) => (
+                              <View
+                                key={item.key}
+                                style={[
+                                  styles.detailRowIcyNew,
+                                  index === shownDetails.length - 1 &&
+                                    styles.detailRowLast,
+                                ]}>
+                                <View style={styles.detailIconIcy}>
+                                  <Icon
+                                    name={
+                                      DETAIL_ICONS[item.key] ||
+                                      'information-circle-outline'
+                                    }
+                                    size={wp(5)}
+                                    color={Colors.brandRoyal}
+                                  />
+                                </View>
+                                <View style={styles.detailText}>
+                                  <Text style={styles.detailLabelIcy}>
+                                    {item.label}
+                                  </Text>
+                                  <Text style={styles.detailValueIcy}>
+                                    {item.value}
+                                  </Text>
+                                </View>
+                                <Icon
+                                  name="chevron-forward"
+                                  size={wp(5)}
+                                  color={Colors.brandRoyal}
+                                />
+                              </View>
+                            ))}
+                          </View>
+                        </View>
+                      </AnimatedCard>
+                    </>
+                  ) : null}
+
+                  {studentActions}
+                </View>
+              </View>
+            </EschoolyScreenShell.Body>
+          </ScrollEnterScrollView>
+          {logoutModal}
+        </EschoolyScreenShell>
+      </StudentToneProvider>
+    );
+  }
 
   return (
+    <StudentToneProvider active={false}>
     <SafeAreaView style={styles.container} edges={['top']}>
-
-      <StatusBar backgroundColor={Colors.parentBg} barStyle="dark-content" />
-
-      <MainHeaderComponent
-
-        title={title} 
-
-        notificationCount={1}
-
-        navyBack
-
-        onBackPress={
-
-          isTab ? () => navigation.navigate('Home') : undefined
-
-        }
-
+      <StatusBar
+        backgroundColor={Colors.parentBg}
+        barStyle="dark-content"
       />
-
-
-
+      <MainHeaderComponent
+        title={title}
+        notificationCount={1}
+        navyBack
+        onBackPress={
+          isTab ? () => navigation.navigate('Home') : undefined
+        }
+      />
       <ScrollEnterScrollView
         style={styles.scrollArea}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, {paddingBottom: bottomPad}]}
         showsVerticalScrollIndicator={false}
         bounces={false}
         overScrollMode="never"
         removeClippedSubviews={false}
         keyboardShouldPersistTaps="handled">
-
-        {isParent ? (
-          <ParentIdentityCard
-            person={isParent ? parentPerson : profilePerson}
-            animationIndex={1}
-            entering={getHomeScreenEnter(1)}
-          />
-        ) : studentCard ? (
-          <AnimatedCard
-            index={1}
-            entering={getHomeScreenEnter(1)}
-            style={styles.idPreviewWrap}>
-            <IdCardPreview data={studentCard} navy />
-          </AnimatedCard>
-        ) : profileLoading ? (
-          <ActivityIndicator
-            style={styles.profileLoader}
-            size="large"
-            color={Colors.primary}
-          />
-        ) : null}
-
-        {isParent || shownDetails.length > 0 ? (
+        <ParentIdentityCard
+          person={parentPerson}
+          animationIndex={1}
+          entering={getHomeScreenEnter(1)}
+        />
+        {shownDetails.length > 0 ? (
         <>
         <AnimatedCard
           index={2}
           entering={getHomeScreenEnter(2)}
           style={styles.sectionTitleEnter}>
-          <Text
-            style={
-              isParent ? styles.sectionTitle : styles.cardDetailsSectionTitle
-            }>
-            {isParent ? Strings.contactDetails : Strings.cardDetailsTitle}
-          </Text>
+          <Text style={styles.sectionTitle}>{Strings.contactDetails}</Text>
         </AnimatedCard>
-
         <AnimatedCard
           index={3}
           entering={getHomeScreenEnter(3)}
@@ -288,65 +474,44 @@ const MyProfile = ({isTab = false}) => {
               end={GRADIENT_END}
               style={styles.detailsCard}>
             <CardWave variant={SCREEN_WAVES.contactDetails} />
-            {shownDetails.map((item, index) => {
-              const iconColor = DETAIL_ICON_COLOR[item.key] || Colors.iconSky;
-
-              return (
-                <View
-                  key={item.key}
-                  style={[
-                    styles.detailRow,
-                    index === shownDetails.length - 1 && styles.detailRowLast,
-                  ]}>
-                  <View style={styles.iconWrap}>
-                    <Icon
-                      name={DETAIL_ICONS[item.key] || 'information-circle-outline'}
-                      size={wp(5)}
-                      color={iconColor}
-                    />
-                  </View>
-                  <View style={styles.detailText}>
-                    <Text style={styles.detailLabel}>{item.label}</Text>
-                    <Text style={styles.detailValue}>{item.value}</Text>
-                  </View>
+            {shownDetails.map((item, index) => (
+              <View
+                key={item.key}
+                style={[
+                  styles.detailRow,
+                  index === shownDetails.length - 1 && styles.detailRowLast,
+                ]}>
+                <View style={styles.iconWrap}>
                   <Icon
-                    name="chevron-forward"
+                    name={DETAIL_ICONS[item.key] || 'information-circle-outline'}
                     size={wp(5)}
-                    color={Colors.whiteMuted85}
+                    color={DETAIL_ICON_COLOR[item.key] || Colors.iconSky}
                   />
                 </View>
-              );
-            })}
+                <View style={styles.detailText}>
+                  <Text style={styles.detailLabel}>{item.label}</Text>
+                  <Text style={styles.detailValue}>{item.value}</Text>
+                </View>
+                <Icon
+                  name="chevron-forward"
+                  size={wp(5)}
+                  color={Colors.whiteMuted85}
+                />
+              </View>
+            ))}
             </LinearGradient>
           </View>
         </AnimatedCard>
         </>
         ) : null}
-
-
-
-        {isParent ? (
-
-          <ProfileActionCard
-            icon="information-circle-outline"
-            iconColor={ACTION_ICON_COLOR.moreInfo}
-            title={Strings.moreInfo}
-            onPress={openMoreInfo}
-            animationIndex={4}
-            entering={getHomeScreenEnter(4)}
-          />
-
-        ) : canDownloadIdCard ? (
-          <ProfileActionCard
-            icon="download-outline"
-            iconColor={ACTION_ICON_COLOR.idCard}
-            title={Strings.downloadIdCard}
-            onPress={handleDownloadIdCard}
-            animationIndex={4}
-            entering={getHomeScreenEnter(4)}
-          />
-        ) : null}
-
+        <ProfileActionCard
+          icon="information-circle-outline"
+          iconColor={ACTION_ICON_COLOR.moreInfo}
+          title={Strings.moreInfo}
+          onPress={openMoreInfo}
+          animationIndex={4}
+          entering={getHomeScreenEnter(4)}
+        />
         <ProfileActionCard
           icon="lock-closed-outline"
           iconColor={ACTION_ICON_COLOR.updatePassword}
@@ -355,7 +520,6 @@ const MyProfile = ({isTab = false}) => {
           animationIndex={5}
           entering={getHomeScreenEnter(5)}
         />
-
         <ProfileActionCard
           icon="log-out-outline"
           iconColor={ACTION_ICON_COLOR.logout}
@@ -365,57 +529,18 @@ const MyProfile = ({isTab = false}) => {
           animationIndex={6}
           entering={getHomeScreenEnter(6)}
         />
-
       </ScrollEnterScrollView>
-
-
-
-      {isParent && moreInfoVisible ? (
+      {moreInfoVisible ? (
         <ParentMoreInfoModal
           visible
-          person={isParent ? parentPerson : profilePerson}
+          person={parentPerson}
           replayToken={modalReplay}
           onClose={closeMoreInfo}
         />
       ) : null}
-
-      <Modal
-        visible={logoutConfirmVisible}
-        transparent
-        animationType="fade"
-        statusBarTranslucent
-        onRequestClose={() => {
-          if (!loggingOut) {
-            setLogoutConfirmVisible(false);
-          }
-        }}>
-        <View style={styles.confirmOverlay}>
-          <View style={styles.confirmCard}>
-            <Text style={styles.confirmTitle}>{Strings.logout}</Text>
-            <Text style={styles.confirmMessage}>Are you sure you want to logout?</Text>
-            <View style={styles.confirmActions}>
-              <Pressable
-                style={styles.confirmNo}
-                disabled={loggingOut}
-                onPress={() => setLogoutConfirmVisible(false)}>
-                <Text style={styles.confirmNoText}>No</Text>
-              </Pressable>
-              <Pressable
-                style={styles.confirmYes}
-                disabled={loggingOut}
-                onPress={handleLogout}>
-                {loggingOut ? (
-                  <ActivityIndicator size="small" color={Colors.white} />
-                ) : (
-                  <Text style={styles.confirmYesText}>Yes</Text>
-                )}
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
+      {logoutModal}
     </SafeAreaView>
+    </StudentToneProvider>
   );
 };
 
@@ -431,6 +556,25 @@ const styles = StyleSheet.create({
 
     backgroundColor: Colors.parentBg,
 
+  },
+  containerStudent: {
+    backgroundColor: Colors.canvas,
+  },
+  detailsCardIcyWrap: {
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: Colors.borderSubtle,
+  },
+  detailsCardIcy: {
+    backgroundColor: Colors.surface,
+  },
+  detailRowIcy: {
+    borderBottomColor: Colors.borderSubtle,
+  },
+  detailLabelIcy: {
+    color: Colors.textSecondary,
+  },
+  detailValueIcy: {
+    color: Colors.textPrimary,
   },
 
   scrollArea: {
@@ -470,7 +614,7 @@ const styles = StyleSheet.create({
   },
 
   cardDetailsSectionTitle: {
-    color: Colors.grayText,
+    color: Colors.textSecondary,
     fontFamily: Fonts.medium,
     fontSize: Fontsize.xs1,
     letterSpacing: 0.8,
@@ -614,6 +758,113 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.semibold,
     fontSize: Fontsize.xs1,
   },
-
+  studentScroll: {
+    flexGrow: 1,
+    backgroundColor: Colors.canvas,
+    overflow: 'visible',
+  },
+  studentBand: {
+    borderBottomLeftRadius: NAVY_ICE_CURVE,
+    paddingBottom: FLOAT_CARD_GAP + FLOAT_CARD_TUCK,
+    overflow: 'visible',
+  },
+  studentBody: {
+    paddingTop: 0,
+    marginTop: -FLOAT_CARD_TUCK,
+    overflow: 'visible',
+  },
+  canvasStage: {
+    position: 'relative',
+    overflow: 'visible',
+    minHeight: hp(62),
+  },
+  canvasWave: {
+    position: 'absolute',
+    top: hp(2),
+    right: -wp(4),
+    left: 0,
+    height: hp(56),
+    zIndex: 0,
+  },
+  canvasForeground: {
+    zIndex: 1,
+  },
+  idPreviewWrapIcy: {
+    width: '100%',
+    marginBottom: hp(1.35),
+    zIndex: 2,
+    overflow: 'visible',
+  },
+  cardDetailsSectionTitleIcy: {
+    color: Colors.brandNavy,
+    fontFamily: Fonts.bold,
+    fontSize: Fontsize.sm,
+    letterSpacing: 0.2,
+    marginBottom: 0,
+    marginTop: 0,
+  },
+  detailsWrapIcy: {
+    marginBottom: hp(0.6),
+    overflow: 'visible',
+    backgroundColor: Colors.bannerIceStart,
+    borderRadius: radius.banner,
+    ...elevation.card,
+  },
+  detailsClipIcy: {
+    borderRadius: radius.banner,
+    overflow: 'hidden',
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: 'rgba(91, 156, 255, 0.35)',
+  },
+  detailsFillIcy: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  detailsWaveIcy: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  detailsInnerIcy: {
+    paddingHorizontal: wp(3.4),
+    paddingVertical: hp(0.5),
+    zIndex: 1,
+  },
+  detailRowIcyNew: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: hp(1.25),
+    borderBottomWidth: StyleSheet.hairlineWidth * 2,
+    borderBottomColor: Colors.borderSubtle,
+  },
+  detailIconIcy: {
+    width: wp(10),
+    height: wp(10),
+    borderRadius: wp(5),
+    backgroundColor: Colors.hubCard,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: wp(3),
+  },
+  confirmCardIcy: {
+    backgroundColor: Colors.bannerIceStart,
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: 'rgba(91, 156, 255, 0.35)',
+    ...elevation.banner,
+  },
+  confirmTitleIcy: {
+    color: Colors.brandNavy,
+  },
+  confirmMessageIcy: {
+    color: Colors.textSecondary,
+  },
+  confirmNoIcy: {
+    backgroundColor: Colors.hubCard,
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: Colors.borderSubtle,
+  },
+  confirmNoTextIcy: {
+    color: Colors.brandNavy,
+  },
+  confirmYesIcy: {
+    backgroundColor: Colors.brandNavy,
+  },
 });
 

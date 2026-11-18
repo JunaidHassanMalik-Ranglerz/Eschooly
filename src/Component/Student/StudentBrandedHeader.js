@@ -10,7 +10,13 @@ import {Fontsize} from '../../Constants/Fontsize';
 import {spacing} from '../../Constants/Theme';
 import {hp, wp} from '../../Constants/Responsive';
 
-const StudentBrandedHeader = ({title, unreadCount, onBackPress}) => {
+const StudentBrandedHeader = ({
+  title,
+  unreadCount,
+  onBackPress,
+  showBell = true,
+  rightAction,
+}) => {
   const navigation = useNavigation();
 
   return (
@@ -21,7 +27,13 @@ const StudentBrandedHeader = ({title, unreadCount, onBackPress}) => {
           <View style={styles.brandRule} />
           <Text style={styles.wordmark}>{Strings.eschoolyWordmark}</Text>
         </View>
-        <NotificationBell count={unreadCount} onDark numeric />
+        {rightAction ? (
+          rightAction
+        ) : showBell ? (
+          <NotificationBell count={unreadCount} onDark numeric />
+        ) : (
+          <View style={styles.bellSpacer} />
+        )}
       </View>
 
       <View style={styles.titleRow}>
@@ -84,5 +96,9 @@ const styles = StyleSheet.create({
     fontSize: Fontsize.md,
     color: Colors.white,
     flex: 1,
+  },
+  bellSpacer: {
+    width: wp(8.5),
+    height: wp(8.5),
   },
 });

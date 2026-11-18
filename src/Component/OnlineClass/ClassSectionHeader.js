@@ -3,12 +3,14 @@ import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {Colors} from '../../Constants/Colors';
 import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
-import {wp, hp} from '../../Constants/Responsive';
+import {hp} from '../../Constants/Responsive';
+import {useStudentTone} from '../Glass/StudentTone';
 
 const ClassSectionHeader = props => {
+  const icy = useStudentTone();
   return (
     <View style={styles.row}>
-      <Text style={styles.title}>{props?.title}</Text>
+      <Text style={[styles.title, icy && styles.titleIcy]}>{props?.title}</Text>
       {props?.linkText ? (
         <TouchableOpacity activeOpacity={0.8} onPress={props?.onPress}>
           <Text style={styles.link}>{props?.linkText}</Text>
@@ -32,6 +34,9 @@ const styles = StyleSheet.create({
     color: Colors.black,
     fontFamily: Fonts.bold,
     fontSize: Fontsize.sm,
+  },
+  titleIcy: {
+    color: Colors.brandNavy,
   },
   link: {
     color: Colors.primary,

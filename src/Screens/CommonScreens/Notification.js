@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import ScrollEnterScrollView from '../../Component/ScrollEnterScrollView';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {SafeAreaView} from 'react-native-safe-area-context';
@@ -17,12 +18,29 @@ import {useDispatch, useSelector} from 'react-redux';
 import Icon from 'react-native-vector-icons/Ionicons';
 import NotificationCard from '../../Component/NotificationCard';
 import AnimatedCard from '../../Component/AnimatedCard';
+import StudentBrandedHeader from '../../Component/Student/StudentBrandedHeader';
+import EschoolyScreenShell, {
+  FLOAT_CARD_GAP,
+  FLOAT_CARD_RADIUS,
+  FLOAT_CARD_TUCK,
+  NAVY_ICE_CURVE,
+} from '../../Component/Glass/EschoolyScreenShell';
+import CardWave, {SCREEN_WAVES} from '../../Component/CardWave';
 import {Images} from '../../Assets';
 import {Colors} from '../../Constants/Colors';
 import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
+import {elevation, radius} from '../../Constants/Theme';
 import {wp, hp} from '../../Constants/Responsive';
+import {
+  GRADIENT_END,
+  GRADIENT_START,
+} from '../../Component/Profile/ProfileTheme';
+import {
+  StudentToneProvider,
+  useStackBottomPad,
+} from '../../Component/Glass/StudentTone';
 import {ScreenEnterProvider} from '../../hooks/useScreenEnterGate';
 import {getHomeScreenEnter} from '../../utils/cardAnimation';
 import {showToast} from '../../utils/toast';
@@ -54,6 +72,7 @@ const NotificationContent = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [readingId, setReadingId] = useState(null);
   const [markingAll, setMarkingAll] = useState(false);
+  const bottomPad = useStackBottomPad();
   const unreadOnly = activeTab === Strings.tabUnread;
   const requestRef = useRef(0);
   const listUnread = unreadOnly
@@ -196,11 +215,150 @@ const NotificationContent = () => {
     ]);
   };
 
+  const overflowMenu = (
+    <TouchableOpacity
+      style={styles.menuBtn}
+      activeOpacity={0.85}
+      disabled={unreadCount <= 0 || markingAll}
+      onPress={handleMarkAll}
+      accessibilityRole="button"
+      accessibilityLabel={Strings.markAllRead}>
+      {markingAll ? (
+        <ActivityIndicator size="small" color={Colors.white} />
+      ) : (
+        <Image
+          source={Images.threeDots}
+          style={[
+            styles.menuIconStudent,
+            unreadCount <= 0 ? styles.menuIconDisabled : null,
+          ]}
+          resizeMode="contain"
+        />
+      )}
+    </TouchableOpacity>
+  );
+
+  const filterTabs = TABS.map(tab => {
+    const active = tab === activeTab;
+    return (
+      <TouchableOpacity
+        key={tab}
+        style={[styles.filterTab, active && styles.filterTabActive]}
+        activeOpacity={0.85}
+        onPress={() => setActiveTab(tab)}>
+        <Text
+          style={[styles.filterTabText, active && styles.filterTabTextActive]}
+          numberOfLines={1}>
+          {tab}
+        </Text>
+      </TouchableOpacity>
+    );
+  });
+
+  const listBody =
+    loading && !isParent ? (
+      <ActivityIndicator
+        style={styles.loader}
+        size="large"
+        color={isParent ? Colors.primary : Colors.brandRoyal}
+      />
+    ) : items.length === 0 ? (
+      <Text style={[styles.empty, !isParent && styles.emptyIcy]}>
+        {unreadOnly ? Strings.noUnreadNotifications : Strings.noNotifications}
+      </Text>
+    ) : (
+      items.map((item, index) => {
+        const slot = index + 2;
+        return (
+          <NotificationCard
+            key={item.id}
+            item={item}
+            onPress={isParent ? undefined : () => handleReadOne(item)}
+            animationIndex={slot}
+            entering={getHomeScreenEnter(slot)}
+          />
+        );
+      })
+    );
+
+  if (!isParent) {
+    return (
+      <StudentToneProvider active>
+        <EschoolyScreenShell variant="navy-ice">
+          <ScrollEnterScrollView
+            style={styles.scrollArea}
+            contentContainerStyle={[
+              styles.studentScroll,
+              {paddingBottom: bottomPad},
+            ]}
+            showsVerticalScrollIndicator={false}
+            bounces
+            overScrollMode="auto"
+            removeClippedSubviews={false}
+            keyboardShouldPersistTaps="handled"
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={() => loadStudentNotifications(true)}
+                tintColor={Colors.brandRoyal}
+                colors={[Colors.brandRoyal]}
+              />
+            }>
+            <EschoolyScreenShell.Header style={styles.studentBand}>
+              <StudentBrandedHeader
+                title={Strings.notifications}
+                showBell={false}
+                rightAction={overflowMenu}
+              />
+            </EschoolyScreenShell.Header>
+            <EschoolyScreenShell.Body tuck={false} style={styles.studentBody}>
+              <View style={styles.canvasStage}>
+                <View pointerEvents="none" style={styles.canvasWave}>
+                  <CardWave
+                    variant={SCREEN_WAVES.assignmentIce}
+                    color="rgba(37, 99, 235, 0.12)"
+                  />
+                </View>
+                <View style={styles.canvasForeground}>
+                  <AnimatedCard
+                    index={1}
+                    entering={getHomeScreenEnter(1)}
+                    style={styles.filterWrapIcy}>
+                    <View style={styles.filterClipIcy}>
+                      <LinearGradient
+                        colors={[Colors.bannerIceStart, Colors.bannerIceEnd]}
+                        start={GRADIENT_START}
+                        end={GRADIENT_END}
+                        style={styles.filterFillIcy}
+                      />
+                      <View pointerEvents="none" style={styles.filterWaveIcy}>
+                        <CardWave
+                          variant={SCREEN_WAVES.assignmentIce}
+                          color="rgba(91, 156, 255, 0.16)"
+                        />
+                      </View>
+                      <View style={styles.filterInnerIcy}>{filterTabs}</View>
+                    </View>
+                  </AnimatedCard>
+                  {listBody}
+                </View>
+              </View>
+            </EschoolyScreenShell.Body>
+          </ScrollEnterScrollView>
+        </EschoolyScreenShell>
+      </StudentToneProvider>
+    );
+  }
+
   return (
+    <StudentToneProvider active={false}>
     <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar backgroundColor={SCREEN_BG} barStyle="dark-content" />
 
-      <AnimatedCard index={0} entering={getHomeScreenEnter(0)} style={styles.header}>
+      <AnimatedCard
+        index={0}
+        entering={getHomeScreenEnter(0)}
+        style={styles.header}>
         <TouchableOpacity
           style={styles.backBtn}
           activeOpacity={0.85}
@@ -208,24 +366,13 @@ const NotificationContent = () => {
           <Icon name="chevron-back" size={wp(5.5)} color={Colors.white} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{Strings.notifications}</Text>
-        <TouchableOpacity
-          style={styles.menuBtn}
-          activeOpacity={0.85}
-          disabled={isParent || unreadCount <= 0 || markingAll}
-          onPress={handleMarkAll}>
-          {markingAll ? (
-            <ActivityIndicator size="small" color={NAVY} />
-          ) : (
-            <Image
-              source={Images.threeDots}
-              style={[
-                styles.menuIcon,
-                !isParent && unreadCount <= 0 ? styles.menuIconDisabled : null,
-              ]}
-              resizeMode="contain"
-            />
-          )}
-        </TouchableOpacity>
+        <View style={styles.menuBtn}>
+          <Image
+            source={Images.threeDots}
+            style={styles.menuIcon}
+            resizeMode="contain"
+          />
+        </View>
       </AnimatedCard>
 
       <AnimatedCard index={1} entering={getHomeScreenEnter(1)} style={styles.tabsCard}>
@@ -250,48 +397,16 @@ const NotificationContent = () => {
 
       <ScrollEnterScrollView
         style={styles.scrollArea}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, {paddingBottom: bottomPad}]}
         showsVerticalScrollIndicator={false}
-        bounces={!isParent}
-        overScrollMode={isParent ? 'never' : 'auto'}
+        bounces={false}
+        overScrollMode="never"
         removeClippedSubviews={false}
-        keyboardShouldPersistTaps="handled"
-        refreshControl={
-          isParent ? undefined : (
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={() => loadStudentNotifications(true)}
-              tintColor={Colors.primary}
-              colors={[Colors.primary]}
-            />
-          )
-        }>
-        {loading && !isParent ? (
-          <ActivityIndicator
-            style={styles.loader}
-            size="large"
-            color={Colors.primary}
-          />
-        ) : items.length === 0 ? (
-          <Text style={styles.empty}>
-            {unreadOnly ? Strings.noUnreadNotifications : Strings.noNotifications}
-          </Text>
-        ) : (
-          items.map((item, index) => {
-            const slot = index + 2;
-            return (
-              <NotificationCard
-                key={item.id}
-                item={item}
-                onPress={isParent ? undefined : () => handleReadOne(item)}
-                animationIndex={slot}
-                entering={getHomeScreenEnter(slot)}
-              />
-            );
-          })
-        )}
+        keyboardShouldPersistTaps="handled">
+        {listBody}
       </ScrollEnterScrollView>
     </SafeAreaView>
+    </StudentToneProvider>
   );
 };
 
@@ -307,6 +422,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: SCREEN_BG,
+  },
+  containerStudent: {
+    backgroundColor: Colors.canvas,
+  },
+  headerStudent: {
+    backgroundColor: Colors.canvas,
   },
   scrollArea: {
     flex: 1,
@@ -358,6 +479,9 @@ const styles = StyleSheet.create({
     paddingBottom: hp(0.2),
     backgroundColor: SCREEN_BG,
   },
+  tabsRowStudent: {
+    backgroundColor: Colors.canvas,
+  },
   tab: {
     paddingHorizontal: wp(4.2),
     paddingVertical: hp(0.7),
@@ -371,6 +495,11 @@ const styles = StyleSheet.create({
     backgroundColor: TAB_IDLE_BG,
     borderWidth: 1,
     borderColor: TAB_IDLE_BORDER,
+  },
+  tabIdleStudent: {
+    backgroundColor: Colors.hubCard,
+    borderWidth: 1,
+    borderColor: Colors.borderSubtle,
   },
   tabText: {
     color: TAB_IDLE_TEXT,
@@ -395,5 +524,93 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.regular,
     fontSize: Fontsize.xs1,
     marginTop: hp(6),
+  },
+  emptyIcy: {
+    color: Colors.textSecondary,
+  },
+  studentScroll: {
+    flexGrow: 1,
+    backgroundColor: Colors.canvas,
+    overflow: 'visible',
+  },
+  studentBand: {
+    borderBottomLeftRadius: NAVY_ICE_CURVE,
+    paddingBottom: FLOAT_CARD_GAP + FLOAT_CARD_TUCK,
+    overflow: 'visible',
+  },
+  studentBody: {
+    paddingTop: 0,
+    marginTop: -FLOAT_CARD_TUCK,
+    overflow: 'visible',
+  },
+  canvasStage: {
+    position: 'relative',
+    overflow: 'visible',
+    minHeight: hp(62),
+  },
+  canvasWave: {
+    position: 'absolute',
+    top: hp(2),
+    right: -wp(4),
+    left: 0,
+    height: hp(56),
+    zIndex: 0,
+  },
+  canvasForeground: {
+    zIndex: 1,
+  },
+  menuIconStudent: {
+    width: wp(5),
+    height: wp(5),
+    tintColor: Colors.white,
+  },
+  filterWrapIcy: {
+    marginBottom: hp(1.35),
+    zIndex: 2,
+    overflow: 'visible',
+    backgroundColor: Colors.bannerIceStart,
+    borderRadius: FLOAT_CARD_RADIUS,
+    ...elevation.banner,
+  },
+  filterClipIcy: {
+    borderRadius: FLOAT_CARD_RADIUS,
+    overflow: 'hidden',
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: 'rgba(91, 156, 255, 0.35)',
+  },
+  filterFillIcy: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  filterWaveIcy: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  filterInnerIcy: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: wp(2.2),
+    paddingVertical: hp(1.05),
+    zIndex: 1,
+    gap: wp(1.6),
+  },
+  filterTab: {
+    flex: 1,
+    minHeight: hp(4.6),
+    borderRadius: radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: wp(2),
+    backgroundColor: Colors.hubCard,
+  },
+  filterTabActive: {
+    backgroundColor: Colors.brandNavy,
+  },
+  filterTabText: {
+    color: Colors.textSecondary,
+    fontFamily: Fonts.medium,
+    fontSize: Fontsize.xs1,
+  },
+  filterTabTextActive: {
+    color: Colors.white,
+    fontFamily: Fonts.semibold,
   },
 });

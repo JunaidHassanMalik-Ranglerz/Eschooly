@@ -1,16 +1,24 @@
 import React from 'react';
 import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
+import Icon from 'react-native-vector-icons/Ionicons';
 import DepthIcon from '../DepthIcon';
 import ProfileGradientCard from '../Profile/ProfileGradientCard';
-import {SCREEN_WAVES} from '../CardWave';
+import AnimatedCard from '../AnimatedCard';
+import CardWave, {SCREEN_WAVES} from '../CardWave';
+import FeatureArtImage from '../Glass/FeatureArtImage';
 import {FEATURE_ICON_META} from '../../Constants/IconTheme';
+import {EducationIcons} from '../../Assets/EducationIcons';
 import {Images} from '../../Assets';
 import {Colors} from '../../Constants/Colors';
 import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
 import {getSubjectGradient} from '../../Constants/CardTheme';
+import {elevation, radius} from '../../Constants/Theme';
 import {wp, hp} from '../../Constants/Responsive';
+import {useStudentTone} from '../Glass/StudentTone';
+import {GRADIENT_END, GRADIENT_START} from '../Profile/ProfileTheme';
 
 const RecordingClassCard = ({
   item,
@@ -24,74 +32,151 @@ const RecordingClassCard = ({
   onDownload,
 }) => {
   const paletteIndex = gradientIndex ?? animationIndex;
-  return (
-  <ProfileGradientCard
-    innerStyle={styles.inner}
-    animationIndex={animationIndex}
-    entering={entering}
-    replayToken={replayToken}
-    colors={getSubjectGradient(paletteIndex + 2)}
-    waveVariant={paletteIndex === 0 ? SCREEN_WAVES.onlineClass : null}>
-    <View style={styles.topRow}>
-      <View style={styles.videoIconWrap}>
-        <Image source={Images.videoIcon} style={styles.videoIcon} resizeMode="contain" />
-      </View>
+  const icy = useStudentTone();
 
-      <View style={styles.info}>
-        <View style={styles.titleRow}>
-          {item?.title ? (
-            <Text style={styles.title} numberOfLines={1}>
-              {item.title}
-            </Text>
+  const body = (
+    <>
+      <View style={styles.topRow}>
+        <View style={[styles.videoIconWrap, icy && styles.videoIconWrapIcy]}>
+          {icy ? (
+            <FeatureArtImage
+              source={EducationIcons.onlineClasses}
+              size={wp(9)}
+            />
           ) : (
-            <View style={styles.title} />
+            <Image
+              source={Images.videoIcon}
+              style={styles.videoIcon}
+              resizeMode="contain"
+            />
           )}
-          {item?.status ? (
-            <View style={styles.statusBadge}>
-              <Text style={styles.statusText} numberOfLines={1}>
-                {item.status}
+        </View>
+
+        <View style={styles.info}>
+          <View style={styles.titleRow}>
+            {item?.title ? (
+              <Text style={[styles.title, icy && styles.titleIcy]}>
+                {item.title}
               </Text>
-            </View>
+            ) : (
+              <View style={styles.title} />
+            )}
+            {item?.status ? (
+              <View style={[styles.statusBadge, icy && styles.statusBadgeIcy]}>
+                <Text
+                  style={[styles.statusText, icy && styles.statusTextIcy]}
+                  numberOfLines={1}>
+                  {item.status}
+                </Text>
+              </View>
+            ) : null}
+          </View>
+          {item?.detail ? (
+            <Text style={[styles.detail, icy && styles.detailIcy]}>
+              {item.detail}
+            </Text>
           ) : null}
         </View>
-        {item?.detail ? (
-          <Text style={styles.detail} numberOfLines={1}>
-            {item.detail}
-          </Text>
-        ) : null}
       </View>
-    </View>
 
-    {item?.canWatch !== false || item?.canDownload !== false ? (
-    <View style={styles.btnRow}>
-      {item?.canWatch !== false ? (
-        <TouchableOpacity
-          style={styles.actionBtn}
-          activeOpacity={0.8}
-          disabled={watching}
-          onPress={() => onWatch?.(item)}>
-          <DepthIcon name={FEATURE_ICON_META.watch.icon} size={wp(3.5)} color={FEATURE_ICON_META.watch.color} />
-          <Text style={styles.actionText} numberOfLines={1}>
-            {Strings.watch}
-          </Text>
-        </TouchableOpacity>
-      ) : null}
+      {item?.canWatch !== false || item?.canDownload !== false ? (
+        <View style={styles.btnRow}>
+          {item?.canWatch !== false ? (
+            <TouchableOpacity
+              style={[styles.actionBtn, icy && styles.actionBtnIcy]}
+              activeOpacity={0.8}
+              disabled={watching}
+              onPress={() => onWatch?.(item)}>
+              {icy ? (
+                <Icon
+                  name="play-outline"
+                  size={wp(4)}
+                  color={Colors.brandRoyal}
+                />
+              ) : (
+                <DepthIcon
+                  name={FEATURE_ICON_META.watch.icon}
+                  size={wp(3.5)}
+                  color={FEATURE_ICON_META.watch.color}
+                />
+              )}
+              <Text
+                style={[styles.actionText, icy && styles.actionIcy]}
+                numberOfLines={1}>
+                {Strings.watch}
+              </Text>
+            </TouchableOpacity>
+          ) : null}
 
-      {item?.canDownload !== false ? (
-        <TouchableOpacity
-          style={styles.actionBtn}
-          activeOpacity={0.8}
-          disabled={downloading}
-          onPress={() => onDownload?.(item)}>
-          <DepthIcon name={FEATURE_ICON_META.download.icon} size={wp(3.5)} color={FEATURE_ICON_META.download.color} />
-          <Text style={styles.actionText} numberOfLines={1}>
-            {Strings.download}
-          </Text>
-        </TouchableOpacity>
+          {item?.canDownload !== false ? (
+            <TouchableOpacity
+              style={[styles.actionBtn, icy && styles.actionBtnIcy]}
+              activeOpacity={0.8}
+              disabled={downloading}
+              onPress={() => onDownload?.(item)}>
+              {icy ? (
+                <Icon
+                  name="download-outline"
+                  size={wp(4)}
+                  color={Colors.brandNavy}
+                />
+              ) : (
+                <DepthIcon
+                  name={FEATURE_ICON_META.download.icon}
+                  size={wp(3.5)}
+                  color={FEATURE_ICON_META.download.color}
+                />
+              )}
+              <Text
+                style={[styles.actionText, icy && styles.actionIcy]}
+                numberOfLines={1}>
+                {Strings.download}
+              </Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
       ) : null}
-    </View>
-    ) : null}
-  </ProfileGradientCard>
+    </>
+  );
+
+  if (icy) {
+    return (
+      <AnimatedCard
+        index={animationIndex}
+        entering={entering}
+        replayToken={replayToken}
+        style={styles.wrapIcy}>
+        <View style={styles.pressIcy}>
+          <View style={styles.clipIcy}>
+            <LinearGradient
+              colors={[Colors.bannerIceStart, Colors.bannerIceEnd]}
+              start={GRADIENT_START}
+              end={GRADIENT_END}
+              style={styles.fillIcy}
+            />
+            <View pointerEvents="none" style={styles.waveIcy}>
+              <CardWave
+                variant={SCREEN_WAVES.assignmentIce}
+                color="rgba(91, 156, 255, 0.14)"
+              />
+            </View>
+            <View style={styles.innerIcy}>{body}</View>
+          </View>
+        </View>
+      </AnimatedCard>
+    );
+  }
+
+  return (
+    <ProfileGradientCard
+      innerStyle={styles.inner}
+      animationIndex={animationIndex}
+      entering={entering}
+      replayToken={replayToken}
+      colors={getSubjectGradient(paletteIndex + 2)}
+      waveVariant={paletteIndex === 0 ? SCREEN_WAVES.onlineClass : null}>
+      {body}
+    </ProfileGradientCard>
   );
 };
 
@@ -101,9 +186,36 @@ const styles = StyleSheet.create({
   inner: {
     paddingVertical: hp(1.3),
   },
+  wrapIcy: {
+    marginBottom: hp(1.2),
+    overflow: 'visible',
+  },
+  pressIcy: {
+    borderRadius: radius.banner,
+    overflow: 'visible',
+    backgroundColor: Colors.bannerIceStart,
+    ...elevation.card,
+  },
+  clipIcy: {
+    borderRadius: radius.banner,
+    overflow: 'hidden',
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: 'rgba(91, 156, 255, 0.35)',
+  },
+  fillIcy: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  waveIcy: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  innerIcy: {
+    paddingHorizontal: wp(3.4),
+    paddingVertical: hp(1.3),
+    zIndex: 1,
+  },
   topRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: hp(1.2),
     zIndex: 1,
   },
@@ -123,10 +235,11 @@ const styles = StyleSheet.create({
   },
   info: {
     flex: 1,
+    minWidth: 0,
   },
   titleRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: hp(0.3),
   },
   title: {
@@ -149,6 +262,7 @@ const styles = StyleSheet.create({
     paddingVertical: hp(0.4),
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   statusText: {
     color: Colors.whiteMuted85,
@@ -170,6 +284,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.whiteOverlay18,
     borderRadius: wp(5),
     paddingVertical: hp(1.15),
+    minHeight: hp(4.8),
     gap: wp(1.5),
   },
   actionText: {
@@ -177,5 +292,31 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.semibold,
     fontSize: Fontsize.xs1,
     includeFontPadding: false,
+  },
+  titleIcy: {
+    color: Colors.brandNavy,
+  },
+  detailIcy: {
+    color: Colors.textSecondary,
+  },
+  actionIcy: {
+    color: Colors.brandNavy,
+  },
+  videoIconWrapIcy: {
+    width: wp(12),
+    height: wp(12),
+    borderRadius: wp(3),
+    backgroundColor: Colors.hubCard,
+  },
+  statusBadgeIcy: {
+    backgroundColor: Colors.hubCard,
+  },
+  statusTextIcy: {
+    color: Colors.brandRoyal,
+  },
+  actionBtnIcy: {
+    backgroundColor: Colors.hubCard,
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: Colors.borderSubtle,
   },
 });

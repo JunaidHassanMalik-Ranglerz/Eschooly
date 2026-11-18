@@ -8,8 +8,11 @@ import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
 import {wp, hp} from '../../Constants/Responsive';
+import {elevation} from '../../Constants/Theme';
 import IdCardDetailRow from './IdCardDetailRow';
 import PersonAvatar from '../Profile/PersonAvatar';
+import CardWave, {SCREEN_WAVES} from '../CardWave';
+import {FLOAT_CARD_RADIUS} from '../Glass/EschoolyScreenShell';
 import {
   CARD_RADIUS,
   GRADIENT_END,
@@ -17,28 +20,193 @@ import {
   PROFILE_GRADIENT,
 } from '../Profile/ProfileTheme';
 
+const OFFICIAL_GRADIENT = [Colors.brandNavy, '#0B2A5C', Colors.brandRoyal];
+const ICE_STRIP = [Colors.brandNavy, Colors.brandRoyal];
+const ICE_AVATAR = wp(15.5);
+
 const AVATAR = wp(19);
 const HEADER_H = hp(7.5);
 
-const IdCardPreview = ({data, isBack, navy = false}) => {
-  const CardShell = ({children}) =>
-    navy ? (
-      <LinearGradient
-        colors={PROFILE_GRADIENT}
-        start={GRADIENT_START}
-        end={GRADIENT_END}
-        style={[styles.card, styles.cardNavy]}>
-        {children}
-      </LinearGradient>
-    ) : (
-      <View style={styles.card}>{children}</View>
-    );
+const textValue = value => (value == null ? '' : String(value).trim());
+
+const IceIdCardFront = ({data}) => (
+  <View style={styles.iceWrap}>
+    <View style={styles.iceShell}>
+      <View style={styles.iceClip}>
+        <LinearGradient
+          colors={[Colors.bannerIceStart, Colors.bannerIceEnd]}
+          start={{x: 0, y: 0.08}}
+          end={{x: 1, y: 1}}
+          style={styles.iceFill}
+        />
+        <View pointerEvents="none" style={styles.iceWave}>
+          <CardWave
+            variant={SCREEN_WAVES.assignmentIce}
+            color="rgba(91, 156, 255, 0.16)"
+          />
+        </View>
+        <View style={styles.iceFace}>
+          <LinearGradient
+            colors={ICE_STRIP}
+            start={{x: 0, y: 0}}
+            end={{x: 1, y: 0}}
+            style={styles.iceStrip}>
+            <View style={styles.headerLeft}>
+              <View style={styles.logoBox}>
+                <Image
+                  source={Images.cap}
+                  style={styles.logoIcon}
+                  resizeMode="contain"
+                />
+              </View>
+              <View style={styles.schoolCopy}>
+                <Text style={styles.schoolName}>{data.schoolName}</Text>
+                {textValue(data.schoolTagline) ? (
+                  <Text style={styles.schoolTag}>{data.schoolTagline}</Text>
+                ) : null}
+              </View>
+            </View>
+            {textValue(data.academicYear) ? (
+              <Text style={styles.year}>{data.academicYear}</Text>
+            ) : null}
+          </LinearGradient>
+
+          <Text style={styles.iceCaption}>{Strings.idCardPreviewFront}</Text>
+
+          <View style={styles.iceIdentity}>
+            <PersonAvatar
+              person={{
+                value: data.value,
+                label: data.name,
+                name: data.name,
+                initials: data.initials,
+                gender: data.gender,
+                photo: data.photo,
+                photoUrl: data.photoUrl,
+                className: data.class,
+                classBadge: data.classBadge,
+                classInfo: data.classInfo,
+              }}
+              size={ICE_AVATAR}
+              borderColor={Colors.borderSubtle}
+              borderWidth={StyleSheet.hairlineWidth * 2}
+              style={styles.iceAvatar}
+            />
+            <View style={styles.iceNameCol}>
+              <Text style={styles.iceName}>{data.name}</Text>
+              {textValue(data.role) ? (
+                <Text style={styles.iceRole}>{data.role}</Text>
+              ) : null}
+            </View>
+          </View>
+
+          <View style={styles.iceStats}>
+            <IceStat label={Strings.classShort} value={data.class} />
+            <View style={styles.iceStatRule} />
+            <IceStat label={Strings.sectionShort} value={data.section} />
+            <View style={styles.iceStatRule} />
+            <IceStat label={Strings.rollShort} value={data.rollNo} />
+          </View>
+
+          <View style={styles.iceDetails}>
+            {textValue(data.studentId) ? (
+              <View style={styles.iceIdBadge}>
+                <Text style={styles.iceIdText}>{data.studentId}</Text>
+              </View>
+            ) : null}
+            {textValue(data.schoolLine) ? (
+              <Text style={styles.iceMeta}>{data.schoolLine}</Text>
+            ) : null}
+            {textValue(data.cityLine) ? (
+              <Text style={styles.iceMeta}>{data.cityLine}</Text>
+            ) : null}
+            <IceField
+              icon="call-outline"
+              label={Strings.phone}
+              value={data.phone}
+            />
+            <IceField
+              icon="location-outline"
+              label={Strings.address}
+              value={data.address}
+            />
+            <IceField
+              icon="calendar-outline"
+              label={Strings.validUntil}
+              value={data.validUntil}
+            />
+          </View>
+
+          <View style={styles.iceFooter}>
+            <Text style={styles.iceFooterText}>
+              {Strings.authorizedSignature}
+            </Text>
+            <View style={styles.verifiedRow}>
+              <Icon
+                name="checkmark-circle"
+                size={wp(4)}
+                color={Colors.brandRoyal}
+              />
+              <Text style={styles.iceVerified}>{Strings.verified}</Text>
+            </View>
+          </View>
+        </View>
+      </View>
+    </View>
+  </View>
+);
+
+const IceStat = ({label, value}) => (
+  <View style={styles.iceStat}>
+    <Text style={styles.iceStatLabel}>{label}</Text>
+    <Text style={styles.iceStatValue} numberOfLines={2}>
+      {value}
+    </Text>
+  </View>
+);
+
+const IceField = ({icon, label, value}) =>
+  !textValue(value) ? null : (
+    <View style={styles.iceField}>
+      <Icon name={icon} size={wp(3.6)} color={Colors.brandRoyal} />
+      <View style={styles.fieldText}>
+        <Text style={styles.iceFieldLabel}>{label}</Text>
+        <Text style={styles.iceFieldValue}>{value}</Text>
+      </View>
+    </View>
+  );
+
+const OfficialCardShell = ({children}) => (
+  <View style={styles.cardNavyWrap}>
+    <LinearGradient
+      colors={OFFICIAL_GRADIENT}
+      start={GRADIENT_START}
+      end={GRADIENT_END}
+      style={[styles.card, styles.cardNavy]}>
+      <View pointerEvents="none" style={styles.waveNavy}>
+        <CardWave
+          variant={SCREEN_WAVES.assignmentIce}
+          color="rgba(255,255,255,0.12)"
+        />
+      </View>
+      {children}
+    </LinearGradient>
+  </View>
+);
+
+const IdCardPreview = ({data, isBack, navy = false, variant = 'default'}) => {
+  if (variant === 'ice' && !isBack) {
+    return <IceIdCardFront data={data} />;
+  }
+
+  const CardShell = navy ? OfficialCardShell : View;
+  const shellStyle = navy ? undefined : styles.card;
 
   if (isBack) {
     return (
       <View style={styles.wrap}>
         <Text style={styles.label}>{Strings.idCardPreviewBack}</Text>
-        <CardShell>
+        <CardShell style={shellStyle}>
           <LinearGradient
             colors={navy ? PROFILE_GRADIENT : [Colors.primary, Colors.primaryLight]}
             start={{x: 0, y: 0}}
@@ -93,14 +261,16 @@ const IdCardPreview = ({data, isBack, navy = false}) => {
 
   return (
     <View style={styles.wrap}>
-      <Text style={styles.label}>{Strings.idCardPreviewFront}</Text>
+      <Text style={[styles.label, navy && styles.labelNavy]}>
+        {Strings.idCardPreviewFront}
+      </Text>
 
-      <CardShell>
+      <CardShell style={shellStyle}>
         <LinearGradient
-          colors={navy ? PROFILE_GRADIENT : [Colors.primary, Colors.primaryLight]}
+          colors={navy ? OFFICIAL_GRADIENT : [Colors.primary, Colors.primaryLight]}
           start={{x: 0, y: 0}}
           end={{x: 1, y: 0}}
-          style={styles.header}>
+          style={[styles.header, navy && styles.headerNavy]}>
           <View style={styles.headerLeft}>
             <View style={styles.logoBox}>
               <Image
@@ -109,16 +279,20 @@ const IdCardPreview = ({data, isBack, navy = false}) => {
                 resizeMode="contain"
               />
             </View>
-            <View>
+            <View style={styles.schoolCopy}>
               <Text style={styles.schoolName}>{data.schoolName}</Text>
-              <Text style={styles.schoolTag}>{data.schoolTagline}</Text>
+              {textValue(data.schoolTagline) ? (
+                <Text style={styles.schoolTag}>{data.schoolTagline}</Text>
+              ) : null}
             </View>
           </View>
-          <Text style={styles.year}>{data.academicYear}</Text>
+          {textValue(data.academicYear) ? (
+            <Text style={styles.year}>{data.academicYear}</Text>
+          ) : null}
         </LinearGradient>
 
         <View style={styles.body}>
-          <View style={styles.profileRow}>
+          <View style={[styles.profileRow, navy && styles.profileRowNavy]}>
             <PersonAvatar
               person={{
                 value: data.value,
@@ -137,17 +311,19 @@ const IdCardPreview = ({data, isBack, navy = false}) => {
               borderWidth={4}
               style={styles.avatar}
             />
-            <View style={styles.nameCol}>
+            <View style={[styles.nameCol, navy && styles.nameColNavy]}>
               <Text style={[styles.studentName, navy && styles.textOnNavy]}>
                 {data.name}
               </Text>
-              <Text style={[styles.role, navy && styles.textMutedNavy]}>
-                {data.role}
-              </Text>
+              {textValue(data.role) ? (
+                <Text style={[styles.role, navy && styles.textMutedNavy]}>
+                  {data.role}
+                </Text>
+              ) : null}
             </View>
           </View>
 
-          <View style={styles.statsRow}>
+          <View style={[styles.statsRow, navy && styles.statsRowNavy]}>
             <StatItem label={Strings.classShort} value={data.class} navy={navy} />
             <View style={[styles.vLine, navy && styles.vLineNavy]} />
             <StatItem
@@ -164,17 +340,23 @@ const IdCardPreview = ({data, isBack, navy = false}) => {
           </View>
 
           <View style={styles.detailBlock}>
-            <View style={[styles.idBadge, navy && styles.idBadgeNavy]}>
-              <Text style={[styles.idText, navy && styles.textOnNavy]}>
-                {data.studentId}
+            {textValue(data.studentId) ? (
+              <View style={[styles.idBadge, navy && styles.idBadgeNavy]}>
+                <Text style={[styles.idText, navy && styles.textOnNavy]}>
+                  {data.studentId}
+                </Text>
+              </View>
+            ) : null}
+            {textValue(data.schoolLine) ? (
+              <Text style={[styles.address, navy && styles.textMutedNavy]}>
+                {data.schoolLine}
               </Text>
-            </View>
-            <Text style={[styles.address, navy && styles.textMutedNavy]}>
-              {data.schoolLine}
-            </Text>
-            <Text style={[styles.address, navy && styles.textMutedNavy]}>
-              {data.cityLine}
-            </Text>
+            ) : null}
+            {textValue(data.cityLine) ? (
+              <Text style={[styles.address, navy && styles.textMutedNavy]}>
+                {data.cityLine}
+              </Text>
+            ) : null}
             <PreviewField
               icon="call-outline"
               label={Strings.phone}
@@ -201,8 +383,14 @@ const IdCardPreview = ({data, isBack, navy = false}) => {
             {Strings.authorizedSignature}
           </Text>
           <View style={styles.verifiedRow}>
-            <Icon name="checkmark-circle" size={wp(4)} color={Colors.success} />
-            <Text style={styles.verifiedText}>{Strings.verified}</Text>
+            <Icon
+              name="checkmark-circle"
+              size={wp(4)}
+              color={navy ? '#93C5FD' : Colors.success}
+            />
+            <Text style={[styles.verifiedText, navy && styles.verifiedTextNavy]}>
+              {Strings.verified}
+            </Text>
           </View>
         </View>
       </CardShell>
@@ -226,12 +414,14 @@ const PreviewField = ({icon, label, value, navy}) => (
   )
 );
 
-const textValue = value => (value == null ? '' : String(value).trim());
-
 const StatItem = ({label, value, navy}) => (
-  <View style={styles.statItem}>
+  <View style={[styles.statItem, navy && styles.statItemNavy]}>
     <Text style={[styles.statLabel, navy && styles.textMutedNavy]}>{label}</Text>
-    <Text style={[styles.statValue, navy && styles.textOnNavy]}>{value}</Text>
+    <Text
+      style={[styles.statValue, navy && styles.textOnNavy]}
+      numberOfLines={2}>
+      {value}
+    </Text>
   </View>
 );
 
@@ -249,6 +439,11 @@ const styles = StyleSheet.create({
     marginBottom: hp(1.2),
     textTransform: 'uppercase',
   },
+  labelNavy: {
+    color: Colors.white,
+    fontFamily: Fonts.semibold,
+    letterSpacing: 1.1,
+  },
   card: {
     backgroundColor: Colors.white,
     borderRadius: CARD_RADIUS,
@@ -259,8 +454,20 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 4,
   },
+  cardNavyWrap: {
+    borderRadius: FLOAT_CARD_RADIUS,
+    overflow: 'visible',
+    ...elevation.banner,
+  },
   cardNavy: {
     backgroundColor: 'transparent',
+    borderRadius: FLOAT_CARD_RADIUS,
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: 'rgba(147, 197, 253, 0.35)',
+    overflow: 'hidden',
+  },
+  waveNavy: {
+    ...StyleSheet.absoluteFillObject,
   },
   header: {
     height: HEADER_H,
@@ -270,10 +477,22 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
   },
+  headerNavy: {
+    height: undefined,
+    minHeight: HEADER_H,
+    paddingBottom: hp(1.15),
+    alignItems: 'center',
+  },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+    minWidth: 0,
+    marginRight: wp(2),
+  },
+  schoolCopy: {
+    flex: 1,
+    minWidth: 0,
   },
   logoBox: {
     width: wp(9),
@@ -293,12 +512,14 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontFamily: Fonts.bold,
     fontSize: Fontsize.sm,
+    flexShrink: 1,
   },
   schoolTag: {
     color: Colors.whiteMuted85,
     fontFamily: Fonts.regular,
     fontSize: Fontsize.xs0,
     marginTop: hp(0.2),
+    flexShrink: 1,
   },
   year: {
     color: Colors.whiteMuted85,
@@ -315,6 +536,10 @@ const styles = StyleSheet.create({
     marginTop: -(AVATAR / 6.5),
     marginBottom: hp(1.2),
   },
+  profileRowNavy: {
+    alignItems: 'flex-start',
+    marginBottom: hp(1.35),
+  },
   avatar: {
     marginRight: wp(3),
     shadowColor: Colors.black,
@@ -325,13 +550,19 @@ const styles = StyleSheet.create({
   },
   nameCol: {
     flex: 1,
+    minWidth: 0,
     paddingTop: hp(3.2),
     paddingLeft: wp(2),
+  },
+  nameColNavy: {
+    paddingTop: hp(2.4),
+    justifyContent: 'center',
   },
   studentName: {
     color: Colors.black,
     fontFamily: Fonts.bold,
     fontSize: Fontsize.sm,
+    flexShrink: 1,
   },
   role: {
     color: Colors.grayText,
@@ -348,9 +579,22 @@ const styles = StyleSheet.create({
     gap: wp(2.5),
     marginBottom: hp(1.6),
   },
+  statsRowNavy: {
+    width: '100%',
+    alignSelf: 'stretch',
+    marginLeft: 0,
+    marginTop: hp(0.2),
+    gap: 0,
+    justifyContent: 'space-between',
+  },
   statItem: {
     alignItems: 'center',
     minWidth: wp(12),
+  },
+  statItemNavy: {
+    flex: 1,
+    minWidth: 0,
+    paddingHorizontal: wp(1),
   },
   vLine: {
     width: 1,
@@ -424,6 +668,8 @@ const styles = StyleSheet.create({
   },
   footerText: {
     flex: 1,
+    minWidth: 0,
+    marginRight: wp(2),
     color: Colors.grayText,
     fontFamily: Fonts.regular,
     fontSize: Fontsize.xs1,
@@ -438,6 +684,9 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.semibold,
     fontSize: Fontsize.xs1,
     marginLeft: wp(1.2),
+  },
+  verifiedTextNavy: {
+    color: '#93C5FD',
   },
   backHeader: {
     paddingHorizontal: wp(4),
@@ -491,5 +740,171 @@ const styles = StyleSheet.create({
   footerNavy: {
     backgroundColor: 'rgba(255,255,255,0.08)',
     borderTopColor: Colors.whiteOverlay18,
+  },
+  iceWrap: {
+    width: '100%',
+  },
+  iceShell: {
+    borderRadius: FLOAT_CARD_RADIUS,
+    backgroundColor: Colors.bannerIceStart,
+    overflow: 'visible',
+    ...elevation.banner,
+  },
+  iceClip: {
+    borderRadius: FLOAT_CARD_RADIUS,
+    overflow: 'hidden',
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: 'rgba(91, 156, 255, 0.35)',
+  },
+  iceFill: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  iceWave: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  iceFace: {
+    zIndex: 1,
+  },
+  iceStrip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: wp(3.6),
+    paddingVertical: hp(1.05),
+  },
+  iceCaption: {
+    color: Colors.brandNavy,
+    fontFamily: Fonts.semibold,
+    fontSize: Fontsize.xs0,
+    letterSpacing: 0.9,
+    textTransform: 'uppercase',
+    paddingHorizontal: wp(3.8),
+    paddingTop: hp(1.15),
+    paddingBottom: hp(0.85),
+  },
+  iceIdentity: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: wp(3.8),
+    marginBottom: hp(1.15),
+  },
+  iceAvatar: {
+    marginRight: wp(3),
+  },
+  iceNameCol: {
+    flex: 1,
+    minWidth: 0,
+  },
+  iceName: {
+    color: Colors.brandNavy,
+    fontFamily: Fonts.bold,
+    fontSize: Fontsize.sm,
+    flexShrink: 1,
+  },
+  iceRole: {
+    color: Colors.textSecondary,
+    fontFamily: Fonts.regular,
+    fontSize: Fontsize.xs0,
+    marginTop: hp(0.2),
+  },
+  iceStats: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    marginHorizontal: wp(3.8),
+    marginBottom: hp(1.15),
+    backgroundColor: Colors.hubCard,
+    borderRadius: wp(3.2),
+    paddingVertical: hp(0.9),
+    paddingHorizontal: wp(1.2),
+  },
+  iceStat: {
+    flex: 1,
+    minWidth: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: wp(1),
+  },
+  iceStatRule: {
+    width: StyleSheet.hairlineWidth * 2,
+    backgroundColor: Colors.borderSubtle,
+    marginVertical: hp(0.2),
+  },
+  iceStatLabel: {
+    color: Colors.textSecondary,
+    fontFamily: Fonts.medium,
+    fontSize: Fontsize.xs0,
+    letterSpacing: 0.4,
+    marginBottom: hp(0.2),
+  },
+  iceStatValue: {
+    color: Colors.brandNavy,
+    fontFamily: Fonts.bold,
+    fontSize: Fontsize.xs5,
+    textAlign: 'center',
+  },
+  iceDetails: {
+    paddingHorizontal: wp(3.8),
+    paddingBottom: hp(0.4),
+  },
+  iceIdBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: Colors.hubCard,
+    borderRadius: wp(3.2),
+    paddingHorizontal: wp(3.2),
+    paddingVertical: hp(0.45),
+    marginBottom: hp(0.55),
+  },
+  iceIdText: {
+    color: Colors.brandNavy,
+    fontFamily: Fonts.semibold,
+    fontSize: Fontsize.xs1,
+  },
+  iceMeta: {
+    color: Colors.textSecondary,
+    fontFamily: Fonts.regular,
+    fontSize: Fontsize.xs1,
+    lineHeight: Fontsize.sm,
+  },
+  iceField: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: hp(0.7),
+  },
+  iceFieldLabel: {
+    color: Colors.textSecondary,
+    fontFamily: Fonts.medium,
+    fontSize: Fontsize.xs0,
+  },
+  iceFieldValue: {
+    color: Colors.brandNavy,
+    fontFamily: Fonts.semibold,
+    fontSize: Fontsize.xs1,
+    marginTop: hp(0.08),
+  },
+  iceFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: Colors.hubCard,
+    borderTopWidth: StyleSheet.hairlineWidth * 2,
+    borderTopColor: Colors.borderSubtle,
+    paddingHorizontal: wp(3.8),
+    paddingVertical: hp(1.15),
+    marginTop: hp(0.85),
+  },
+  iceFooterText: {
+    flex: 1,
+    minWidth: 0,
+    marginRight: wp(2),
+    color: Colors.textSecondary,
+    fontFamily: Fonts.regular,
+    fontSize: Fontsize.xs1,
+    fontStyle: 'italic',
+  },
+  iceVerified: {
+    color: Colors.brandRoyal,
+    fontFamily: Fonts.semibold,
+    fontSize: Fontsize.xs1,
+    marginLeft: wp(1.2),
   },
 });

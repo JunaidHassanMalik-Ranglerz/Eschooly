@@ -11,10 +11,8 @@ import {elevation, spacing} from '../../Constants/Theme';
 import {hp, wp} from '../../Constants/Responsive';
 
 export const WELCOME_BANNER_HEIGHT = hp(16.8);
-export const WELCOME_ART_OVERFLOW = hp(0.4);
 
-const ART_W = wp(30);
-const ART_H = hp(11);
+const ART_SIZE = wp(32);
 
 const WelcomeBanner = ({firstName, title, subtitle, art, style}) => {
   const headline = title
@@ -39,14 +37,14 @@ const WelcomeBanner = ({firstName, title, subtitle, art, style}) => {
           </Text>
           <View style={styles.underline} />
         </View>
+        <View pointerEvents="none" style={styles.art}>
+          <FeatureArtImage
+            source={art || EducationIcons.welcomeGraduationBooks}
+            width={ART_SIZE}
+            height={ART_SIZE}
+          />
+        </View>
       </LinearGradient>
-      <View pointerEvents="none" style={styles.artWrap}>
-        <FeatureArtImage
-          source={art || EducationIcons.welcomeGraduationBooks}
-          width={ART_W}
-          height={ART_H}
-        />
-      </View>
     </View>
   );
 };
@@ -55,26 +53,29 @@ export default WelcomeBanner;
 
 const styles = StyleSheet.create({
   shell: {
-    height: WELCOME_BANNER_HEIGHT,
+    minHeight: WELCOME_BANNER_HEIGHT,
     borderRadius: wp(7),
     backgroundColor: Colors.bannerIceStart,
-    overflow: 'visible',
+    overflow: 'hidden',
     ...elevation.banner,
   },
   gradient: {
-    ...StyleSheet.absoluteFillObject,
+    flexGrow: 1,
+    minHeight: WELCOME_BANNER_HEIGHT,
+    flexDirection: 'row',
+    alignItems: 'center',
     borderRadius: wp(7),
     borderWidth: StyleSheet.hairlineWidth * 2,
     borderColor: Colors.borderGlass,
-    overflow: 'hidden',
+    paddingLeft: spacing.md,
+    paddingRight: wp(1.5),
+    paddingVertical: hp(1.2),
   },
   copy: {
-    width: '56%',
-    paddingLeft: spacing.md,
-    paddingRight: wp(1),
-    paddingVertical: hp(1.55),
+    flex: 1,
+    minWidth: 0,
+    paddingRight: wp(2),
     justifyContent: 'center',
-    zIndex: 2,
   },
   title: {
     ...Typography.bannerTitle,
@@ -94,14 +95,10 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.brandRoyal,
     marginTop: hp(1.05),
   },
-  artWrap: {
-    position: 'absolute',
-    right: wp(2.5),
-    bottom: hp(1.1),
-    width: ART_W,
-    height: ART_H,
+  art: {
+    width: ART_SIZE,
+    height: ART_SIZE,
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 1,
   },
 });
