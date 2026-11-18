@@ -1,113 +1,91 @@
 import React from 'react';
 import {
-  Platform,
   StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
-import LinearGradient from 'react-native-linear-gradient';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
-import Svg, {Path} from 'react-native-svg';
-import {CARD_GRADIENTS} from '../../Constants/CardTheme';
+import ScrollEnterScrollView from '../../Component/ScrollEnterScrollView';
+import {EnterView} from '../../Component/AnimatedCard';
+import FeatureArtImage from '../../Component/Glass/FeatureArtImage';
+import AuthBrandHeader, {
+  AUTH_CARD_TUCK,
+} from '../../Component/Auth/AuthBrandHeader';
+import AuthIceCard from '../../Component/Auth/AuthIceCard';
+import AuthSecureFooter from '../../Component/Auth/AuthSecureFooter';
+import {EducationIcons} from '../../Assets/EducationIcons';
 import {Colors} from '../../Constants/Colors';
 import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
+import {spacing} from '../../Constants/Theme';
 import {wp, hp} from '../../Constants/Responsive';
-import {EnterView} from '../../Component/AnimatedCard';
 import {ROLES, useRole} from '../../context/RoleContext';
 import {withScreenEnter} from '../../hooks/useScreenEnterGate';
-import {GRADIENT_END, GRADIENT_START} from '../../Component/Profile/ProfileTheme';
 import {
   getRoleCardEntering,
   getRoleFooterEntering,
   getRoleHeaderEntering,
 } from '../../utils/cardAnimation';
 
-const ROLE_ICON_COLOR = Colors.iconSky;
-
 const ROLE_OPTIONS = [
   {
     id: ROLES.PARENT,
     title: Strings.parentRole,
     description: Strings.parentRoleDesc,
-    ionIcon: 'people',
+    art: EducationIcons.linkedChildren,
   },
   {
     id: ROLES.STUDENT,
     title: Strings.studentRole,
     description: Strings.studentRoleDesc,
-    ionIcon: 'school',
+    art: EducationIcons.welcomeGraduationBooks,
   },
 ];
-
-const ROLE_CARD_GRADIENT = CARD_GRADIENTS.royal;
-
-const RoleWaves = () => (
-  <View style={styles.waveWrap} pointerEvents="none">
-    <Svg width="100%" height="100%" viewBox="0 0 390 320" preserveAspectRatio="none">
-      <Path
-        fill="rgba(255,255,255,0.08)"
-        d="M0,128 C48,86 92,64 138,102 C184,140 228,78 286,48 C332,26 364,58 390,86 L390,320 L0,320 Z"
-      />
-      <Path
-        fill="rgba(255,255,255,0.14)"
-        d="M0,158 C56,118 102,108 148,142 C198,178 242,108 298,82 C340,64 368,92 390,118 L390,320 L0,320 Z"
-      />
-      <Path
-        fill="rgba(255,255,255,0.22)"
-        d="M0,198 C58,162 108,178 162,196 C218,216 262,150 318,138 C354,130 376,152 390,168 L390,320 L0,320 Z"
-      />
-    </Svg>
-  </View>
-);
 
 const RoleCard = ({item, index, onPress}) => (
   <EnterView
     motion={getRoleCardEntering(index)}
     enterKey={`role-card-${index}`}
-    style={styles.cardOuter}>
+    style={styles.cardEnter}>
     <TouchableOpacity
-      style={styles.cardPress}
       activeOpacity={0.88}
       delayPressIn={0}
-      onPress={onPress}>
-        <LinearGradient
-          colors={ROLE_CARD_GRADIENT}
-          start={GRADIENT_START}
-          end={GRADIENT_END}
-          style={[styles.card, CARD_SHADOW]}>
-          <View style={styles.iconWrap}>
-            <Icon
-              name={item.ionIcon}
-              size={wp(9.5)}
-              color={ROLE_ICON_COLOR}
-            />
+      onPress={onPress}
+      style={styles.cardPress}>
+      <AuthIceCard contentStyle={styles.cardFill}>
+        <View style={styles.cardRow}>
+          <View style={styles.iconWrap} pointerEvents="none">
+            <FeatureArtImage source={item.art} width={wp(16)} height={wp(16)} />
           </View>
-
           <View style={styles.cardContent}>
-            <Text style={styles.cardTitle}>{item.title}</Text>
-            <Text style={styles.cardDesc}>{item.description}</Text>
+            <Text style={styles.cardTitle} numberOfLines={1}>
+              {item.title}
+            </Text>
+            <Text style={styles.cardDesc} numberOfLines={3}>
+              {item.description}
+            </Text>
           </View>
-
           <View style={styles.arrowBtn}>
             <Icon
               name="arrow-forward"
-              size={wp(5)}
-              color={ROLE_ICON_COLOR}
+              size={wp(4.6)}
+              color={Colors.brandRoyal}
             />
           </View>
-        </LinearGradient>
+        </View>
+      </AuthIceCard>
     </TouchableOpacity>
   </EnterView>
 );
 
 const Role = () => {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const {setRole} = useRole();
 
   const handleRolePress = option => {
@@ -116,35 +94,36 @@ const Role = () => {
   };
 
   return (
-    <View style={styles.root}>
-      <LinearGradient
-        colors={[Colors.splashStart, Colors.primaryLight, Colors.splashEnd]}
-        locations={[0, 0.42, 1]}
-        start={{x: 0.1, y: 0}}
-        end={{x: 0.9, y: 1}}
-        style={StyleSheet.absoluteFill}
+    <View style={styles.screen}>
+      <StatusBar
+        animated={false}
+        translucent
+        backgroundColor={Colors.transparent}
+        barStyle="light-content"
       />
-      <RoleWaves />
+      <ScrollEnterScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        bounces
+        keyboardShouldPersistTaps="handled"
+        removeClippedSubviews={false}>
+        <AuthBrandHeader insets={insets} showTagline={false}>
+          <EnterView
+            motion={getRoleHeaderEntering()}
+            enterKey="role-header"
+            style={styles.headerCopy}>
+            <Text style={styles.welcome}>{Strings.welcome}</Text>
+            <Text style={styles.heading}>{Strings.selectRole}</Text>
+            <Text style={styles.subtitle}>{Strings.roleSubtitle}</Text>
+          </EnterView>
+        </AuthBrandHeader>
 
-      <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-        <StatusBar
-          animated
-          translucent={false}
-          backgroundColor={Colors.splashStart}
-          barStyle="light-content"
-        />
-
-        <EnterView
-          motion={getRoleHeaderEntering()}
-          enterKey="role-header"
-          style={styles.header}>
-          <Text style={styles.brand}>{Strings.eschool}</Text>
-          <Text style={styles.welcome}>{Strings.welcome}</Text>
-          <Text style={styles.heading}>{Strings.selectRole}</Text>
-          <Text style={styles.subtitle}>{Strings.roleSubtitle}</Text>
-        </EnterView>
-
-        <View style={styles.cardsCenter}>
+        <View
+          style={[
+            styles.body,
+            {paddingBottom: hp(2.4) + (insets.bottom || 0)},
+          ]}>
           {ROLE_OPTIONS.map((role, index) => (
             <RoleCard
               key={role.id}
@@ -153,167 +132,113 @@ const Role = () => {
               onPress={() => handleRolePress(role)}
             />
           ))}
+          <EnterView
+            motion={getRoleFooterEntering()}
+            enterKey="role-footer">
+            <AuthSecureFooter showWebsite={false} style={styles.footer} />
+          </EnterView>
         </View>
-
-        <EnterView
-          motion={getRoleFooterEntering()}
-          enterKey="role-footer"
-          style={styles.footerWrap}>
-          <View style={styles.footer}>
-            <Icon
-              name="shield-checkmark-outline"
-              size={wp(4)}
-              color={Colors.whiteMuted75}
-            />
-            <Text style={styles.footerText}>{Strings.dataSafe}</Text>
-          </View>
-        </EnterView>
-      </SafeAreaView>
+      </ScrollEnterScrollView>
     </View>
   );
 };
 
 export default withScreenEnter(Role, 'role');
 
-const CARD_SHADOW = Platform.select({
-  ios: {
-    shadowColor: '#051A33',
-    shadowOffset: {width: 0, height: 10},
-    shadowOpacity: 0.24,
-    shadowRadius: 16,
-  },
-  android: {
-    elevation: 10,
-  },
-});
-
 const styles = StyleSheet.create({
-  root: {
+  screen: {
     flex: 1,
-    backgroundColor: Colors.splashStart,
+    backgroundColor: Colors.canvas,
   },
-  safe: {
+  scrollView: {
     flex: 1,
   },
-  waveWrap: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    height: hp(38),
-    opacity: 0.95,
+  scroll: {
+    flexGrow: 1,
+    overflow: 'visible',
   },
-  header: {
+  headerCopy: {
+    alignItems: 'center',
+    marginTop: hp(1.6),
     paddingHorizontal: wp(6),
-    paddingTop: hp(1.2),
-    paddingBottom: hp(0.2),
-  },
-  brand: {
-    color: Colors.whiteMuted75,
-    fontFamily: Fonts.medium,
-    fontSize: Fontsize.sm,
-    letterSpacing: 1.2,
-    marginBottom: hp(1.8),
   },
   welcome: {
-    color: Colors.whiteMuted75,
-    fontFamily: Fonts.regular,
+    color: Colors.textOnNavyMuted,
+    fontFamily: Fonts.medium,
     fontSize: Fontsize.xs1,
-    letterSpacing: 0.8,
-    marginBottom: hp(0.6),
+    letterSpacing: 1.8,
+    marginBottom: hp(0.55),
   },
   heading: {
     color: Colors.white,
     fontFamily: Fonts.bold,
     fontSize: Fontsize.lg,
-    lineHeight: Fontsize.xl,
-    marginBottom: hp(1),
-    flexShrink: 1,
+    lineHeight: Fontsize.lg * 1.18,
+    textAlign: 'center',
+    marginBottom: hp(0.8),
   },
   subtitle: {
-    color: Colors.whiteMuted85,
+    color: Colors.textOnNavyMuted,
     fontFamily: Fonts.regular,
-    fontSize: Fontsize.xs3,
-    lineHeight: Fontsize.m,
+    fontSize: Fontsize.xs1,
+    lineHeight: Fontsize.xs1 * 1.45,
+    textAlign: 'center',
   },
-  cardsCenter: {
-    flex: 1,
-    justifyContent: 'flex-start',
-    alignItems: 'stretch',
-    paddingHorizontal: wp(4),
-    paddingTop: hp(2.5),
-    gap: hp(2.8),
+  body: {
+    paddingHorizontal: spacing.md,
+    marginTop: -AUTH_CARD_TUCK,
+    zIndex: 2,
+    gap: hp(1.6),
   },
-  cardOuter: {
-    borderRadius: wp(5.5),
-    overflow: 'hidden',
+  cardEnter: {
+    overflow: 'visible',
   },
   cardPress: {
-    borderRadius: wp(5.5),
-    overflow: 'hidden',
+    overflow: 'visible',
   },
-  card: {
+  cardFill: {
+    paddingVertical: hp(1.7),
+    paddingHorizontal: wp(3.4),
+  },
+  cardRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: wp(5.5),
-    paddingVertical: hp(3.8),
-    paddingHorizontal: wp(5.5),
-    minHeight: hp(14.5),
-    borderWidth: 1,
-    borderColor: 'rgba(101, 196, 255, 0.35)',
-    overflow: 'hidden',
+    minHeight: hp(11.2),
+    zIndex: 1,
   },
   iconWrap: {
-    width: wp(18),
-    height: wp(18),
-    borderRadius: wp(4.5),
+    width: wp(16),
+    height: wp(16),
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: wp(4),
-    backgroundColor: Colors.whiteOverlay18,
+    marginRight: wp(3),
   },
   cardContent: {
     flex: 1,
+    minWidth: 0,
     marginRight: wp(2),
   },
   cardTitle: {
-    color: Colors.white,
+    color: Colors.textPrimary,
     fontFamily: Fonts.bold,
-    fontSize: Fontsize.ml,
-    marginBottom: hp(0.5),
+    fontSize: Fontsize.sm,
+    marginBottom: hp(0.35),
   },
   cardDesc: {
-    color: Colors.whiteMuted85,
-    fontFamily: Fonts.regular,
-    fontSize: Fontsize.xs3,
-    lineHeight: Fontsize.sm,
-  },
-  arrowBtn: {
-    width: wp(11),
-    height: wp(11),
-    borderRadius: wp(5.5),
-    backgroundColor: 'rgba(56, 189, 248, 0.22)',
-    borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.45)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  footerWrap: {
-    paddingBottom: hp(2.5),
-  },
-  footer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: wp(1.5),
-    paddingHorizontal: wp(6),
-  },
-  footerText: {
-    flexShrink: 1,
-    color: Colors.whiteMuted75,
+    color: Colors.textSecondary,
     fontFamily: Fonts.regular,
     fontSize: Fontsize.xs1,
-    textAlign: 'center',
+    lineHeight: Fontsize.xs1 * 1.4,
+  },
+  arrowBtn: {
+    width: wp(10),
+    height: wp(10),
+    borderRadius: wp(5),
+    backgroundColor: Colors.hubCard,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  footer: {
+    marginTop: hp(1.2),
   },
 });
-
