@@ -95,10 +95,22 @@ const AnnouncementsScreen = () => {
   const [modalReplay, setModalReplay] = useState(0);
   const [contentReplay, setContentReplay] = useState(0);
   const activeChildId = pickedChildId || homeChildId || children[0]?.value || null;
-  const parentChild =
-    parentChildCard?.label
-      ? parentChildCard
-      : children.find(item => item.value === String(activeChildId)) || null;
+  const homeChild =
+    children.find(item => item.value === String(activeChildId)) ||
+    children[0] ||
+    null;
+  const parentChild = parentChildCard?.label
+    ? {
+        ...homeChild,
+        ...parentChildCard,
+        rollNo: parentChildCard.rollNo || homeChild?.rollNo,
+        sectionName: parentChildCard.sectionName || homeChild?.sectionName,
+        classLabel:
+          parentChildCard.classLabel ||
+          parentChildCard.className ||
+          homeChild?.classLabel,
+      }
+    : homeChild;
   const announcements = isParent ? parentAnnouncements : studentAnnouncements;
   const bannerChild = isParent
     ? parentChild
@@ -109,6 +121,7 @@ const AnnouncementsScreen = () => {
         className: homeStudent?.className || '',
         photoUrl: homeStudent?.photoUrl || '',
         sectionName: homeStudent?.sectionName || '',
+        rollNo: homeStudent?.rollNo || '',
       };
   const studentIdentity = isParent
     ? bannerChild

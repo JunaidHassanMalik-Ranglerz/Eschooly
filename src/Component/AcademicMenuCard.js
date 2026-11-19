@@ -1,5 +1,5 @@
 import React from 'react';
-import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {ActivityIndicator, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
 import DepthIcon from './DepthIcon';
@@ -38,12 +38,14 @@ const AcademicMenuCard = ({
   color,
   title,
   disabled,
+  loading = false,
   onPress,
   animationIndex = 0,
   waveKey,
 }) => {
   const icy = useStudentTone();
   const art = resolveMenuArt(waveKey);
+  const blocked = disabled || loading;
 
   if (icy) {
     return (
@@ -55,7 +57,7 @@ const AcademicMenuCard = ({
           activeOpacity={0.88}
           delayPressIn={0}
           onPress={onPress}
-          disabled={disabled}
+          disabled={blocked}
           style={[styles.pressIcy, disabled && styles.wrapDisabled]}>
           <View style={styles.clipIcy}>
             <LinearGradient
@@ -78,11 +80,15 @@ const AcademicMenuCard = ({
                 {title}
               </Text>
               <View style={styles.chevronWrapIcy}>
-                <Icon
-                  name="chevron-forward"
-                  size={wp(5)}
-                  color={Colors.brandRoyal}
-                />
+                {loading ? (
+                  <ActivityIndicator size="small" color={Colors.brandRoyal} />
+                ) : (
+                  <Icon
+                    name="chevron-forward"
+                    size={wp(5)}
+                    color={Colors.brandRoyal}
+                  />
+                )}
               </View>
             </View>
           </View>
@@ -100,7 +106,7 @@ const AcademicMenuCard = ({
         activeOpacity={0.88}
         delayPressIn={0}
         onPress={onPress}
-        disabled={disabled}
+        disabled={blocked}
         style={[styles.press, disabled && styles.wrapDisabled]}>
         <LinearGradient
           colors={ACADEMICS_MENU_GRADIENT}
@@ -114,7 +120,11 @@ const AcademicMenuCard = ({
             {title}
           </Text>
           <View style={styles.chevronWrap}>
-            <Icon name="chevron-forward" size={wp(5)} color={Colors.white} />
+            {loading ? (
+              <ActivityIndicator size="small" color={Colors.white} />
+            ) : (
+              <Icon name="chevron-forward" size={wp(5)} color={Colors.white} />
+            )}
           </View>
         </LinearGradient>
       </TouchableOpacity>

@@ -186,7 +186,9 @@ const Holidays = () => {
         classInfo: homeStudent?.className || homeStudent?.classLabel || '',
         classLabel: homeStudent?.classLabel || homeStudent?.className || '',
         className: homeStudent?.className || '',
+        sectionName: homeStudent?.sectionName || '',
         photoUrl: homeStudent?.photoUrl || '',
+        rollNo: homeStudent?.rollNo || '',
       };
 
   useEffect(() => {

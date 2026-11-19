@@ -3,6 +3,7 @@ import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
 import PersonAvatar from './Profile/PersonAvatar';
+import ChildIdentityFace from './ChildIdentityFace';
 import CardWave, {SCREEN_WAVES} from './CardWave';
 import {
   CARD_RADIUS,
@@ -44,6 +45,15 @@ const SelectedChildBanner = ({
     ? `${classText} · Roll ${child.rollNo}`
     : child.meta || classText;
   const switchable = Boolean(onSwitchPress && canSwitch);
+
+  const icyRow = (
+    <ChildIdentityFace
+      student={child}
+      icy
+      switchable={switchable}
+      avatarSize={isLarge ? wp(14) : wp(12)}
+    />
+  );
 
   const row = (
     <>
@@ -114,7 +124,7 @@ const SelectedChildBanner = ({
         end={{x: 1, y: 1}}
         style={[styles.iceFill, isLarge && styles.iceFillLarge]}>
         <CardWave variant={SCREEN_WAVES.assignmentIce} color={ICE_WAVE} />
-        {row}
+        {icyRow}
       </LinearGradient>
     </View>
   ) : (
@@ -189,8 +199,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   iceFill: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: FLOAT_CARD_RADIUS,
     borderWidth: StyleSheet.hairlineWidth * 2,
     borderColor: Colors.borderGlass,

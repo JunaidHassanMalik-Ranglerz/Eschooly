@@ -28,6 +28,16 @@ export const mapHomeChild = child => {
   const className = text(
     record.class_name || classRecord?.name || classRecord?.class_name,
   );
+  const sectionRecord = asObject(record.section) || asObject(classRecord?.section);
+  const sectionName = text(
+    record.section_name ||
+      (typeof record.section === 'string' || typeof record.section === 'number'
+        ? record.section
+        : '') ||
+      sectionRecord?.name ||
+      sectionRecord?.section_name ||
+      classRecord?.section_name,
+  );
 
   return {
     id: record.id,
@@ -38,7 +48,10 @@ export const mapHomeChild = child => {
     className,
     classLabel: className,
     classBadge: className,
-    rollNo: text(record.roll_no),
+    sectionName,
+    rollNo: text(
+      record.roll_no || record.rollNo || record.roll_number || record.roll,
+    ),
     initials: initialsFromName(name),
   };
 };

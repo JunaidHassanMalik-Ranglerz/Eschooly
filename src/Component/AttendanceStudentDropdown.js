@@ -4,6 +4,7 @@ import ChildSwitchModal from './Parent/ChildSwitchModal';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
 import PersonAvatar from './Profile/PersonAvatar';
+import ChildIdentityFace from './ChildIdentityFace';
 import CardWave, {SCREEN_WAVES} from './CardWave';
 import {
   CARD_RADIUS,
@@ -65,7 +66,16 @@ const AttendanceStudentDropdown = props => {
     props?.student?.classLabel ||
     props?.student?.classBadge;
 
-  const cardContent = (
+  const icyFace = (
+    <ChildIdentityFace
+      student={props?.student}
+      icy
+      switchable={!readOnly}
+      avatarSize={flyer || floating ? wp(14) : wp(12)}
+    />
+  );
+
+  const cardContent = icy ? icyFace : (
     <>
       <PersonAvatar
         person={props?.student}

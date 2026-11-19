@@ -98,7 +98,16 @@ const StudentResults = () => {
     children.find(item => item.value === String(activeChildId)) || null;
   const bannerChild = isParent
     ? resultCard?.child?.label
-      ? resultCard.child
+      ? {
+          ...parentChild,
+          ...resultCard.child,
+          rollNo: resultCard.child.rollNo || parentChild?.rollNo,
+          sectionName: resultCard.child.sectionName || parentChild?.sectionName,
+          classLabel:
+            resultCard.child.classLabel ||
+            resultCard.child.className ||
+            parentChild?.classLabel,
+        }
       : parentChild
     : {
         label: resultChild?.label || homeStudent?.label || '',

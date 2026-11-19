@@ -2,7 +2,7 @@ import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {StyleSheet, View} from 'react-native';
 import ScrollEnterScrollView from '../../Component/ScrollEnterScrollView';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {useNavigation} from '@react-navigation/native';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {useDispatch, useSelector} from 'react-redux';
 import MainHeaderComponent from '../../Component/MainHeaderComponent';
 import ParentChildCard from '../../Component/Parent/ParentChildCard';
@@ -47,6 +47,7 @@ const Menu = () => {
     state => state.studentHome?.unreadNotifications || 0,
   );
   const [switchVisible, setSwitchVisible] = useState(false);
+  const [openingValue, setOpeningValue] = useState(null);
   const parentChild =
     children.find(item => item.value === String(homeChildId)) || children[0] || null;
   const parentCanSwitch = children.length > 1;
@@ -57,6 +58,7 @@ const Menu = () => {
         classInfo: homeStudent?.className || homeStudent?.classLabel || '',
         classLabel: homeStudent?.classLabel || homeStudent?.className || '',
         className: homeStudent?.className || '',
+        sectionName: homeStudent?.sectionName || '',
         photoUrl: homeStudent?.photoUrl || '',
         rollNo: homeStudent?.rollNo || '',
       };
@@ -88,17 +90,20 @@ const Menu = () => {
     [dispatch, homeChildId],
   );
 
+  useFocusEffect(
+    useCallback(() => {
+      setOpeningValue(null);
+      return undefined;
+    }, []),
+  );
+
   const handlePress = item => {
     const target = isParent && item.parentScreen ? item.parentScreen : item.screen;
-    if (!target) {
+    if (!target || openingValue) {
       return;
     }
 
-    if (!isParent && item.tab) {
-      navigation.navigate(target);
-      return;
-    }
-
+    setOpeningValue(item.value);
     navigation.navigate(target);
   };
 
@@ -120,6 +125,7 @@ const Menu = () => {
         color={meta.color}
         title={item.label}
         disabled={disabled}
+        loading={openingValue === item.value}
         animationIndex={index + 2}
         waveKey={item.value}
         onPress={() => handlePress(item)}

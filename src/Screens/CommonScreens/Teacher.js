@@ -64,7 +64,9 @@ const Teacher = () => {
         classInfo: homeStudent?.className || homeStudent?.classLabel || '',
         classLabel: homeStudent?.classLabel || homeStudent?.className || '',
         className: homeStudent?.className || '',
+        sectionName: homeStudent?.sectionName || '',
         photoUrl: homeStudent?.photoUrl || '',
+        rollNo: homeStudent?.rollNo || '',
       };
   const studentLabel = isParent ? Strings.child : Strings.student;
   const canSwitchChild = isParent && students.length > 1;

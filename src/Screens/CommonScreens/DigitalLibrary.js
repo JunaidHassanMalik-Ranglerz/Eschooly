@@ -73,10 +73,34 @@ const DigitalLibrary = () => {
 
   const activeChildId = homeChildId || children[0]?.value || null;
   const parentCanSwitch = isParent && children.length > 1;
-  const parentChild =
-    parentLibrary?.child?.label
-      ? parentLibrary.child
-      : children.find(item => item.value === String(activeChildId)) || null;
+  const homeChild =
+    children.find(item => item.value === String(activeChildId)) ||
+    children[0] ||
+    null;
+  const libraryChild = parentLibrary?.child;
+  const parentChild = libraryChild?.label
+    ? {
+        ...homeChild,
+        ...libraryChild,
+        photoUrl: libraryChild.photoUrl || homeChild?.photoUrl,
+        className: libraryChild.className || homeChild?.className,
+        classLabel:
+          libraryChild.classLabel ||
+          libraryChild.className ||
+          homeChild?.classLabel ||
+          homeChild?.className,
+        classBadge:
+          libraryChild.classBadge ||
+          homeChild?.classBadge ||
+          libraryChild.className ||
+          homeChild?.className,
+        sectionName:
+          typeof libraryChild.sectionName === 'object'
+            ? homeChild?.sectionName
+            : libraryChild.sectionName || homeChild?.sectionName,
+        rollNo: libraryChild.rollNo || homeChild?.rollNo,
+      }
+    : homeChild;
   const resources = isParent
     ? parentLibrary?.items || EMPTY_LIBRARY_ITEMS
     : studentItems;
@@ -88,6 +112,7 @@ const DigitalLibrary = () => {
         className: homeStudent?.className || '',
         sectionName: homeStudent?.sectionName || '',
         photoUrl: homeStudent?.photoUrl || '',
+        rollNo: homeStudent?.rollNo || '',
         status: homeStudent?.status || (homeStudent?.label ? 'Active' : undefined),
       };
 
