@@ -20,7 +20,9 @@ const RegisterContent = () => {
   const {clearRole, isParent, setLoggedInStudentId, setRole} = useRole();
   const [familyId, setFamilyId] = useState('FAM-049');
   const [studentId, setStudentId] = useState('QA-STU-0001');
-  const [password, setPassword] = useState('Admin@098');
+  const [password, setPassword] = useState(
+    isParent ? '12345678' : 'Admin@098'
+  );
   const [showPassword, setShowPassword] = useState(false);
 
   const signInParent = async () => {
