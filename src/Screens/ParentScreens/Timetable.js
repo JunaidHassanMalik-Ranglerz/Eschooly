@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {
   ActivityIndicator,
   StatusBar,
@@ -19,6 +19,7 @@ import CardWave, {SCREEN_WAVES} from '../../Component/CardWave';
 import TimetableStudentHeader from '../../Component/Timetable/TimetableStudentHeader';
 import TimetablePeriodCard from '../../Component/Timetable/TimetablePeriodCard';
 import SelectedChildBanner from '../../Component/SelectedChildBanner';
+import ChildSwitchModal from '../../Component/Parent/ChildSwitchModal';
 import {CARD_GRADIENTS} from '../../Constants/CardTheme';
 import {Colors} from '../../Constants/Colors';
 import {Fonts} from '../../Constants/Fonts';
@@ -35,6 +36,7 @@ import {withScreenEnter} from '../../hooks/useScreenEnterGate';
 import {useDispatch, useSelector} from 'react-redux';
 import {showToast} from '../../utils/toast';
 import {
+  fetchChildDashboard,
   fetchChildTimetable,
   fetchParentHome,
 } from '../../store/slices/parentHomeSlice';
@@ -96,12 +98,15 @@ const Timetable = () => {
   const [loading, setLoading] = useState(!isParent);
   const [viewMode, setViewMode] = useState(Strings.day);
   const [currentDate, setCurrentDate] = useState(() => new Date());
+  const [switchVisible, setSwitchVisible] = useState(false);
 
   const week = useMemo(() => buildWeek(currentDate), [currentDate]);
   const dayName = DAY_NAMES[currentDate.getDay()];
-  const parentChild = children.find(
-    item => item.value === String(selectedChildId),
-  );
+  const parentChild =
+    children.find(item => item.value === String(selectedChildId)) ||
+    children[0] ||
+    null;
+  const parentCanSwitch = isParent && children.length > 1;
   const classLabel = isParent ? parentChild?.className || '' : '';
   const timetable = isParent ? parentSlots : studentSlots;
   const visibleItems = timetable.filter(item => item.subject !== 'Break');
@@ -192,8 +197,30 @@ const Timetable = () => {
     setCurrentDate(next);
   };
 
+  const openChildSwitch = useCallback(() => {
+    if (!parentCanSwitch) {
+      return;
+    }
+    setSwitchVisible(true);
+  }, [parentCanSwitch]);
+
+  const handleSelectChild = useCallback(
+    nextId => {
+      if (!nextId || String(nextId) === String(selectedChildId)) {
+        return;
+      }
+      dispatch(fetchChildDashboard(nextId));
+    },
+    [dispatch, selectedChildId],
+  );
+
   const modeToggle = (
-    <View style={[styles.toggleWrap, icy && styles.toggleWrapStudent]}>
+    <View
+      style={[
+        styles.toggleWrap,
+        icy && styles.toggleWrapStudent,
+        icy && isParent && styles.toggleWrapParent,
+      ]}>
       {[Strings.day, Strings.week].map(tab => {
         const active = tab === viewMode;
         return (
@@ -220,10 +247,19 @@ const Timetable = () => {
   );
 
   const monthNav = (
-    <View style={[styles.monthRow, icy && styles.monthRowStudent]}>
+    <View
+      style={[
+        styles.monthRow,
+        icy && styles.monthRowStudent,
+        icy && isParent && styles.monthRowParent,
+      ]}>
       <TouchableOpacity
         onPress={() => changeWeek(-1)}
-        style={[styles.monthArrow, icy && styles.monthArrowStudent]}
+        style={[
+          styles.monthArrow,
+          icy && styles.monthArrowStudent,
+          icy && isParent && styles.monthArrowParent,
+        ]}
         hitSlop={8}
         accessibilityRole="button"
         accessibilityLabel="Previous week">
@@ -234,13 +270,21 @@ const Timetable = () => {
         />
       </TouchableOpacity>
       <Text
-        style={[styles.month, icy && styles.monthStudent]}
+        style={[
+          styles.month,
+          icy && styles.monthStudent,
+          icy && isParent && styles.monthParent,
+        ]}
         numberOfLines={1}>
         {MONTHS[currentDate.getMonth()]} {currentDate.getFullYear()}
       </Text>
       <TouchableOpacity
         onPress={() => changeWeek(1)}
-        style={[styles.monthArrow, icy && styles.monthArrowStudent]}
+        style={[
+          styles.monthArrow,
+          icy && styles.monthArrowStudent,
+          icy && isParent && styles.monthArrowParent,
+        ]}
         hitSlop={8}
         accessibilityRole="button"
         accessibilityLabel="Next week">
@@ -254,7 +298,12 @@ const Timetable = () => {
   );
 
   const dateStrip = (
-    <View style={[styles.weekRow, icy && styles.weekRowStudent]}>
+    <View
+      style={[
+        styles.weekRow,
+        icy && styles.weekRowStudent,
+        icy && isParent && styles.weekRowParent,
+      ]}>
       {week.map(item => {
         const active =
           item.date.getDate() === currentDate.getDate() &&
@@ -262,11 +311,19 @@ const Timetable = () => {
         return (
           <TouchableOpacity
             key={item.key}
-            style={[styles.dayCol, icy && styles.dayColStudent]}
+            style={[
+              styles.dayCol,
+              icy && styles.dayColStudent,
+              icy && isParent && styles.dayColParent,
+            ]}
             activeOpacity={0.85}
             onPress={() => setCurrentDate(item.date)}>
             <Text
-              style={[styles.dayLabel, icy && styles.dayLabelStudent]}
+              style={[
+                styles.dayLabel,
+                icy && styles.dayLabelStudent,
+                icy && isParent && styles.dayLabelParent,
+              ]}
               numberOfLines={1}>
               {item.label}
             </Text>
@@ -274,12 +331,16 @@ const Timetable = () => {
               style={[
                 styles.dateCircle,
                 icy && styles.dateCircleStudent,
-                active && (icy ? styles.dateCircleActiveStudent : styles.dateCircleActive),
+                icy && isParent && styles.dateCircleParent,
+                active &&
+                  (icy ? styles.dateCircleActiveStudent : styles.dateCircleActive),
+                active && icy && isParent && styles.dateCircleActiveParent,
               ]}>
               <Text
                 style={[
                   styles.dateText,
                   icy && styles.dateTextStudent,
+                  icy && isParent && styles.dateTextParent,
                   active && styles.dateTextActive,
                 ]}>
                 {item.day}
@@ -356,7 +417,14 @@ const Timetable = () => {
             keyboardShouldPersistTaps="handled"
             removeClippedSubviews={false}>
             <EschoolyScreenShell.Header>
-              <TimetableStudentHeader unreadCount={unreadNotifications} />
+              <TimetableStudentHeader
+                unreadCount={unreadNotifications}
+                subtitle={
+                  isParent
+                    ? Strings.timetableSubtitleParent
+                    : Strings.timetableSubtitleStudent
+                }
+              />
             </EschoolyScreenShell.Header>
             <EschoolyScreenShell.Body style={styles.studentBody}>
               <View style={styles.canvasStage}>
@@ -371,13 +439,16 @@ const Timetable = () => {
                     <SelectedChildBanner
                       child={parentChild}
                       icy
-                      canSwitch={false}
                       compactMargin
                       animationIndex={1}
+                      canSwitch={parentCanSwitch}
+                      onSwitchPress={
+                        parentCanSwitch ? openChildSwitch : undefined
+                      }
                     />
                   ) : null}
                   {modeToggle}
-                  <View style={styles.calCard}>
+                  <View style={[styles.calCard, isParent && styles.calCardParent]}>
                     {monthNav}
                     {dateStrip}
                   </View>
@@ -388,6 +459,15 @@ const Timetable = () => {
               </View>
             </EschoolyScreenShell.Body>
           </ScrollEnterScrollView>
+          {parentCanSwitch ? (
+            <ChildSwitchModal
+              visible={switchVisible}
+              childrenList={children}
+              selectedId={String(selectedChildId || parentChild?.value || '')}
+              onSelect={handleSelectChild}
+              onClose={() => setSwitchVisible(false)}
+            />
+          ) : null}
         </EschoolyScreenShell>
       </StudentToneProvider>
     );
@@ -469,6 +549,10 @@ const styles = StyleSheet.create({
     zIndex: 2,
     ...elevation.banner,
   },
+  toggleWrapParent: {
+    marginTop: hp(0.2),
+    marginBottom: hp(1.2),
+  },
   toggleBtnActiveStudent: {
     backgroundColor: Colors.brandNavy,
   },
@@ -479,6 +563,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: hp(0.35),
   },
+  monthRowParent: {
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: hp(0.55),
+  },
   monthArrowStudent: {
     width: wp(11),
     height: wp(11),
@@ -487,12 +576,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  monthArrowParent: {
+    width: wp(10),
+    height: wp(10),
+  },
   monthStudent: {
     flex: 1,
     color: Colors.textPrimary,
     textAlign: 'center',
     fontSize: Fontsize.sm1,
     paddingHorizontal: wp(1),
+  },
+  monthParent: {
+    minWidth: 0,
+    paddingHorizontal: wp(2),
   },
   dayLabelStudent: {
     color: Colors.textSecondary,
@@ -501,24 +598,50 @@ const styles = StyleSheet.create({
     marginBottom: hp(0.55),
     fontSize: Fontsize.xs0,
   },
+  dayLabelParent: {
+    marginBottom: hp(0.4),
+    includeFontPadding: false,
+  },
   dayColStudent: {
     minHeight: hp(7.2),
     paddingVertical: hp(0.35),
+  },
+  dayColParent: {
+    flex: 1,
+    minWidth: 0,
+    minHeight: 0,
+    alignItems: 'center',
+    paddingVertical: hp(0.2),
   },
   dateCircleStudent: {
     width: wp(8.5),
     height: wp(8.5),
     borderRadius: wp(8.5),
   },
+  dateCircleParent: {
+    width: wp(8.2),
+    height: wp(8.2),
+    borderRadius: wp(8.2),
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
   dateCircleActiveStudent: {
     backgroundColor: Colors.brandNavy,
     borderRadius: wp(8.5),
     overflow: 'hidden',
   },
+  dateCircleActiveParent: {
+    borderRadius: wp(8.2),
+  },
   dateTextStudent: {
     color: Colors.textPrimary,
     includeFontPadding: false,
     textAlign: 'center',
+  },
+  dateTextParent: {
+    width: '100%',
+    textAlignVertical: 'center',
   },
   calCard: {
     backgroundColor: Colors.surface,
@@ -531,10 +654,23 @@ const styles = StyleSheet.create({
     marginBottom: hp(1.45),
     ...elevation.card,
   },
+  calCardParent: {
+    paddingHorizontal: wp(2),
+    paddingTop: hp(0.65),
+    paddingBottom: hp(0.85),
+    marginBottom: hp(1.2),
+    overflow: 'visible',
+  },
   weekRowStudent: {
     justifyContent: 'flex-start',
     marginBottom: 0,
     marginTop: hp(0.15),
+  },
+  weekRowParent: {
+    width: '100%',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginTop: 0,
   },
   sectionTitle: {
     color: Colors.textPrimary,

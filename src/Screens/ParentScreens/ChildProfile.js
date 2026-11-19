@@ -85,6 +85,7 @@ const ChildProfile = () => {
     <ScreenEnterProvider motion="childProfile">
       <ParentNavyIceLayout
         title={Strings.childProfile}
+        subtitle={Strings.childProfileSubtitleParent}
         unreadCount={1}
         footer={
           canSwitchChild ? (

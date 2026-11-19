@@ -395,6 +395,7 @@ const Fee = () => {
   return (
     <ParentNavyIceLayout
       title={headerTitle}
+      subtitle={Strings.feeSubtitleParent}
       unreadCount={unreadNotificationCount || 1}
       onBackPress={
         viewMode === 'home' ? undefined : () => setFeeViewMode('home')

@@ -153,7 +153,10 @@ const ExamSchedule = () => {
   }, [dispatch, isParent, selectedChildId]);
 
   return (
-    <ParentNavyIceLayout title={Strings.examSchedule} unreadCount={1}>
+    <ParentNavyIceLayout
+      title={Strings.examSchedule}
+      subtitle={Strings.examScheduleSubtitleParent}
+      unreadCount={1}>
         <SelectedChildBanner
           child={shownChild}
           icy

@@ -398,7 +398,14 @@ const Syllabus = () => {
         icy ? (
           <>
             <EschoolyScreenShell.Header style={styles.studentBand}>
-              <SyllabusStudentHeader unreadCount={unreadNotifications} />
+              <SyllabusStudentHeader
+                unreadCount={unreadNotifications}
+                subtitle={
+                  isParent
+                    ? Strings.syllabusSubtitleParent
+                    : Strings.syllabusSubtitleStudent
+                }
+              />
             </EschoolyScreenShell.Header>
             <EschoolyScreenShell.Body tuck={false} style={styles.studentBody}>
               <View style={styles.canvasStage}>
@@ -485,6 +492,7 @@ const styles = StyleSheet.create({
   },
   studentBand: {
     borderBottomLeftRadius: NAVY_ICE_CURVE,
+    borderBottomRightRadius: NAVY_ICE_CURVE,
     paddingBottom: FLOAT_CARD_GAP + FLOAT_CARD_TUCK,
     overflow: 'visible',
   },

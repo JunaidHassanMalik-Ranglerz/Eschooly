@@ -237,6 +237,11 @@ const Teacher = () => {
               <StudentBrandedHeader
                 title={Strings.teachers}
                 unreadCount={unreadNotifications}
+                subtitle={
+                  isParent
+                    ? Strings.teachersSubtitleParent
+                    : Strings.teachersSubtitleStudent
+                }
               />
             </EschoolyScreenShell.Header>
             <EschoolyScreenShell.Body tuck={false} style={styles.studentBody}>
@@ -317,6 +322,7 @@ const styles = StyleSheet.create({
   },
   studentBand: {
     borderBottomLeftRadius: NAVY_ICE_CURVE,
+    borderBottomRightRadius: NAVY_ICE_CURVE,
     paddingBottom: FLOAT_CARD_GAP + FLOAT_CARD_TUCK,
     overflow: 'visible',
   },

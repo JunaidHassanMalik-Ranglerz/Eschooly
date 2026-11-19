@@ -9,6 +9,7 @@ import {Typography} from '../../Constants/Typography';
 import {Fontsize} from '../../Constants/Fontsize';
 import {spacing} from '../../Constants/Theme';
 import {hp, wp} from '../../Constants/Responsive';
+import HeaderSubtitle from './HeaderSubtitle';
 
 const StudentBrandedHeader = ({
   title,
@@ -16,6 +17,7 @@ const StudentBrandedHeader = ({
   onBackPress,
   showBell = true,
   rightAction,
+  subtitle,
 }) => {
   const navigation = useNavigation();
 
@@ -50,6 +52,7 @@ const StudentBrandedHeader = ({
           {title}
         </Text>
       </View>
+      <HeaderSubtitle text={subtitle} />
     </>
   );
 };

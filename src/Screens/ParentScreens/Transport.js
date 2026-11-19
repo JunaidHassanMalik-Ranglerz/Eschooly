@@ -36,7 +36,10 @@ const Transport = () => {
   const transport = transportDetails || {};
 
   return (
-    <ParentNavyIceLayout title={Strings.transport} unreadCount={1}>
+    <ParentNavyIceLayout
+      title={Strings.transport}
+      subtitle={Strings.transportSubtitleParent}
+      unreadCount={1}>
         <SelectedChildBanner
           child={activeStudent}
           icy

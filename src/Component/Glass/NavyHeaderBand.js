@@ -16,6 +16,7 @@ const styles = StyleSheet.create({
   band: {
     backgroundColor: Colors.brandNavy,
     borderBottomLeftRadius: radius.header,
+    borderBottomRightRadius: radius.header,
     paddingBottom: hp(1.35),
   },
   content: {

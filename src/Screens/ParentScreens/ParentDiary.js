@@ -35,7 +35,10 @@ const ParentDiary = () => {
 
   return (
     <ScreenEnterProvider motion="diary">
-      <ParentNavyIceLayout title={Strings.diary} unreadCount={1}>
+      <ParentNavyIceLayout
+        title={Strings.diary}
+        subtitle={Strings.diarySubtitleParent}
+        unreadCount={1}>
         <SelectedChildBanner
           child={activeStudent}
           icy

@@ -1,5 +1,5 @@
 import {createAsyncThunk, createSlice} from '@reduxjs/toolkit';
-import {getApiErrorMessage} from '../../utils/apiError';
+import {getApiErrorMessage, isNetworkFailure} from '../../utils/apiError';
 import {
   getChildAttendance,
   getChildDashboard,
@@ -27,15 +27,18 @@ const initialState = {
   parent: null,
   children: [],
   selectedChildId: null,
+  previousChildId: null,
   dashboard: null,
   homeLoading: false,
   dashboardLoading: false,
   error: null,
+  errorKind: null,
 };
 
 const rejectMessage = error => ({
   message: getApiErrorMessage(error),
   status: error?.response?.status ?? null,
+  network: isNetworkFailure(error),
 });
 
 const isFailedBody = body =>
@@ -232,42 +235,54 @@ const parentHomeSlice = createSlice({
     builder
       .addCase(fetchParentHome.pending, state => {
         state.homeLoading = true;
-        state.error = null;
       })
       .addCase(fetchParentHome.fulfilled, (state, action) => {
         state.homeLoading = false;
         state.parent = action.payload.parent;
         state.children = action.payload.children;
         state.selectedChildId = action.payload.selectedChildId;
+        state.previousChildId = null;
         state.dashboard = action.payload.dashboard;
         state.error = null;
+        state.errorKind = null;
       })
       .addCase(fetchParentHome.rejected, (state, action) => {
         state.homeLoading = false;
         state.error = action.payload?.message || 'Unable to load home.';
+        state.errorKind = action.payload?.network ? 'network' : 'server';
       })
       .addCase(fetchChildDashboard.pending, (state, action) => {
-        state.selectedChildId = String(action.meta.arg);
+        const nextId = String(action.meta.arg);
+        if (String(state.selectedChildId || '') !== nextId) {
+          state.previousChildId = state.selectedChildId;
+        }
+        state.selectedChildId = nextId;
         state.dashboardLoading = true;
-        state.error = null;
       })
       .addCase(fetchChildDashboard.fulfilled, (state, action) => {
         if (String(state.selectedChildId) !== String(action.payload.childId)) {
           return;
         }
         state.dashboardLoading = false;
+        state.previousChildId = null;
         state.dashboard = action.payload.dashboard;
         state.error = null;
+        state.errorKind = null;
       })
       .addCase(fetchChildDashboard.rejected, (state, action) => {
+        if (action.payload?.stale) {
+          return;
+        }
         if (String(state.selectedChildId) !== String(action.meta.arg)) {
           return;
         }
         state.dashboardLoading = false;
-        if (!action.payload?.stale) {
-          state.dashboard = null;
-          state.error = action.payload?.message || 'Unable to load dashboard.';
+        if (action.payload?.network && state.previousChildId) {
+          state.selectedChildId = state.previousChildId;
         }
+        state.previousChildId = null;
+        state.error = action.payload?.message || 'Unable to load dashboard.';
+        state.errorKind = action.payload?.network ? 'network' : 'server';
       });
   },
 });

@@ -18,6 +18,12 @@ import NotificationBell from '../../Component/NotificationBell';
 import GlanceRow from '../../Component/Glass/GlanceRow';
 import HomeSearchField from '../../Component/Glass/HomeSearchField';
 import NavyHeaderBand from '../../Component/Glass/NavyHeaderBand';
+import {
+  FLOAT_CARD_TUCK,
+  FLOAT_HEADER_PAD,
+  HEADER_NAVY_MIN_HEIGHT,
+  NAVY_ICE_CURVE,
+} from '../../Component/Glass/EschoolyScreenShell';
 import SectionHeader from '../../Component/Glass/SectionHeader';
 import StateView from '../../Component/Glass/StateView';
 import WelcomeCarousel from '../../Component/Glass/WelcomeCarousel';
@@ -66,8 +72,6 @@ const HUB_SIDE = spacing.md;
 const HUB_PEEK = wp(5.5);
 const QUICK_ACCESS_WIDTH =
   (SCREEN_W - HUB_SIDE - QUICK_ACCESS_GAP * 3 - HUB_PEEK) / 4;
-const SEARCH_BANNER_GAP = hp(1.9);
-const NAVY_TUCK = hp(2.2);
 
 const paintNavyStatusBar = navigation => {
   const nativeOptions = {
@@ -380,8 +384,11 @@ const styles = StyleSheet.create({
     overflow: 'visible',
   },
   headerBand: {
-    borderBottomLeftRadius: wp(12),
-    paddingBottom: SEARCH_BANNER_GAP + NAVY_TUCK,
+    borderBottomLeftRadius: NAVY_ICE_CURVE,
+    borderBottomRightRadius: NAVY_ICE_CURVE,
+    paddingBottom: FLOAT_HEADER_PAD,
+    minHeight: HEADER_NAVY_MIN_HEIGHT,
+    overflow: 'visible',
   },
   headerContent: {
     paddingHorizontal: spacing.lg,
@@ -440,7 +447,7 @@ const styles = StyleSheet.create({
   },
   body: {
     paddingHorizontal: spacing.md,
-    marginTop: -NAVY_TUCK,
+    marginTop: -FLOAT_CARD_TUCK,
     overflow: 'visible',
   },
   sectionHead: {

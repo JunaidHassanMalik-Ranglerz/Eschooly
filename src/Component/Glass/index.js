@@ -7,6 +7,8 @@ export {
   FLOAT_CARD_GAP,
   FLOAT_CARD_TUCK,
   FLOAT_CARD_RADIUS,
+  FLOAT_HEADER_PAD,
+  HEADER_NAVY_MIN_HEIGHT,
 } from './EschoolyScreenShell';
 export {default as FeatureArtImage} from './FeatureArtImage';
 export {default as FeatureHeroBanner} from './FeatureHeroBanner';

@@ -306,6 +306,11 @@ const NotificationContent = () => {
                 title={Strings.notifications}
                 showBell={false}
                 rightAction={overflowMenu}
+                subtitle={
+                  isParent
+                    ? Strings.notificationsSubtitleParent
+                    : Strings.notificationsSubtitleStudent
+                }
               />
             </EschoolyScreenShell.Header>
             <EschoolyScreenShell.Body tuck={false} style={styles.studentBody}>
@@ -472,6 +477,7 @@ const styles = StyleSheet.create({
   },
   studentBand: {
     borderBottomLeftRadius: NAVY_ICE_CURVE,
+    borderBottomRightRadius: NAVY_ICE_CURVE,
     paddingBottom: FLOAT_CARD_GAP + FLOAT_CARD_TUCK,
     overflow: 'visible',
   },

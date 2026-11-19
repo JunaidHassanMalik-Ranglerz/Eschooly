@@ -12,10 +12,15 @@ export const NAVY_ICE_TUCK = hp(2.6);
 export const NAVY_ICE_SEARCH_GAP = hp(1.25);
 export const NAVY_ICE_CURVE = wp(12);
 
-/** Approved Home / Digital Library floating-card overlap. Opt-in; defaults unchanged. */
+/** Approved Parent Home floating-card overlap. */
 export const FLOAT_CARD_GAP = hp(1.9);
 export const FLOAT_CARD_TUCK = hp(2.2);
 export const FLOAT_CARD_RADIUS = wp(7);
+export const FLOAT_HEADER_PAD = FLOAT_CARD_GAP + FLOAT_CARD_TUCK;
+/** Parent Home navy-band floor. Home itself is still content-sized. */
+export const HEADER_NAVY_MIN_HEIGHT = hp(3.6) + hp(7.4) + FLOAT_HEADER_PAD;
+/** Inner navy-ice screens: Home visual depth without Home greeting copy. */
+export const HEADER_NAVY_INNER_MIN_HEIGHT = hp(4.2) + hp(9.5) + FLOAT_HEADER_PAD;
 
 /**
  * Opt-in navy-to-ice screen chrome.
@@ -131,8 +136,10 @@ const styles = StyleSheet.create({
   },
   curveBand: {
     borderBottomLeftRadius: NAVY_ICE_CURVE,
-    borderBottomRightRadius: 0,
-    paddingBottom: NAVY_ICE_SEARCH_GAP + NAVY_ICE_TUCK,
+    borderBottomRightRadius: NAVY_ICE_CURVE,
+    paddingBottom: FLOAT_HEADER_PAD,
+    minHeight: HEADER_NAVY_INNER_MIN_HEIGHT,
+    overflow: 'visible',
   },
   headerContent: {
     paddingHorizontal: spacing.lg,
@@ -142,7 +149,7 @@ const styles = StyleSheet.create({
     overflow: 'visible',
   },
   bodyTuck: {
-    marginTop: -NAVY_ICE_TUCK,
+    marginTop: -FLOAT_CARD_TUCK,
   },
   heroSlot: {
     overflow: 'visible',

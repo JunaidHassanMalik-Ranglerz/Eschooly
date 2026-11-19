@@ -107,7 +107,18 @@ const MainNavigation = () => {
           contentStyle: {backgroundColor: Colors.parentBg},
         }}
       >
-        <MAIN_STACK.Screen name="SplashScreen" component={SplashScreen} />
+        <MAIN_STACK.Screen
+          name="SplashScreen"
+          component={SplashScreen}
+          options={{
+            contentStyle: {backgroundColor: Colors.splashStart},
+            statusBarStyle: 'light',
+            statusBarBackgroundColor: Colors.splashStart,
+            statusBarTranslucent: true,
+            statusBarAnimation: 'none',
+            animation: 'none',
+          }}
+        />
         <MAIN_STACK.Screen
           name="Role"
           component={Role}

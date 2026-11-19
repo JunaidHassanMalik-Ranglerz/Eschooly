@@ -1,5 +1,13 @@
 import React from 'react';
-import {Image, StyleSheet, Text, TextInput, TouchableOpacity, View} from 'react-native';
+import {
+  Image,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {Colors} from '../Constants/Colors';
 import {Fonts} from '../Constants/Fonts';
@@ -7,13 +15,15 @@ import {Fontsize} from '../Constants/Fontsize';
 import {wp, hp} from '../Constants/Responsive';
 
 const CustomTextInput = props => {
+  const secure = !!props?.secureTextEntry;
+
   return (
     <View style={[styles.wrapper, props?.wrapperStyle]}>
       {props?.label ? (
         <Text style={[styles.label, props?.labelStyle]} numberOfLines={1}>{props?.label}</Text>
       ) : null}
 
-      <View style={[styles.inputBox, props?.inputBoxStyle]}>
+      <View style={[styles.inputBox, props?.inputBoxStyle]} collapsable={false}>
         {props?.vectorIcon ? (
           <View
             style={[
@@ -49,7 +59,12 @@ const CustomTextInput = props => {
         ) : null}
 
         <TextInput
-          style={[styles.input, props?.placeholderStyle, props?.inputStyle]}
+          style={[
+            styles.input,
+            props?.placeholderStyle,
+            props?.inputStyle,
+            secure && Platform.OS === 'android' ? styles.androidSecure : null,
+          ]}
           placeholder={props?.placeholder}
           placeholderTextColor={
             props?.placeholderStyle?.color ?? Colors.mutedText
@@ -57,10 +72,13 @@ const CustomTextInput = props => {
           value={props?.value}
           onChangeText={props?.onChangeText}
           keyboardType={props?.keyboardType}
-          secureTextEntry={!!props?.secureTextEntry}
+          secureTextEntry={secure}
           autoCapitalize={props?.autoCapitalize}
           onFocus={props?.onFocus}
           onBlur={props?.onBlur}
+          underlineColorAndroid="transparent"
+          textAlignVertical="center"
+          includeFontPadding={false}
         />
 
         {props?.rightIcon || props?.rightVectorIcon ? (
@@ -142,10 +160,16 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
+    minWidth: 0,
+    minHeight: 22,
     color: Colors.black,
     fontFamily: Fonts.regular,
     fontSize: Fontsize.xs3,
     padding: 0,
+    textAlignVertical: 'center',
+  },
+  androidSecure: {
+    fontFamily: 'sans-serif',
   },
   helper: {
     color: Colors.grayText,

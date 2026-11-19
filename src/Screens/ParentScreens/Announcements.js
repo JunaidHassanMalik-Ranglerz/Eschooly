@@ -308,7 +308,14 @@ const AnnouncementsScreen = () => {
             removeClippedSubviews={false}
             keyboardShouldPersistTaps="handled">
             <EschoolyScreenShell.Header style={styles.studentBand}>
-              <AnnouncementStudentHeader unreadCount={unreadNotifications} />
+              <AnnouncementStudentHeader
+                unreadCount={unreadNotifications}
+                subtitle={
+                  isParent
+                    ? Strings.announcementsSubtitleParent
+                    : Strings.announcementsSubtitleStudent
+                }
+              />
             </EschoolyScreenShell.Header>
             <EschoolyScreenShell.Body tuck={false} style={styles.studentBody}>
               <View style={styles.canvasStage}>

@@ -20,6 +20,7 @@ import AnimatedCard from '../../Component/AnimatedCard';
 import EschoolyScreenShell, {
   FLOAT_CARD_GAP,
   FLOAT_CARD_TUCK,
+  NAVY_ICE_CURVE,
 } from '../../Component/Glass/EschoolyScreenShell';
 import CardWave, {SCREEN_WAVES} from '../../Component/CardWave';
 import {useRoleData} from '../../hooks/useRoleData';
@@ -312,7 +313,14 @@ const DigitalLibrary = () => {
             keyboardShouldPersistTaps="handled"
             removeClippedSubviews={false}>
             <EschoolyScreenShell.Header style={styles.libraryBand}>
-              <LibraryStudentHeader unreadCount={unreadNotifications} />
+              <LibraryStudentHeader
+                unreadCount={unreadNotifications}
+                subtitle={
+                  isParent
+                    ? Strings.librarySubtitleParent
+                    : Strings.librarySubtitleStudent
+                }
+              />
             </EschoolyScreenShell.Header>
             <EschoolyScreenShell.Body tuck={false} style={styles.libraryBody}>
               <View style={styles.canvasStage}>
@@ -478,7 +486,8 @@ const styles = StyleSheet.create({
     zIndex: 0,
   },
   libraryBand: {
-    borderBottomLeftRadius: wp(12),
+    borderBottomLeftRadius: NAVY_ICE_CURVE,
+    borderBottomRightRadius: NAVY_ICE_CURVE,
     paddingBottom: FLOAT_CARD_GAP + FLOAT_CARD_TUCK,
     overflow: 'visible',
   },

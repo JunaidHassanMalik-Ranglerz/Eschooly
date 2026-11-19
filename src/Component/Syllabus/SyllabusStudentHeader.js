@@ -9,8 +9,9 @@ import {Typography} from '../../Constants/Typography';
 import {Fontsize} from '../../Constants/Fontsize';
 import {spacing} from '../../Constants/Theme';
 import {hp, wp} from '../../Constants/Responsive';
+import HeaderSubtitle from '../Student/HeaderSubtitle';
 
-const SyllabusStudentHeader = ({unreadCount}) => {
+const SyllabusStudentHeader = ({unreadCount, subtitle}) => {
   const navigation = useNavigation();
 
   return (
@@ -38,6 +39,7 @@ const SyllabusStudentHeader = ({unreadCount}) => {
           {Strings.syllabus}
         </Text>
       </View>
+      <HeaderSubtitle text={subtitle} />
     </>
   );
 };

@@ -19,13 +19,15 @@ import {hp, wp} from '../../Constants/Responsive';
 
 /** Width-based wave slot so curve amplitude stays stable across phone heights. */
 export const AUTH_WAVE_HEIGHT = wp(30);
+export const AUTH_WAVE_HEIGHT_DENSE = wp(16);
 /** Shared floating-card tuck into the lower wave (not a per-screen pixel offset). */
 export const AUTH_CARD_TUCK = wp(13);
+export const AUTH_CARD_TUCK_DENSE = wp(8);
 
-const AuthBrandWaves = () => (
+const AuthBrandWaves = ({height = AUTH_WAVE_HEIGHT}) => (
   <View
     pointerEvents="none"
-    style={styles.waveWrap}
+    style={[styles.waveWrap, {height}]}
     accessibilityElementsHidden
     importantForAccessibility="no-hide-descendants">
     <Svg
@@ -68,41 +70,64 @@ const AuthBrandWaves = () => (
 const AuthBrandHeader = ({
   insets = {top: 0},
   compact = false,
+  dense = false,
   showTagline = true,
   tagline = Strings.learnSmarter,
   children,
   style,
-}) => (
-  <LinearGradient
-    colors={[Colors.brandNavy, Colors.brandRoyal]}
-    start={{x: 0.14, y: 0}}
-    end={{x: 0.86, y: 1}}
-    style={[
-      styles.brand,
-      {paddingTop: insets.top + hp(compact ? 1.4 : 2.4)},
-      style,
-    ]}>
-    <View
+}) => {
+  const logoSize = dense ? wp(11) : wp(18);
+  const waveHeight = dense ? AUTH_WAVE_HEIGHT_DENSE : AUTH_WAVE_HEIGHT;
+
+  return (
+    <LinearGradient
+      colors={[Colors.brandNavy, Colors.brandRoyal]}
+      start={{x: 0.14, y: 0}}
+      end={{x: 0.86, y: 1}}
       style={[
-        styles.brandCopy,
-        {paddingBottom: hp(compact ? 1.8 : 2.2)},
+        styles.brand,
+        {
+          paddingTop: insets.top + hp(dense ? 0.6 : compact ? 1.4 : 2.4),
+        },
+        style,
       ]}>
-      <View style={styles.logoBox}>
-        <Icon name="school" size={wp(9)} color={Colors.brandRoyal} />
-      </View>
-      <Text style={styles.wordmark} numberOfLines={1}>
-        {Strings.eschoolyWordmark}
-      </Text>
-      {showTagline ? (
-        <Text style={styles.tagline} numberOfLines={1}>
-          {tagline}
+      <View
+        style={[
+          styles.brandCopy,
+          {paddingBottom: hp(dense ? 0.6 : compact ? 1.8 : 2.2)},
+        ]}>
+        <View
+          style={[
+            styles.logoBox,
+            dense && {
+              width: logoSize,
+              height: logoSize,
+              borderRadius: wp(3),
+              marginBottom: hp(0.6),
+            },
+          ]}>
+          <Icon
+            name="school"
+            size={dense ? wp(6) : wp(9)}
+            color={Colors.brandRoyal}
+          />
+        </View>
+        <Text
+          style={[styles.wordmark, dense && styles.wordmarkDense]}
+          numberOfLines={1}>
+          {Strings.eschoolyWordmark}
         </Text>
-      ) : null}
-      {children}
-    </View>
-    <AuthBrandWaves />
-  </LinearGradient>
-);
+        {showTagline && !dense ? (
+          <Text style={styles.tagline} numberOfLines={1}>
+            {tagline}
+          </Text>
+        ) : null}
+        {children}
+      </View>
+      <AuthBrandWaves height={waveHeight} />
+    </LinearGradient>
+  );
+};
 
 export default AuthBrandHeader;
 
@@ -130,6 +155,10 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontSize: Fontsize.ml,
     letterSpacing: 1.6,
+  },
+  wordmarkDense: {
+    fontSize: Fontsize.sm,
+    letterSpacing: 1.2,
   },
   tagline: {
     marginTop: hp(0.7),

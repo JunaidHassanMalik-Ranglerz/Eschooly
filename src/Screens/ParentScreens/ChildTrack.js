@@ -137,6 +137,7 @@ const ChildTrack = () => {
   return (
     <ParentNavyIceLayout
       title={Strings.trackChild}
+      subtitle={Strings.childTrackSubtitleParent}
       unreadCount={1}
       footer={
         canSwitchChild ? (

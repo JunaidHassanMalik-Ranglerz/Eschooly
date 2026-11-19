@@ -18,6 +18,7 @@ const ParentNavyIceLayout = ({
   footer,
   showBell = true,
   onBackPress,
+  subtitle,
   contentContainerStyle,
 }) => {
   const bottomPad = useStackBottomPad();
@@ -43,6 +44,7 @@ const ParentNavyIceLayout = ({
               unreadCount={unreadCount}
               showBell={showBell}
               onBackPress={onBackPress}
+              subtitle={subtitle}
             />
           </EschoolyScreenShell.Header>
           <EschoolyScreenShell.Body>

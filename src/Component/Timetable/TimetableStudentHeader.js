@@ -9,8 +9,9 @@ import {Typography} from '../../Constants/Typography';
 import {Fontsize} from '../../Constants/Fontsize';
 import {spacing} from '../../Constants/Theme';
 import {hp, wp} from '../../Constants/Responsive';
+import HeaderSubtitle from '../Student/HeaderSubtitle';
 
-const TimetableStudentHeader = ({unreadCount}) => {
+const TimetableStudentHeader = ({unreadCount, subtitle}) => {
   const navigation = useNavigation();
 
   return (
@@ -38,6 +39,7 @@ const TimetableStudentHeader = ({unreadCount}) => {
           {Strings.timetable}
         </Text>
       </View>
+      <HeaderSubtitle text={subtitle} />
     </>
   );
 };

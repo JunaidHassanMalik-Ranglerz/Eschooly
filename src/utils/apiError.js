@@ -17,6 +17,27 @@ const firstValidationError = errors => {
   return null;
 };
 
+export const isNetworkFailure = error => {
+  if (!error) {
+    return false;
+  }
+
+  if (error.network === true) {
+    return true;
+  }
+
+  if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
+    return true;
+  }
+
+  if (error.response) {
+    return false;
+  }
+
+  const message = typeof error.message === 'string' ? error.message : '';
+  return /network|internet|connection/i.test(message);
+};
+
 export const getApiErrorMessage = error => {
   const data = error?.response?.data;
   const validationMessage = firstValidationError(data?.errors);

@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
+import React, {useCallback, useEffect, useLayoutEffect, useRef, useState} from 'react';
 import {
   ActivityIndicator,
   AppState,
@@ -20,17 +20,22 @@ import ParentStatCard from '../../Component/Parent/ParentStatCard';
 import ScheduleItem from '../../Component/Parent/ScheduleItem';
 import NavyHeaderBand from '../../Component/Glass/NavyHeaderBand';
 import SectionHeader from '../../Component/Glass/SectionHeader';
+import GlassButton from '../../Component/Glass/GlassButton';
 import {EducationIcons, getFeatureArt} from '../../Assets/EducationIcons';
 import {Colors} from '../../Constants/Colors';
 import {Typography} from '../../Constants/Typography';
+import {Fonts} from '../../Constants/Fonts';
+import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
-import {spacing} from '../../Constants/Theme';
+import {elevation, spacing} from '../../Constants/Theme';
 import {wp, hp} from '../../Constants/Responsive';
 import {useGreeting} from '../../utils/getGreeting';
+import {isNetworkFailure} from '../../utils/apiError';
 import {SCREEN_WAVES} from '../../Component/CardWave';
 import {
-  FLOAT_CARD_GAP,
   FLOAT_CARD_TUCK,
+  FLOAT_HEADER_PAD,
+  HEADER_NAVY_MIN_HEIGHT,
   NAVY_ICE_CURVE,
 } from '../../Component/Glass/EschoolyScreenShell';
 import {
@@ -64,26 +69,82 @@ const paintNavyStatusBar = navigation => {
   setBlueStatusBar();
 };
 
+const parentDisplayName = (parent, authUser, authProfile) =>
+  parent?.name ||
+  parent?.full_name ||
+  authUser?.name ||
+  authUser?.full_name ||
+  authProfile?.name ||
+  authProfile?.full_name ||
+  '';
+
 const ParentHome = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const greeting = useGreeting();
-  const {parent, children, selectedChildId, dashboard, dashboardLoading} =
-    useSelector(state => state.parentHome);
-  const [homeLoading, setHomeLoading] = useState(true);
+  const {
+    parent,
+    children,
+    selectedChildId,
+    dashboard,
+    dashboardLoading,
+    homeLoading: sliceHomeLoading,
+    error,
+    errorKind,
+  } = useSelector(state => state.parentHome);
+  const authUser = useSelector(state => state.auth.user);
+  const authProfile = useSelector(state => state.auth.profile);
+  const hasCachedHome = Boolean(parent || (children && children.length));
+  const hasCachedHomeRef = useRef(hasCachedHome);
+  hasCachedHomeRef.current = hasCachedHome;
+  const [homeLoading, setHomeLoading] = useState(!hasCachedHome);
   const [switchVisible, setSwitchVisible] = useState(false);
   const [modalReplay, setModalReplay] = useState(0);
+  const retryLock = useRef(false);
   const activeStudent =
     children.find(item => item.value === selectedChildId) || children[0] || null;
   const canSwitchChild = children.length > 1;
   const schedule = dashboard?.schedule || [];
   const todayLesson = schedule[0];
-  const parentName = parent?.name || parent?.full_name || '';
+  const parentName = parentDisplayName(parent, authUser, authProfile);
+  const isOffline = errorKind === 'network' || isNetworkFailure({message: error});
+  const showCachedOffline = isOffline && hasCachedHome;
+  const showEmptyOffline = isOffline && !hasCachedHome;
+  const blockingLoader = homeLoading && !hasCachedHome && !isOffline;
 
   const openChildSwitch = useCallback(() => {
     setSwitchVisible(true);
     setModalReplay(value => value + 1);
   }, []);
+
+  const loadHome = useCallback(
+    ({silent} = {}) => {
+      if (retryLock.current) {
+        return Promise.resolve();
+      }
+
+      retryLock.current = true;
+      if (!hasCachedHomeRef.current) {
+        setHomeLoading(true);
+      }
+
+      return dispatch(fetchParentHome())
+        .unwrap()
+        .catch(nextError => {
+          if (!silent && !nextError?.network) {
+            showToast({
+              type: 'error',
+              text1: nextError?.message || 'Unable to load home.',
+            });
+          }
+        })
+        .finally(() => {
+          retryLock.current = false;
+          setHomeLoading(false);
+        });
+    },
+    [dispatch],
+  );
 
   const handleSelectChild = useCallback(
     nextId => {
@@ -92,13 +153,13 @@ const ParentHome = () => {
       }
       dispatch(fetchChildDashboard(nextId))
         .unwrap()
-        .catch(error => {
-          if (error?.stale) {
+        .catch(nextError => {
+          if (nextError?.stale || nextError?.network) {
             return;
           }
           showToast({
             type: 'error',
-            text1: error?.message || 'Unable to load dashboard.',
+            text1: nextError?.message || 'Unable to load dashboard.',
           });
         });
     },
@@ -106,30 +167,8 @@ const ParentHome = () => {
   );
 
   useEffect(() => {
-    let active = true;
-    setHomeLoading(true);
-
-    dispatch(fetchParentHome())
-      .unwrap()
-      .catch(error => {
-        if (!active) {
-          return;
-        }
-        showToast({
-          type: 'error',
-          text1: error?.message || 'Unable to load home.',
-        });
-      })
-      .finally(() => {
-        if (active) {
-          setHomeLoading(false);
-        }
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [dispatch]);
+    loadHome({silent: true});
+  }, [loadHome]);
 
   useLayoutEffect(() => {
     paintNavyStatusBar(navigation);
@@ -144,13 +183,16 @@ const ParentHome = () => {
         if (next === 'active') {
           paint();
           setTimeout(paint, 80);
+          if (errorKind === 'network') {
+            loadHome({silent: true});
+          }
         }
       });
       return () => {
         clearTimeout(later);
         sub.remove();
       };
-    }, [navigation]),
+    }, [errorKind, loadHome, navigation]),
   );
 
   return (
@@ -194,9 +236,11 @@ const ParentHome = () => {
                 <Text style={styles.greeting} numberOfLines={1}>
                   {greeting}
                 </Text>
-                <Text style={styles.parentName} numberOfLines={1}>
-                  {parentName}
-                </Text>
+                {parentName ? (
+                  <Text style={styles.parentName} numberOfLines={1}>
+                    {parentName}
+                  </Text>
+                ) : null}
                 <Text style={styles.subtitle} numberOfLines={1}>
                   {Strings.whatsHappening}
                 </Text>
@@ -205,14 +249,44 @@ const ParentHome = () => {
           </AnimatedCard>
 
           <View style={styles.body}>
-            {homeLoading ? (
+            {showCachedOffline || showEmptyOffline ? (
+              <View style={styles.offlineBanner}>
+                <View style={styles.offlineRow}>
+                  <Icon
+                    name="cloud-offline-outline"
+                    size={wp(5.2)}
+                    color={Colors.brandRoyal}
+                  />
+                  <View style={styles.offlineCopy}>
+                    <Text style={styles.offlineTitle} numberOfLines={2}>
+                      {showEmptyOffline
+                        ? Strings.offlineBannerEmpty
+                        : Strings.offlineBannerCached}
+                    </Text>
+                    {showEmptyOffline ? (
+                      <Text style={styles.offlineHint} numberOfLines={2}>
+                        {Strings.offlineBannerEmptyHint}
+                      </Text>
+                    ) : null}
+                  </View>
+                </View>
+                <GlassButton
+                  title={Strings.retryAction}
+                  onPress={() => loadHome({silent: false})}
+                  compact
+                  loading={homeLoading || sliceHomeLoading}
+                  style={styles.offlineRetry}
+                />
+              </View>
+            ) : null}
+
+            {blockingLoader ? (
               <ActivityIndicator
                 style={styles.loader}
                 size="large"
                 color={Colors.brandNavy}
               />
-            ) : null}
-            {!homeLoading && activeStudent ? (
+            ) : activeStudent ? (
               <AnimatedCard
                 index={1}
                 entering={ACADEMICS_PROFILE_ENTERING}
@@ -227,60 +301,67 @@ const ParentHome = () => {
                   onSwitchPress={canSwitchChild ? openChildSwitch : undefined}
                 />
               </AnimatedCard>
-            ) : null}
-            {!homeLoading && !activeStudent ? (
-              <Text style={styles.emptyChildren}>No linked children</Text>
-            ) : null}
-
-            {!homeLoading && activeStudent ? (
-              <View style={styles.statsGrid}>
-                {dashboardLoading ? (
-                  <ActivityIndicator
-                    style={styles.dashboardLoader}
-                    size="small"
-                    color={Colors.brandNavy}
-                  />
-                ) : null}
-                <ParentStatCard
-                  art={getFeatureArt('attendance')}
-                  label={Strings.attendance}
-                  value={dashboard?.attendance || '—'}
-                  hint={Strings.thisMonthShort}
-                  entering={getAcademicsMenuEntering(null, 2)}
-                  animationIndex={2}
-                  onPress={() => navigation.navigate('ParentAttendance')}
+            ) : (
+              <View style={styles.unavailableCard}>
+                <Icon
+                  name="people-outline"
+                  size={wp(6)}
+                  color={Colors.brandRoyal}
                 />
-                <ParentStatCard
-                  art={getFeatureArt('library')}
-                  label={Strings.digitalLibrary}
-                  value={dashboard?.libraryCount || '—'}
-                  hint={Strings.libraryBooksHint}
-                  entering={getAcademicsMenuEntering(null, 3)}
-                  animationIndex={3}
-                  onPress={() => navigation.navigate('DigitalLibrary')}
-                />
-                <ParentStatCard
-                  art={getFeatureArt('exams')}
-                  label={Strings.exams}
-                  value={dashboard?.exams || '—'}
-                  hint={Strings.upcoming}
-                  entering={getAcademicsMenuEntering(null, 4)}
-                  animationIndex={4}
-                  // onPress={() => navigation.navigate('ExamSchedule')}
-                />
-                <ParentStatCard
-                  art={getFeatureArt('announcements')}
-                  label={Strings.announcements}
-                  value={dashboard?.announcements || '—'}
-                  hint={Strings.newLabel}
-                  entering={getAcademicsMenuEntering(null, 5)}
-                  animationIndex={5}
-                  onPress={() => navigation.navigate('Announcements')}
-                />
+                <Text style={styles.unavailableTitle} numberOfLines={2}>
+                  {isOffline
+                    ? Strings.offlineChildUnavailable
+                    : 'No linked children'}
+                </Text>
               </View>
-            ) : null}
+            )}
 
-            {!homeLoading ? (
+            <View style={styles.statsGrid}>
+              {dashboardLoading ? (
+                <ActivityIndicator
+                  style={styles.dashboardLoader}
+                  size="small"
+                  color={Colors.brandNavy}
+                />
+              ) : null}
+              <ParentStatCard
+                art={getFeatureArt('attendance')}
+                label={Strings.attendance}
+                value={dashboard?.attendance}
+                hint={Strings.thisMonthShort}
+                entering={getAcademicsMenuEntering(null, 2)}
+                animationIndex={2}
+                onPress={() => navigation.navigate('ParentAttendance')}
+              />
+              <ParentStatCard
+                art={getFeatureArt('library')}
+                label={Strings.digitalLibrary}
+                value={dashboard?.libraryCount}
+                hint={Strings.libraryBooksHint}
+                entering={getAcademicsMenuEntering(null, 3)}
+                animationIndex={3}
+                onPress={() => navigation.navigate('DigitalLibrary')}
+              />
+              <ParentStatCard
+                art={getFeatureArt('exams')}
+                label={Strings.exams}
+                value={dashboard?.exams}
+                hint={Strings.upcoming}
+                entering={getAcademicsMenuEntering(null, 4)}
+                animationIndex={4}
+              />
+              <ParentStatCard
+                art={getFeatureArt('announcements')}
+                label={Strings.announcements}
+                value={dashboard?.announcements}
+                hint={Strings.newLabel}
+                entering={getAcademicsMenuEntering(null, 5)}
+                animationIndex={5}
+                onPress={() => navigation.navigate('Announcements')}
+              />
+            </View>
+
+            {!blockingLoader ? (
               <>
                 <AnimatedCard
                   index={6}
@@ -390,7 +471,10 @@ const styles = StyleSheet.create({
   },
   headerBand: {
     borderBottomLeftRadius: NAVY_ICE_CURVE,
-    paddingBottom: FLOAT_CARD_GAP + FLOAT_CARD_TUCK,
+    borderBottomRightRadius: NAVY_ICE_CURVE,
+    paddingBottom: FLOAT_HEADER_PAD,
+    minHeight: HEADER_NAVY_MIN_HEIGHT,
+    overflow: 'visible',
   },
   headerContent: {
     paddingHorizontal: spacing.lg,
@@ -472,5 +556,62 @@ const styles = StyleSheet.create({
     fontSize: Typography.body.fontSize,
     marginTop: hp(1),
     marginBottom: hp(1),
+  },
+  offlineBanner: {
+    backgroundColor: Colors.bannerIceStart,
+    borderRadius: wp(5),
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: Colors.borderGlass,
+    paddingHorizontal: spacing.md,
+    paddingVertical: hp(1.4),
+    marginBottom: hp(1.4),
+    ...elevation.card,
+  },
+  offlineRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: wp(2.2),
+  },
+  offlineCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  offlineTitle: {
+    color: Colors.textPrimary,
+    fontFamily: Fonts.semibold,
+    fontSize: Fontsize.xs1,
+    lineHeight: Fontsize.xs1 * 1.4,
+  },
+  offlineHint: {
+    color: Colors.textSecondary,
+    fontFamily: Fonts.regular,
+    fontSize: Fontsize.xs1,
+    lineHeight: Fontsize.xs1 * 1.35,
+    marginTop: hp(0.3),
+  },
+  offlineRetry: {
+    marginTop: hp(0.8),
+    minWidth: wp(36),
+    alignSelf: 'flex-start',
+  },
+  unavailableCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.bannerIceStart,
+    borderRadius: wp(5),
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: Colors.borderGlass,
+    paddingHorizontal: spacing.md,
+    paddingVertical: hp(1.6),
+    marginBottom: hp(0.4),
+    gap: wp(2.5),
+    ...elevation.card,
+  },
+  unavailableTitle: {
+    flex: 1,
+    color: Colors.textPrimary,
+    fontFamily: Fonts.medium,
+    fontSize: Fontsize.xs1,
+    lineHeight: Fontsize.xs1 * 1.4,
   },
 });
