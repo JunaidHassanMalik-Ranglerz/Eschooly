@@ -16,7 +16,10 @@ import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
 import {elevation} from '../../Constants/Theme';
-import {FLOAT_CARD_RADIUS} from '../../Component/Glass/EschoolyScreenShell';
+import {
+  FLOAT_CARD_GAP,
+  FLOAT_CARD_RADIUS,
+} from '../../Component/Glass/EschoolyScreenShell';
 import {wp, hp} from '../../Constants/Responsive';
 import {useRoleData} from '../../hooks/useRoleData';
 import {withScreenEnter} from '../../hooks/useScreenEnterGate';
@@ -70,7 +73,7 @@ const ChildTrack = () => {
   const [switchVisible, setSwitchVisible] = useState(false);
   const [modalReplay, setModalReplay] = useState(0);
   const {width, height} = useWindowDimensions();
-  const mapHeight = Math.min(width * 0.62, height * 0.34);
+  const mapHeight = Math.min(width - wp(8), height * 0.46);
   const activeChildId = homeChildId || children[0]?.value || null;
   const parentChild =
     children.find(item => item.value === String(activeChildId)) || children[0] || null;
@@ -165,13 +168,15 @@ const ChildTrack = () => {
         <AnimatedCard
           index={2}
           entering={getHomeScreenEnter(2)}
-          style={[styles.mapShell, {height: mapHeight}]}>
+          style={styles.mapShell}>
           <View style={styles.mapClip}>
-            <Image
-              source={Images.transportMap}
-              style={styles.mapImage}
-              resizeMode="cover"
-            />
+            <View style={[styles.mapMedia, {height: mapHeight}]}>
+              <Image
+                source={Images.transportMap}
+                style={styles.mapImage}
+                resizeMode="contain"
+              />
+            </View>
             <View style={styles.mapStatus}>
               <FeatureArtImage
                 source={EducationIcons.transport}
@@ -218,36 +223,34 @@ const styles = StyleSheet.create({
     width: '100%',
     borderRadius: FLOAT_CARD_RADIUS,
     backgroundColor: Colors.bannerIceStart,
+    marginTop: FLOAT_CARD_GAP,
     marginBottom: hp(1.6),
     overflow: 'visible',
     ...elevation.banner,
   },
   mapClip: {
-    flex: 1,
     borderRadius: FLOAT_CARD_RADIUS,
     overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth * 2,
     borderColor: Colors.borderGlass,
+    backgroundColor: Colors.bannerIceStart,
+  },
+  mapMedia: {
+    width: '100%',
+    backgroundColor: Colors.bannerIceStart,
   },
   mapImage: {
-    ...StyleSheet.absoluteFillObject,
     width: '100%',
     height: '100%',
   },
   mapStatus: {
-    position: 'absolute',
-    left: wp(3),
-    right: wp(3),
-    bottom: hp(1.2),
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: wp(3.5),
+    paddingVertical: hp(1.15),
+    borderTopWidth: StyleSheet.hairlineWidth * 2,
+    borderTopColor: 'rgba(19, 69, 163, 0.12)',
     backgroundColor: Colors.bannerIceStart,
-    borderRadius: wp(5),
-    borderWidth: StyleSheet.hairlineWidth * 2,
-    borderColor: Colors.borderGlass,
-    paddingHorizontal: wp(2.5),
-    paddingVertical: hp(0.85),
-    ...elevation.card,
   },
   statusText: {
     flex: 1,
