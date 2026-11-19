@@ -1,7 +1,11 @@
 import {Platform} from 'react-native';
 import ReactNativeBlobUtil from 'react-native-blob-util';
-import axiosInstance, {API_BASE_URL, getAuthToken} from '../api/axiosInstance';
+import axiosInstance, {getAuthToken} from '../api/axiosInstance';
 import {storage, storageKeys} from '../utils/storage';
+import {classifyFetchedDocument, jsonDocumentMessage} from '../utils/documentResponse';
+import {childResultCardPrintUrl} from './parentResultCardUrl';
+
+export {childResultCardPrintUrl} from './parentResultCardUrl';
 
 const asObject = value =>
   value && typeof value === 'object' && !Array.isArray(value) ? value : null;
@@ -291,7 +295,7 @@ const authHeaders = async () => {
     }
   }
   return {
-    Accept: 'application/pdf, application/json',
+    Accept: 'application/pdf, text/html, application/json',
     ...(token ? {Authorization: `Bearer ${token}`} : {}),
   };
 };
@@ -310,7 +314,7 @@ const responseMessage = async response => {
 
 const fileUri = path => (path.startsWith('file://') ? path : `file://${path}`);
 
-const saveResultPdf = async (sourcePath, fileName) => {
+const saveResultDocument = async (sourcePath, fileName, mimeType) => {
   if (Platform.OS !== 'android') {
     return fileUri(sourcePath);
   }
@@ -320,7 +324,7 @@ const saveResultPdf = async (sourcePath, fileName) => {
       {
         name: fileName,
         parentFolder: '',
-        mimeType: 'application/pdf',
+        mimeType,
       },
       'Download',
       sourcePath,
@@ -334,9 +338,9 @@ const saveResultPdf = async (sourcePath, fileName) => {
 
 export const downloadChildResultCard = async childId => {
   const headers = await authHeaders();
-  const url = `${API_BASE_URL}/parent/children/${childId}/results/card/print`;
-  const fileName = `result-card-${childId}.pdf`;
-  const path = `${ReactNativeBlobUtil.fs.dirs.CacheDir}/${fileName}`;
+  const url = childResultCardPrintUrl(childId);
+  const cacheName = `result-card-${childId}`;
+  const path = `${ReactNativeBlobUtil.fs.dirs.CacheDir}/${cacheName}`;
 
   const response = await ReactNativeBlobUtil.config({
     fileCache: true,
@@ -344,13 +348,22 @@ export const downloadChildResultCard = async childId => {
   }).fetch('GET', url, headers);
   const info = response.info();
   const type = String(info.headers?.['Content-Type'] || info.headers?.['content-type'] || '');
+  const preview = await ReactNativeBlobUtil.fs.readFile(response.path(), 'utf8');
+  const classified = classifyFetchedDocument({
+    contentType: type,
+    bodyPreview: preview,
+  });
 
   if (info.status >= 400) {
-    throw new Error((await responseMessage(response)) || 'Unable to download result card.');
+    throw new Error(
+      classified.kind === 'json'
+        ? jsonDocumentMessage(preview) || 'Unable to download result card.'
+        : (await responseMessage(response)) || 'Unable to download result card.',
+    );
   }
 
-  if (type.includes('json')) {
-    const body = await response.json();
+  if (classified.kind === 'json') {
+    const body = JSON.parse(preview);
     if (body?.success === false) {
       throw new Error(body.message || 'Unable to download result card.');
     }
@@ -365,10 +378,20 @@ export const downloadChildResultCard = async childId => {
     if (saved.info().status >= 400) {
       throw new Error('Unable to download result card.');
     }
-    return saveResultPdf(saved.path(), fileName);
+    return saveResultDocument(saved.path(), `${cacheName}.pdf`, 'application/pdf');
   }
 
-  return saveResultPdf(response.path(), fileName);
+  if (classified.kind === 'html') {
+    const htmlPath = `${path}.html`;
+    await ReactNativeBlobUtil.fs.writeFile(htmlPath, preview, 'utf8');
+    return saveResultDocument(htmlPath, `${cacheName}.html`, 'text/html');
+  }
+
+  if (classified.kind !== 'pdf') {
+    throw new Error('Unable to download result card.');
+  }
+
+  return saveResultDocument(response.path(), `${cacheName}.pdf`, 'application/pdf');
 };
 
 const responseData = body => {

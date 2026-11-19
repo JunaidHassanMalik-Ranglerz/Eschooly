@@ -6,6 +6,7 @@ module.exports = {
   testMatch: [
     '**/__tests__/parentFees.mapping.test.js',
     '**/__tests__/homeEnterSession.test.js',
+    '**/__tests__/parentResultCard.test.js',
   ],
   transformIgnorePatterns: ['/node_modules/'],
 };

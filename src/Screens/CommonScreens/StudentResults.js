@@ -39,7 +39,7 @@ import {useDispatch, useSelector} from 'react-redux';
 import {showToast} from '../../utils/toast';
 import {fetchChildResultCard, fetchParentHome} from '../../store/slices/parentHomeSlice';
 import {fetchStudentResults} from '../../store/slices/studentHomeSlice';
-import {downloadChildResultCard} from '../../services/parentService';
+import {childResultCardPrintUrl} from '../../services/parentService';
 
 const EMPTY_CARD = {overall: '—', hint: '', subjects: [], pdfUrl: ''};
 
@@ -152,6 +152,7 @@ const StudentResults = () => {
 
     let active = true;
     setLoading(true);
+    setDownloaded(false);
 
     dispatch(fetchChildResultCard(activeChildId))
       .unwrap()
@@ -236,18 +237,16 @@ const StudentResults = () => {
       return;
     }
 
+    if (isParent) {
+      navigation.navigate('PdfViewer', {
+        pdfUrl: childResultCardPrintUrl(activeChildId),
+        title: Strings.resultCard,
+      });
+      return;
+    }
+
     setDownloading(true);
     try {
-      if (isParent) {
-        const pdfUrl = await downloadChildResultCard(activeChildId);
-        setDownloaded(true);
-        navigation.navigate('PdfViewer', {
-          pdfUrl,
-          title: Strings.resultCard,
-        });
-        return;
-      }
-
       if (!result.pdfUrl) {
         showToast({
           type: 'error',

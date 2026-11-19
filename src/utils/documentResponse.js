@@ -11,17 +11,15 @@ export const classifyFetchedDocument = ({contentType, bodyPreview} = {}) => {
   }
   if (
     type.includes('html') ||
-    head.startsWith('<!doctype html') ||
+    head.startsWith('<!doctype') ||
     head.startsWith('<html') ||
+    head.startsWith('<') ||
     /<title[\s>]/.test(head)
   ) {
     return {kind: 'html'};
   }
   if (type.includes('application/pdf') || type.includes('pdf')) {
     return {kind: 'pdf'};
-  }
-  if (head.startsWith('<')) {
-    return {kind: 'html'};
   }
   return {kind: 'unknown'};
 };

@@ -39,6 +39,14 @@ const withViewport = html => {
     : `${extra}${html}`;
 };
 
+const localFilePath = uri => {
+  const value = String(uri || '');
+  if (!value) {
+    return '';
+  }
+  return value.startsWith('file://') ? value.replace(/^file:\/\//, '') : value;
+};
+
 const readToken = async () => {
   let token = getAuthToken();
   if (!token) {
@@ -65,18 +73,55 @@ const PdfViewer = () => {
     let cancelled = false;
 
     const prepareSource = async () => {
+      setHtml('');
+      setSource(null);
+      setPdfPath('');
+      setErrorMessage('');
+      setLoading(true);
+
       if (!pdfUrl) {
         setErrorMessage('Unable to open this file.');
         setLoading(false);
         return;
       }
 
-      if (!/^https?:\/\//i.test(pdfUrl)) {
-        setSource({uri: pdfUrl, cache: false});
-        return;
-      }
+      const openClassified = ({kind, body, path, status = 200}) => {
+        if (status >= 400) {
+          throw new Error(
+            kind === 'json'
+              ? jsonDocumentMessage(body) || 'Unable to open this file.'
+              : 'Unable to open this file.',
+          );
+        }
+        if (kind === 'pdf') {
+          setPdfPath(path);
+          setSource({uri: `file://${path}`, cache: false});
+          return;
+        }
+        if (kind === 'json') {
+          throw new Error(jsonDocumentMessage(body) || 'Unable to open this file.');
+        }
+        if (kind !== 'html') {
+          throw new Error('Unable to open this file.');
+        }
+        setHtml(withViewport(body));
+      };
 
       try {
+        if (!/^https?:\/\//i.test(pdfUrl)) {
+          const path = localFilePath(pdfUrl);
+          const body = await ReactNativeBlobUtil.fs.readFile(path, 'utf8');
+          if (cancelled) {
+            return;
+          }
+          openClassified({
+            kind: classifyFetchedDocument({bodyPreview: body}).kind,
+            body,
+            path,
+          });
+          return;
+        }
+
         const token = await readToken();
         const response = await ReactNativeBlobUtil.config({
           fileCache: true,
@@ -91,35 +136,18 @@ const PdfViewer = () => {
         ).toLowerCase();
 
         const body = await ReactNativeBlobUtil.fs.readFile(cachedPath, 'utf8');
-        const classified = classifyFetchedDocument({
-          contentType: type,
-          bodyPreview: body,
-        });
-
         if (cancelled) {
           return;
         }
-
-        if (info.status >= 400) {
-          throw new Error(
-            classified.kind === 'json'
-              ? jsonDocumentMessage(body) || 'Unable to open this file.'
-              : 'Unable to open this file.',
-          );
-        }
-
-        if (classified.kind === 'pdf') {
-          setPdfPath(cachedPath);
-          setSource({uri: `file://${cachedPath}`, cache: false});
-          return;
-        }
-        if (classified.kind === 'json') {
-          throw new Error(jsonDocumentMessage(body) || 'Unable to open this file.');
-        }
-        if (classified.kind !== 'html') {
-          throw new Error('Unable to open this file.');
-        }
-        setHtml(withViewport(body));
+        openClassified({
+          kind: classifyFetchedDocument({
+            contentType: type,
+            bodyPreview: body,
+          }).kind,
+          body,
+          path: cachedPath,
+          status: info.status,
+        });
       } catch (error) {
         if (!cancelled) {
           setErrorMessage(error?.message || 'Unable to open this file.');
