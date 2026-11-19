@@ -151,15 +151,23 @@ const SelectedChildBanner = ({
         compactMargin && styles.compactMargin,
       ];
 
+  const iceEdge = icy ? (
+    <View pointerEvents="none" style={styles.iceEdge} />
+  ) : null;
+
   const shell = switchable ? (
     <TouchableOpacity
       onPress={onSwitchPress}
       activeOpacity={0.92}
       style={wrapStyle}>
       {bannerContent}
+      {iceEdge}
     </TouchableOpacity>
   ) : (
-    <View style={wrapStyle}>{bannerContent}</View>
+    <View style={wrapStyle}>
+      {bannerContent}
+      {iceEdge}
+    </View>
   );
 
   if (disableEnterAnimation) {
@@ -198,11 +206,17 @@ const styles = StyleSheet.create({
     borderRadius: FLOAT_CARD_RADIUS,
     overflow: 'hidden',
   },
+  iceEdge: {
+    ...StyleSheet.absoluteFill,
+    borderRadius: FLOAT_CARD_RADIUS,
+    borderWidth: 1.4,
+    borderColor: Colors.borderIcy,
+  },
   iceFill: {
     justifyContent: 'center',
     borderRadius: FLOAT_CARD_RADIUS,
     borderWidth: StyleSheet.hairlineWidth * 2,
-    borderColor: Colors.borderGlass,
+    borderColor: 'transparent',
     paddingHorizontal: wp(3.6),
     paddingVertical: hp(1.4),
     minHeight: hp(11.2),

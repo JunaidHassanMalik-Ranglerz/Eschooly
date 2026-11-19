@@ -412,11 +412,6 @@ const MyProfile = ({isTab = false}) => {
                                     {item.value}
                                   </Text>
                                 </View>
-                                <Icon
-                                  name="chevron-forward"
-                                  size={wp(5)}
-                                  color={Colors.brandRoyal}
-                                />
                               </View>
                             ))}
                           </View>

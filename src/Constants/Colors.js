@@ -89,6 +89,7 @@ export const Colors = {
   textOnNavyMuted: 'rgba(255,255,255,0.85)',
   textSecondary: '#6B7C93',
   borderSubtle: '#E3EAF4',
+  borderIcy: '#B8D5F5',
   borderGlass: 'rgba(255,255,255,0.45)',
   borderSelected: '#5B9CFF',
   searchOnNavy: 'rgba(255,255,255,0.12)',

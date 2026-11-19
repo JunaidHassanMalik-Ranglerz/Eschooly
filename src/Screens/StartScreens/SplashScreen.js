@@ -25,8 +25,6 @@ import {applySavedSession, restoreParentSession} from '../../store/restoreSessio
 
 const BOOK_ASPECT = 1312 / 1199;
 const WAVE_RATIO = 0.22;
-const BRAND_FLEX = 1.15;
-const ART_FLEX = 0.85;
 
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
@@ -125,26 +123,54 @@ const SplashScreen = () => {
   const bottomInset = insets.bottom || 0;
   const available = Math.max(height - topInset - bottomInset, 1);
   const shortScreen = available < 640;
+  const compact = available < 560;
   const waveHeight = Math.round(height * WAVE_RATIO);
-  const brandRegionHeight = available * (BRAND_FLEX / (BRAND_FLEX + ART_FLEX));
-  const artRegionHeight = available - brandRegionHeight;
-  const brandTopPad = clamp(
-    shortScreen ? brandRegionHeight * 0.08 : brandRegionHeight * 0.12,
-    16,
-    shortScreen ? 32 : 52,
+  const waveClearance = clamp(
+    waveHeight * (shortScreen ? 0.4 : 0.48),
+    52,
+    waveHeight * 0.58,
   );
+  const usable = Math.max(available - waveClearance, 1);
 
-  const logoSize = clamp(Math.min(width * 0.22, brandRegionHeight * 0.3), 70, 104);
-  const capSize = logoSize * 0.58;
-  const wordmarkSize = clamp(width * 0.07, 22, 30);
-  const taglineSize = clamp(width * 0.04, 14, 17);
-  const swooshWidth = clamp(width * 0.18, 60, 88);
-  const artWidth = clamp(
-    Math.min(width * 0.46, artRegionHeight * 0.82 * BOOK_ASPECT),
-    120,
-    shortScreen ? 168 : 200,
+  const logoSize = clamp(
+    Math.min(width * 0.21, usable * 0.155),
+    compact ? 64 : 72,
+    shortScreen ? 88 : 96,
   );
-  const artHeight = artWidth / BOOK_ASPECT;
+  const capSize = logoSize * 0.58;
+  const wordmarkSize = clamp(width * 0.068, 21, 28);
+  const taglineSize = clamp(width * 0.039, 14, 16);
+  const swooshWidth = clamp(width * 0.16, 56, 78);
+  const swooshHeight = compact ? 7 : 9;
+  const logoGap = clamp(usable * 0.016, 10, 14);
+  const wordmarkGap = clamp(usable * 0.005, 2, 5);
+  const taglineGap = clamp(usable * 0.014, 8, 12);
+  const booksGap = clamp(usable * 0.026, 16, 26);
+
+  const brandBlock =
+    logoSize +
+    logoGap +
+    wordmarkSize * 1.15 +
+    wordmarkGap +
+    swooshHeight +
+    taglineGap +
+    taglineSize * 1.3 +
+    2 +
+    taglineSize * 1.35;
+  const maxArtHeight = Math.max(
+    usable * 0.9 - brandBlock - booksGap,
+    compact ? 96 : 118,
+  );
+  let artWidth = clamp(
+    Math.min(width * (shortScreen ? 0.42 : 0.44), usable * 0.34 * BOOK_ASPECT),
+    compact ? 112 : 132,
+    shortScreen ? 168 : 196,
+  );
+  let artHeight = artWidth / BOOK_ASPECT;
+  if (artHeight > maxArtHeight) {
+    artHeight = maxArtHeight;
+    artWidth = artHeight * BOOK_ASPECT;
+  }
 
   useEffect(() => {
     let active = true;
@@ -201,75 +227,74 @@ const SplashScreen = () => {
             styles.foreground,
             {
               paddingTop: topInset,
-              paddingBottom: bottomInset,
+              paddingBottom: Math.max(bottomInset, waveClearance),
             },
           ]}>
-          <View style={[styles.brandRegion, {paddingTop: brandTopPad}]}>
-            <View style={styles.brandCluster}>
-              <View
-                style={[
-                  styles.logoTile,
-                  {
-                    width: logoSize,
-                    height: logoSize,
-                    borderRadius: logoSize * 0.28,
-                    marginBottom: available * 0.012,
-                  },
-                ]}>
-                <Image
-                  source={Images.cap}
-                  resizeMode="contain"
-                  style={{width: capSize, height: capSize}}
-                  accessibilityIgnoresInvertColors
-                />
-              </View>
-              <Text
-                style={[
-                  styles.wordmark,
-                  {
-                    fontSize: wordmarkSize,
-                    lineHeight: wordmarkSize * 1.15,
-                    marginBottom: available * 0.004,
-                  },
-                ]}
-                numberOfLines={1}
-                maxFontSizeMultiplier={1.1}>
-                {Strings.eschoolyWordmark}
-              </Text>
-              <BrandSwoosh width={swooshWidth} height={Math.max(8, available * 0.012)} />
-              <Text
-                style={[
-                  styles.taglinePrimary,
-                  {
-                    fontSize: taglineSize,
-                    lineHeight: taglineSize * 1.3,
-                    marginTop: available * 0.012,
-                  },
-                ]}
-                numberOfLines={1}
-                maxFontSizeMultiplier={1.15}>
-                {Strings.splashTaglineLine1}
-              </Text>
-              <Text
-                style={[
-                  styles.taglineAccent,
-                  {
-                    fontSize: taglineSize,
-                    lineHeight: taglineSize * 1.35,
-                  },
-                ]}
-                numberOfLines={1}
-                maxFontSizeMultiplier={1.15}>
-                {Strings.splashTaglineLine2}
-              </Text>
+          <View style={styles.hero}>
+            <View
+              style={[
+                styles.logoTile,
+                {
+                  width: logoSize,
+                  height: logoSize,
+                  borderRadius: logoSize * 0.28,
+                  marginBottom: logoGap,
+                },
+              ]}>
+              <Image
+                source={Images.cap}
+                resizeMode="contain"
+                style={{width: capSize, height: capSize}}
+                accessibilityIgnoresInvertColors
+              />
             </View>
-          </View>
-
-          <View style={styles.artRegion} pointerEvents="none">
+            <Text
+              style={[
+                styles.wordmark,
+                {
+                  fontSize: wordmarkSize,
+                  lineHeight: wordmarkSize * 1.15,
+                  marginBottom: wordmarkGap,
+                },
+              ]}
+              numberOfLines={1}
+              maxFontSizeMultiplier={1.1}>
+              {Strings.eschoolyWordmark}
+            </Text>
+            <BrandSwoosh width={swooshWidth} height={swooshHeight} />
+            <Text
+              style={[
+                styles.taglinePrimary,
+                {
+                  fontSize: taglineSize,
+                  lineHeight: taglineSize * 1.3,
+                  marginTop: taglineGap,
+                },
+              ]}
+              numberOfLines={1}
+              maxFontSizeMultiplier={1.15}>
+              {Strings.splashTaglineLine1}
+            </Text>
+            <Text
+              style={[
+                styles.taglineAccent,
+                {
+                  fontSize: taglineSize,
+                  lineHeight: taglineSize * 1.35,
+                },
+              ]}
+              numberOfLines={1}
+              maxFontSizeMultiplier={1.15}>
+              {Strings.splashTaglineLine2}
+            </Text>
             <Image
               source={EducationIcons.digitalLibrary}
               resizeMode="contain"
-              style={{width: artWidth, height: artHeight, marginBottom: waveHeight * 0.18}}
+              style={{
+                width: artWidth,
+                height: artHeight,
+                marginTop: booksGap,
+              }}
               accessibilityIgnoresInvertColors
             />
           </View>
@@ -297,16 +322,13 @@ const styles = StyleSheet.create({
     flex: 1,
     zIndex: 3,
   },
-  brandRegion: {
-    flex: BRAND_FLEX,
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    zIndex: 4,
-  },
-  brandCluster: {
-    alignItems: 'center',
+  hero: {
+    flex: 1,
     width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingHorizontal: 32,
+    zIndex: 4,
   },
   logoTile: {
     backgroundColor: Colors.surface,
@@ -327,7 +349,7 @@ const styles = StyleSheet.create({
   },
   taglinePrimary: {
     color: '#FFFFFF',
-    fontFamily: Fonts.regular,
+    fontFamily: Fonts.medium,
     textAlign: 'center',
     includeFontPadding: false,
   },
@@ -337,12 +359,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     includeFontPadding: false,
     marginTop: 2,
-  },
-  artRegion: {
-    flex: ART_FLEX,
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    zIndex: 2,
   },
   waveWrap: {
     position: 'absolute',
