@@ -10,6 +10,7 @@ import {
 import {InteractionManager} from 'react-native';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {ScrollEnterProvider} from './useScrollEnter';
+import {shouldBumpEnterSession} from '../utils/enterSession';
 
 export const ScreenEnterContext = createContext(null);
 
@@ -31,11 +32,22 @@ export const ACADEMICS_ENTER_MOTION = 'menu';
 
 const TAB_ACADEMICS_ENTER_MOTIONS = new Set([ACADEMICS_ENTER_MOTION]);
 
-export const ScreenEnterProvider = ({children, motion = 'generic'}) => {
+export {shouldBumpEnterSession} from '../utils/enterSession';
+
+export const ScreenEnterProvider = ({
+  children,
+  motion = 'generic',
+  replayOnFocus = true,
+}) => {
   const navigation = useNavigation();
   const sequentialEnter = isSequentialEnterMotion(motion);
-  const [session, setSession] = useState(() => (sequentialEnter ? 0 : 1));
+  const [session, setSession] = useState(() =>
+    sequentialEnter && replayOnFocus ? 0 : 1,
+  );
   const hasLeftRef = useRef(false);
+  const hasPlayedRef = useRef(false);
+  const replayOnFocusRef = useRef(replayOnFocus);
+  replayOnFocusRef.current = replayOnFocus;
 
   const bumpSession = useCallback(() => {
     setSession(value => value + 1);
@@ -47,22 +59,29 @@ export const ScreenEnterProvider = ({children, motion = 'generic'}) => {
       let interactionTask = null;
       let rafId = null;
 
-      if (sequentialEnter) {
-        if (TAB_ACADEMICS_ENTER_MOTIONS.has(motion)) {
-          rafId = requestAnimationFrame(() => {
-            if (!cancelled) {
-              bumpSession();
-            }
-          });
-        } else {
-          interactionTask = InteractionManager.runAfterInteractions(() => {
-            if (!cancelled) {
-              bumpSession();
-            }
-          });
+      const play = () => {
+        if (cancelled) {
+          return;
         }
-      } else if (hasLeftRef.current) {
         bumpSession();
+        hasPlayedRef.current = true;
+      };
+
+      if (
+        shouldBumpEnterSession({
+          sequentialEnter,
+          replayOnFocus,
+          hasPlayed: hasPlayedRef.current,
+          hasLeft: hasLeftRef.current,
+        })
+      ) {
+        if (sequentialEnter && TAB_ACADEMICS_ENTER_MOTIONS.has(motion)) {
+          rafId = requestAnimationFrame(play);
+        } else if (sequentialEnter) {
+          interactionTask = InteractionManager.runAfterInteractions(play);
+        } else {
+          play();
+        }
       }
 
       return () => {
@@ -73,11 +92,14 @@ export const ScreenEnterProvider = ({children, motion = 'generic'}) => {
         }
         hasLeftRef.current = true;
       };
-    }, [bumpSession, motion, sequentialEnter]),
+    }, [bumpSession, motion, replayOnFocus, sequentialEnter]),
   );
 
   useEffect(() => {
     const unsubTabPress = navigation.addListener('tabPress', () => {
+      if (!replayOnFocusRef.current) {
+        return;
+      }
       if (navigation.isFocused()) {
         bumpSession();
       }
@@ -91,8 +113,9 @@ export const ScreenEnterProvider = ({children, motion = 'generic'}) => {
       session,
       motion,
       active: true,
+      stableEnterKeys: !replayOnFocus,
     }),
-    [motion, session],
+    [motion, replayOnFocus, session],
   );
 
   return (
@@ -180,6 +203,11 @@ export const useScreenMotion = () => {
     return screenCtx.motion;
   }
   return routeCtx?.motion ?? 'generic';
+};
+
+export const useEnterStableKeys = () => {
+  const screenCtx = useContext(ScreenEnterContext);
+  return screenCtx?.stableEnterKeys === true;
 };
 
 export const useSequentialEnterScreen = () => {

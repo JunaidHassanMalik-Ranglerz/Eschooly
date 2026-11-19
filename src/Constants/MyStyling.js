@@ -1,7 +1,7 @@
 import {Platform, StatusBar} from 'react-native';
 import {Colors} from './Colors';
 
-const BLUE_STATUS_SCREENS = ['Role'];
+const BLUE_STATUS_SCREENS = ['Role', 'Home'];
 const SPLASH_STATUS_SCREENS = ['SplashScreen', 'Register', 'AuthNavigation'];
 
 export const MyStyling = {

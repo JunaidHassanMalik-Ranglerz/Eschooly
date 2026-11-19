@@ -223,13 +223,13 @@ const StudentHome = () => {
     : '';
 
   return (
-    <ScreenEnterProvider motion={ACADEMICS_ENTER_MOTION}>
+    <ScreenEnterProvider motion={ACADEMICS_ENTER_MOTION} replayOnFocus={false}>
       <SafeAreaView style={styles.screen} edges={['top']}>
         <StatusBar
           animated={false}
-          translucent={true}
-          backgroundColor={Colors.white}
-          barStyle="dark-content"
+          translucent={false}
+          backgroundColor={Colors.brandNavy}
+          barStyle="light-content"
         />
 
         <ScrollEnterScrollView

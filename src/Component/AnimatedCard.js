@@ -10,6 +10,7 @@ import {
   combineMotionSession,
   useEnterActive,
   useEnterSession,
+  useEnterStableKeys,
   useScreenMotion,
   shouldAnimateCard,
   isSequentialEnterMotion,
@@ -66,8 +67,10 @@ export const EnterView = ({
   const shouldAnimate = shouldAnimateCard(disabled, screenMotion);
   const sequentialEnter = isSequentialEnterMotion(screenMotion);
   const motionSession = combineMotionSession(enterSession, replayToken);
+  const stableEnterKeys = useEnterStableKeys();
   const motionConfig = resolveScreenEnterMotion(screenMotion, motion);
-  const runEnter = shouldAnimate && active && isFocused;
+  const runEnter =
+    shouldAnimate && active && (stableEnterKeys || isFocused);
   const animatedStyle = useEnterMotion(
     shouldAnimate ? motionConfig : null,
     motionSession,
@@ -80,7 +83,11 @@ export const EnterView = ({
 
   return (
     <Reanimated.View
-      key={`${enterKey}-${motionSession}`}
+      key={
+        stableEnterKeys
+          ? `${enterKey}-${replayToken}`
+          : `${enterKey}-${motionSession}`
+      }
       pointerEvents="box-none"
       collapsable={false}
       style={[
@@ -109,6 +116,7 @@ const AnimatedCard = ({
   const scrollCtx = useScrollEnter();
   const shouldAnimate = shouldAnimateCard(disabled, motion);
   const motionSession = combineMotionSession(enterSession, replayToken);
+  const stableEnterKeys = useEnterStableKeys();
   const sequentialEnter = isSequentialEnterMotion(motion);
 
   /** Scroll reveal only when explicitly requested — auto index gate caused stuck cards. */
@@ -170,7 +178,7 @@ const AnimatedCard = ({
   const runEnter =
     shouldAnimate &&
     active &&
-    isFocused &&
+    (stableEnterKeys || isFocused) &&
     (!waitForScroll || scrollRevealed);
   const animatedStyle = useEnterMotion(
     shouldAnimate ? motionConfig : null,
@@ -184,7 +192,11 @@ const AnimatedCard = ({
 
   return (
     <Reanimated.View
-      key={`card-${index}-${motionSession}`}
+      key={
+        stableEnterKeys
+          ? `card-${index}-${replayToken}`
+          : `card-${index}-${motionSession}`
+      }
       pointerEvents="box-none"
       collapsable={false}
       onLayout={waitForScroll ? onLayout : undefined}

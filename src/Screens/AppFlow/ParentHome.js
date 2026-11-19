@@ -196,7 +196,7 @@ const ParentHome = () => {
   );
 
   return (
-    <ScreenEnterProvider motion={ACADEMICS_ENTER_MOTION}>
+    <ScreenEnterProvider motion={ACADEMICS_ENTER_MOTION} replayOnFocus={false}>
       <SafeAreaView style={styles.screen} edges={['top']}>
         <StatusBar
           animated={false}
@@ -215,7 +215,7 @@ const ParentHome = () => {
           contentContainerStyle={styles.scroll}>
           <AnimatedCard
             index={0}
-            entering={ACADEMICS_HEADER_ENTERING}
+            entering={{...ACADEMICS_HEADER_ENTERING, enterVisible: true}}
             style={styles.headerShell}>
             <NavyHeaderBand
               style={styles.headerBand}
