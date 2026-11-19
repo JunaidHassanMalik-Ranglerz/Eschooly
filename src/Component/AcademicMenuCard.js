@@ -184,10 +184,10 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(91, 156, 255, 0.35)',
   },
   fillIcy: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   waveIcy: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   faceIcy: {
     flexDirection: 'row',

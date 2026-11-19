@@ -1,25 +1,22 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import {ActivityIndicator, Image, StyleSheet, Text, useWindowDimensions, View} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
-import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
 import ParentNavyIceLayout from '../../Component/Parent/ParentNavyIceLayout';
+import ParentIceCard from '../../Component/Parent/ParentIceCard';
 import SelectedChildBanner from '../../Component/SelectedChildBanner';
 import ChildSwitchModal from '../../Component/Parent/ChildSwitchModal';
 import AnimatedCard from '../../Component/AnimatedCard';
-import CardWave, {SCREEN_WAVES} from '../../Component/CardWave';
-import {
-  CARD_RADIUS,
-  GRADIENT_END,
-  GRADIENT_START,
-  IDENTITY_CARD_SHADOW,
-} from '../../Component/Profile/ProfileTheme';
+import FeatureArtImage from '../../Component/Glass/FeatureArtImage';
+import {SCREEN_WAVES} from '../../Component/CardWave';
+import {EducationIcons} from '../../Assets/EducationIcons';
 import {Images} from '../../Assets';
-import {CARD_GRADIENTS} from '../../Constants/CardTheme';
 import {Colors} from '../../Constants/Colors';
 import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
 import {Strings} from '../../Constants/Strings';
+import {elevation} from '../../Constants/Theme';
+import {FLOAT_CARD_RADIUS} from '../../Component/Glass/EschoolyScreenShell';
 import {wp, hp} from '../../Constants/Responsive';
 import {useRoleData} from '../../hooks/useRoleData';
 import {withScreenEnter} from '../../hooks/useScreenEnterGate';
@@ -30,14 +27,8 @@ import {fetchChildDashboard, fetchChildTransport, fetchParentHome} from '../../s
 const TripCard = ({title, steps, animationIndex}) => (
   <AnimatedCard
     index={animationIndex}
-    entering={getHomeScreenEnter(animationIndex)}
-    style={[styles.cardWrap, IDENTITY_CARD_SHADOW]}>
-    <LinearGradient
-      colors={CARD_GRADIENTS.notification}
-      start={GRADIENT_START}
-      end={GRADIENT_END}
-      style={styles.tripCard}>
-      <CardWave variant={SCREEN_WAVES.transport} />
+    entering={getHomeScreenEnter(animationIndex)}>
+    <ParentIceCard waveVariant={SCREEN_WAVES.transport}>
       <Text style={styles.tripTitle}>{title}</Text>
       {steps.map((step, index) => {
         const isLast = index === steps.length - 1;
@@ -48,21 +39,23 @@ const TripCard = ({title, steps, animationIndex}) => (
                 <Icon
                   name={step.done ? 'checkmark' : 'time-outline'}
                   size={wp(3.4)}
-                  color={step.done ? Colors.white : Colors.whiteMuted85}
+                  color={step.done ? Colors.white : Colors.brandRoyal}
                 />
               </View>
-              {isLast ? null : <View style={styles.line} />}
+              {isLast ? null : (
+                <View style={[styles.line, step.done && styles.lineDone]} />
+              )}
             </View>
             <View style={styles.stepText}>
               <Text style={styles.stepTitle}>{step.title}</Text>
-              <Text style={styles.stepTime} numberOfLines={1}>
+              <Text style={styles.stepTime} numberOfLines={2}>
                 {step.time || Strings.notYet}
               </Text>
             </View>
           </View>
         );
       })}
-    </LinearGradient>
+    </ParentIceCard>
   </AnimatedCard>
 );
 
@@ -172,29 +165,32 @@ const ChildTrack = () => {
         <AnimatedCard
           index={2}
           entering={getHomeScreenEnter(2)}
-          style={[styles.mapCard, {height: mapHeight}]}>
-          <Image
-            source={Images.transportMap}
-            style={styles.mapImage}
-            resizeMode="cover"
-          />
-          <LinearGradient
-            colors={['rgba(7, 26, 61, 0)', 'rgba(7, 26, 61, 0.92)']}
-            style={styles.mapStatus}>
-            <Icon name="bus" size={wp(5.2)} color={Colors.iconAmber} />
-            <View style={styles.statusText}>
-              <Text style={styles.statusLabel} numberOfLines={1}>
-                {shownChild?.label}
-              </Text>
-              <Text style={styles.statusValue} numberOfLines={2}>
-                {isParent && loading ? '—' : trip.status}
-              </Text>
+          style={[styles.mapShell, {height: mapHeight}]}>
+          <View style={styles.mapClip}>
+            <Image
+              source={Images.transportMap}
+              style={styles.mapImage}
+              resizeMode="cover"
+            />
+            <View style={styles.mapStatus}>
+              <FeatureArtImage
+                source={EducationIcons.transport}
+                size={wp(11)}
+              />
+              <View style={styles.statusText}>
+                <Text style={styles.statusLabel} numberOfLines={1}>
+                  {shownChild?.label}
+                </Text>
+                <Text style={styles.statusValue} numberOfLines={2}>
+                  {isParent && loading ? '—' : trip.status}
+                </Text>
+              </View>
             </View>
-          </LinearGradient>
+          </View>
         </AnimatedCard>
 
         {isParent && loading ? (
-          <ActivityIndicator style={styles.loader} size="large" color={Colors.primary} />
+          <ActivityIndicator style={styles.loader} size="large" color={Colors.brandRoyal} />
         ) : isParent && parentTransport && !parentTransport.allocated ? (
           <Text style={styles.empty}>{Strings.noTransport}</Text>
         ) : (
@@ -218,31 +214,20 @@ const ChildTrack = () => {
 export default withScreenEnter(ChildTrack, 'transport');
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.parentBg,
-  },
-  scrollArea: {
-    flex: 1,
-  },
-  content: {
-    paddingHorizontal: wp(4),
-    paddingTop: hp(1),
-    flexGrow: 1,
-  },
-  cardWrap: {
-    borderRadius: CARD_RADIUS,
-    overflow: 'hidden',
-    marginBottom: hp(1.4),
-  },
-  mapCard: {
+  mapShell: {
     width: '100%',
-    borderRadius: CARD_RADIUS,
-    backgroundColor: '#DCEBFD',
+    borderRadius: FLOAT_CARD_RADIUS,
+    backgroundColor: Colors.bannerIceStart,
     marginBottom: hp(1.6),
+    overflow: 'visible',
+    ...elevation.banner,
+  },
+  mapClip: {
+    flex: 1,
+    borderRadius: FLOAT_CARD_RADIUS,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(108, 183, 255, 0.35)',
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: Colors.borderGlass,
   },
   mapImage: {
     ...StyleSheet.absoluteFillObject,
@@ -251,50 +236,44 @@ const styles = StyleSheet.create({
   },
   mapStatus: {
     position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
+    left: wp(3),
+    right: wp(3),
+    bottom: hp(1.2),
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: wp(4),
-    paddingTop: hp(2.4),
-    paddingBottom: hp(1.4),
+    backgroundColor: Colors.bannerIceStart,
+    borderRadius: wp(5),
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: Colors.borderGlass,
+    paddingHorizontal: wp(2.5),
+    paddingVertical: hp(0.85),
+    ...elevation.card,
   },
   statusText: {
     flex: 1,
     minWidth: 0,
-    marginLeft: wp(2.5),
+    marginLeft: wp(2),
   },
   statusLabel: {
-    color: Colors.whiteMuted85,
+    color: Colors.textSecondary,
     fontFamily: Fonts.regular,
     fontSize: Fontsize.xs1,
   },
   statusValue: {
-    color: Colors.white,
+    color: Colors.textPrimary,
     fontFamily: Fonts.bold,
     fontSize: Fontsize.sm,
-    marginTop: hp(0.2),
-  },
-  tripCard: {
-    borderRadius: CARD_RADIUS,
-    paddingHorizontal: wp(4.5),
-    paddingTop: hp(1.8),
-    paddingBottom: hp(1.2),
-    overflow: 'hidden',
+    marginTop: hp(0.15),
   },
   tripTitle: {
-    color: Colors.white,
+    color: Colors.textPrimary,
     fontFamily: Fonts.bold,
     fontSize: Fontsize.sm,
-    marginBottom: hp(1.4),
-    zIndex: 1,
-    flexShrink: 1,
+    marginBottom: hp(1.3),
   },
   stepRow: {
     flexDirection: 'row',
     alignItems: 'stretch',
-    zIndex: 1,
   },
   rail: {
     width: wp(8),
@@ -309,17 +288,22 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   dotDone: {
-    backgroundColor: Colors.iconGreen,
+    backgroundColor: Colors.brandNavy,
   },
   dotWait: {
-    backgroundColor: 'rgba(255,255,255,0.16)',
+    backgroundColor: Colors.bannerIceEnd,
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: Colors.brandRoyal,
   },
   line: {
     position: 'absolute',
     top: wp(6.2),
     bottom: 0,
     width: 2,
-    backgroundColor: 'rgba(255,255,255,0.22)',
+    backgroundColor: 'rgba(19, 69, 163, 0.18)',
+  },
+  lineDone: {
+    backgroundColor: Colors.brandRoyal,
   },
   stepText: {
     flex: 1,
@@ -328,13 +312,13 @@ const styles = StyleSheet.create({
     paddingBottom: hp(1.5),
   },
   stepTitle: {
-    color: Colors.white,
+    color: Colors.textPrimary,
     fontFamily: Fonts.semibold,
     fontSize: Fontsize.xs1,
     flexShrink: 1,
   },
   stepTime: {
-    color: Colors.whiteMuted75,
+    color: Colors.textSecondary,
     fontFamily: Fonts.regular,
     fontSize: Fontsize.xs0,
     marginTop: hp(0.2),
@@ -343,7 +327,7 @@ const styles = StyleSheet.create({
     marginVertical: hp(3),
   },
   empty: {
-    color: Colors.grayText,
+    color: Colors.textSecondary,
     fontFamily: Fonts.regular,
     fontSize: Fontsize.s,
     textAlign: 'center',
