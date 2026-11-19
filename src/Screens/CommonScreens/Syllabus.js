@@ -6,6 +6,7 @@ import {useNavigation} from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
 import SyllabusFilter from '../../Component/SyllabusFilter';
+import OptionPickerSheetModal from '../../Component/OptionPickerSheetModal';
 import SyllabusStudentHeader from '../../Component/Syllabus/SyllabusStudentHeader';
 import OverallProgressCard from '../../Component/OverallProgressCard';
 import ChapterCard from '../../Component/ChapterCard';
@@ -192,6 +193,7 @@ const Syllabus = () => {
   const [openChapterId, setOpenChapterId] = useState(null);
   const [switchVisible, setSwitchVisible] = useState(false);
   const [modalReplay, setModalReplay] = useState(0);
+  const [subjectOpen, setSubjectOpen] = useState(false);
   const parentCanSwitch = children.length > 1;
 
   useEffect(() => {
@@ -342,6 +344,7 @@ const Syllabus = () => {
         value={syllabus?.value}
         label={syllabus?.label}
         animationIndex={2}
+        onOpen={() => setSubjectOpen(true)}
         onChange={item => {
           setSyllabus(item);
           setOpenChapterId(null);
@@ -426,6 +429,22 @@ const Syllabus = () => {
     />
   );
 
+  const subjectPicker = (
+    <OptionPickerSheetModal
+      visible={subjectOpen}
+      onClose={() => setSubjectOpen(false)}
+      title={Strings.subject}
+      subtitle={syllabus?.label}
+      data={subjects}
+      selectedValue={syllabus?.value}
+      onSelect={item => {
+        setSyllabus(item);
+        setOpenChapterId(null);
+      }}
+      variant={icy ? 'ice' : 'navy'}
+    />
+  );
+
   const switchModal =
     isParent && parentCanSwitch ? (
       <ChildSwitchModal
@@ -443,6 +462,7 @@ const Syllabus = () => {
       <StudentToneProvider active>
         <EschoolyScreenShell variant="navy-ice">
           {list}
+          {subjectPicker}
           {switchModal}
         </EschoolyScreenShell>
       </StudentToneProvider>
@@ -464,6 +484,7 @@ const Syllabus = () => {
           notificationCount={1}
         />
         {list}
+        {subjectPicker}
         {switchModal}
       </SafeAreaView>
     </StudentToneProvider>

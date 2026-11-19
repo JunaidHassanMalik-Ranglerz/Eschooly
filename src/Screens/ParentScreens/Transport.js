@@ -1,12 +1,14 @@
-import React from 'react';
+import React, {useCallback, useState} from 'react';
 import {Image, StyleSheet, Text, View} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
+import {useDispatch, useSelector} from 'react-redux';
 import DepthIcon from '../../Component/DepthIcon';
 import AnimatedCard from '../../Component/AnimatedCard';
 import CardWave, {SCREEN_WAVES} from '../../Component/CardWave';
 import {Images} from '../../Assets';
 import ParentNavyIceLayout from '../../Component/Parent/ParentNavyIceLayout';
 import SelectedChildBanner from '../../Component/SelectedChildBanner';
+import ChildSwitchModal from '../../Component/Parent/ChildSwitchModal';
 import {
   CARD_RADIUS,
   GRADIENT_END,
@@ -21,6 +23,8 @@ import {wp, hp} from '../../Constants/Responsive';
 import {useRoleData} from '../../hooks/useRoleData';
 import {withScreenEnter} from '../../hooks/useScreenEnterGate';
 import {getHomeScreenEnter} from '../../utils/cardAnimation';
+import {PARENT_TRANSPORT} from '../../Constants/parentData';
+import {fetchChildDashboard} from '../../store/slices/parentHomeSlice';
 
 const CARD_GRADIENT = ['#07346B', '#062653', '#0D5CA8'];
 
@@ -32,20 +36,81 @@ const INFO_ROWS = [
 ];
 
 const Transport = () => {
-  const {activeStudent, transportDetails} = useRoleData();
-  const transport = transportDetails || {};
+  const dispatch = useDispatch();
+  const {
+    activeStudent,
+    transportDetails,
+    childList,
+    selectedChildId: roleChildId,
+    setSelectedChildId,
+    canSwitchChild: roleCanSwitch,
+    isParent,
+  } = useRoleData();
+  const {selectedChildId: homeChildId, children} = useSelector(
+    state => state.parentHome,
+  );
+  const [switchVisible, setSwitchVisible] = useState(false);
+  const [modalReplay, setModalReplay] = useState(0);
+  const activeChildId = homeChildId || children[0]?.value || roleChildId || null;
+  const parentChild =
+    children.find(item => item.value === String(activeChildId)) ||
+    childList.find(item => item.value === String(activeChildId)) ||
+    children[0] ||
+    childList[0] ||
+    null;
+  const shownChild = isParent ? parentChild || activeStudent : activeStudent;
+  const canSwitchChild = isParent
+    ? children.length > 1 || childList.length > 1
+    : roleCanSwitch;
+  const switchList = children.length ? children : childList;
+  const transport =
+    (isParent && shownChild?.value && PARENT_TRANSPORT[shownChild.value]) ||
+    transportDetails ||
+    {};
+
+  const openSwitch = useCallback(() => {
+    setSwitchVisible(true);
+    setModalReplay(value => value + 1);
+  }, []);
+
+  const handleSelectChild = useCallback(
+    nextId => {
+      if (!nextId || String(nextId) === String(activeChildId)) {
+        return;
+      }
+      if (isParent) {
+        dispatch(fetchChildDashboard(nextId));
+      }
+      setSelectedChildId(String(nextId));
+    },
+    [activeChildId, dispatch, isParent, setSelectedChildId],
+  );
 
   return (
     <ParentNavyIceLayout
       title={Strings.transport}
       subtitle={Strings.transportSubtitleParent}
-      unreadCount={1}>
+      unreadCount={1}
+      footer={
+        canSwitchChild ? (
+          <ChildSwitchModal
+            visible={switchVisible}
+            childrenList={switchList}
+            selectedId={String(activeChildId || shownChild?.value || '')}
+            onSelect={handleSelectChild}
+            onClose={() => setSwitchVisible(false)}
+            replayToken={modalReplay}
+          />
+        ) : null
+      }>
         <SelectedChildBanner
-          child={activeStudent}
+          child={shownChild}
+          variant="large"
           icy
-          canSwitch={false}
+          disableEnterAnimation
           compactMargin
-          animationIndex={1}
+          canSwitch={canSwitchChild}
+          onSwitchPress={canSwitchChild ? openSwitch : undefined}
         />
 
         <AnimatedCard

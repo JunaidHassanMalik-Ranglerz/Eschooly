@@ -64,7 +64,12 @@ const ParentSheetModal = ({
   );
 
   const body = (
-    <View style={[styles.body, tall && !compact && styles.bodyTall]}>
+    <View
+      style={[
+        styles.body,
+        tall && !compact && styles.bodyTall,
+        compact && styles.bodyCompact,
+      ]}>
       {children}
     </View>
   );
@@ -80,7 +85,11 @@ const ParentSheetModal = ({
           compact && styles.sheetCompact,
         ]}>
         {ice ? (
-          <View style={styles.sheetFillIce}>
+          <View
+            style={[
+              styles.sheetFillIce,
+              tall && !compact && styles.sheetFillIceTall,
+            ]}>
             <LinearGradient
               colors={[Colors.bannerIceStart, Colors.bannerIceEnd]}
               start={{x: 0, y: 0.08}}
@@ -215,6 +224,11 @@ const styles = StyleSheet.create({
     minHeight: 0,
     maxHeight: hp(72),
   },
+  bodyCompact: {
+    flexShrink: 0,
+    flexGrow: 0,
+    minHeight: hp(8),
+  },
   sheetIce: {
     backgroundColor: Colors.bannerIceStart,
     borderRadius: radius.banner,
@@ -227,12 +241,14 @@ const styles = StyleSheet.create({
     ...elevation.banner,
   },
   sheetFillIce: {
-    flex: 1,
-    minHeight: 0,
     width: '100%',
     alignSelf: 'stretch',
     overflow: 'hidden',
     borderRadius: radius.banner,
+  },
+  sheetFillIceTall: {
+    flex: 1,
+    minHeight: 0,
   },
   headerIce: {
     alignItems: 'center',

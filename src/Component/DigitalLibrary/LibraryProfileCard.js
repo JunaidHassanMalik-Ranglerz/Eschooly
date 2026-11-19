@@ -1,6 +1,7 @@
 import React from 'react';
-import {StyleSheet, Text, View} from 'react-native';
+import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
+import Icon from 'react-native-vector-icons/Ionicons';
 import ProfileGradientCard from '../Profile/ProfileGradientCard';
 import PersonAvatar from '../Profile/PersonAvatar';
 import CardWave, {SCREEN_WAVES} from '../CardWave';
@@ -45,12 +46,19 @@ const formatClassLabel = student => {
   return `${className} ${section}`;
 };
 
-const LibraryProfileCard = ({student, animationIndex = 0, look}) => {
+const LibraryProfileCard = ({
+  student,
+  animationIndex = 0,
+  look,
+  canSwitch = false,
+  onSwitchPress,
+}) => {
   const icy = useStudentTone();
   const onNavy = icy && look === 'onNavy';
   const floating = icy && look === 'float';
   const classLabel = formatClassLabel(student);
   const statusLabel = String(student?.status || '').trim();
+  const switchable = Boolean(onSwitchPress && canSwitch);
 
   const row = (
     <View style={styles.row}>
@@ -112,11 +120,20 @@ const LibraryProfileCard = ({student, animationIndex = 0, look}) => {
           ) : null}
         </View>
       </View>
+      {switchable ? (
+        <View style={[styles.switchBtn, icy && !onNavy && styles.switchBtnIcy]}>
+          <Icon
+            name="chevron-forward"
+            size={wp(5.5)}
+            color={onNavy ? Colors.white : Colors.brandRoyal}
+          />
+        </View>
+      ) : null}
     </View>
   );
 
   if (floating) {
-    return (
+    const card = (
       <View style={styles.floatShell}>
         <View style={styles.floatClip}>
           <LinearGradient
@@ -133,10 +150,18 @@ const LibraryProfileCard = ({student, animationIndex = 0, look}) => {
         </View>
       </View>
     );
+    if (switchable) {
+      return (
+        <TouchableOpacity activeOpacity={0.92} onPress={onSwitchPress}>
+          {card}
+        </TouchableOpacity>
+      );
+    }
+    return card;
   }
 
   if (onNavy) {
-    return (
+    const card = (
       <View style={styles.onNavyShell}>
         <View style={styles.onNavyClip}>
           <LinearGradient
@@ -150,6 +175,14 @@ const LibraryProfileCard = ({student, animationIndex = 0, look}) => {
         </View>
       </View>
     );
+    if (switchable) {
+      return (
+        <TouchableOpacity activeOpacity={0.92} onPress={onSwitchPress}>
+          {card}
+        </TouchableOpacity>
+      );
+    }
+    return card;
   }
 
   return (
@@ -159,7 +192,8 @@ const LibraryProfileCard = ({student, animationIndex = 0, look}) => {
       disableAnimation={false}
       variant={icy ? 'light' : 'navy'}
       colors={icy ? undefined : CARD_GRADIENTS.notification}
-      waveVariant={icy ? undefined : SCREEN_WAVES.library}>
+      waveVariant={icy ? undefined : SCREEN_WAVES.library}
+      onPress={switchable ? onSwitchPress : undefined}>
       {row}
     </ProfileGradientCard>
   );
@@ -270,6 +304,18 @@ const styles = StyleSheet.create({
     paddingVertical: hp(1.35),
     minHeight: hp(8.6),
     justifyContent: 'center',
+  },
+  switchBtn: {
+    width: wp(9),
+    height: wp(9),
+    borderRadius: wp(4.5),
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.whiteOverlay18,
+    marginLeft: wp(2),
+  },
+  switchBtnIcy: {
+    backgroundColor: Colors.hubCard,
   },
   nameOnNavy: {
     color: Colors.white,

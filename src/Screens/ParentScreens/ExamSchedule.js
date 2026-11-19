@@ -1,9 +1,10 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {ActivityIndicator, StyleSheet, Text, View} from 'react-native';
 import AnimatedCard from '../../Component/AnimatedCard';
 import Icon from 'react-native-vector-icons/Ionicons';
 import ParentNavyIceLayout from '../../Component/Parent/ParentNavyIceLayout';
 import SelectedChildBanner from '../../Component/SelectedChildBanner';
+import ChildSwitchModal from '../../Component/Parent/ChildSwitchModal';
 import ProfileGradientCard from '../../Component/Profile/ProfileGradientCard';
 import ProfileSectionTitle from '../../Component/Profile/ProfileSectionTitle';
 import {Colors} from '../../Constants/Colors';
@@ -16,7 +17,7 @@ import {withScreenEnter} from '../../hooks/useScreenEnterGate';
 import {getHomeScreenEnter} from '../../utils/cardAnimation';
 import {useDispatch, useSelector} from 'react-redux';
 import {showToast} from '../../utils/toast';
-import {fetchChildExams, fetchParentHome} from '../../store/slices/parentHomeSlice';
+import {fetchChildDashboard, fetchChildExams, fetchParentHome} from '../../store/slices/parentHomeSlice';
 
 const parseExamDate = date => {
   const parts = String(date || '').replace(',', '').split(' ').filter(Boolean);
@@ -86,16 +87,36 @@ const ExamScheduleCard = ({item, animationIndex = 0, entering}) => {
 };
 
 const ExamSchedule = () => {
-  const {activeStudent, examSchedule: dummySchedule, classLabel: studentClassLabel, isParent} = useRoleData();
+  const {activeStudent, examSchedule: dummySchedule, classLabel: studentClassLabel, isParent, childList, setSelectedChildId} = useRoleData();
   const dispatch = useDispatch();
   const {selectedChildId, children} = useSelector(state => state.parentHome);
   const [parentExams, setParentExams] = useState(null);
   const [loading, setLoading] = useState(isParent);
+  const [switchVisible, setSwitchVisible] = useState(false);
+  const [modalReplay, setModalReplay] = useState(0);
   const parentChild =
-    children.find(item => item.value === String(selectedChildId)) || parentExams?.child || null;
-  const shownChild = isParent ? parentChild : activeStudent;
-  const classLabel = isParent ? shownChild?.className || '' : studentClassLabel;
+    children.find(item => item.value === String(selectedChildId)) || parentExams?.child || children[0] || null;
+  const shownChild = isParent ? parentChild || activeStudent : activeStudent;
+  const classLabel = isParent ? shownChild?.className || shownChild?.classLabel || '' : studentClassLabel;
   const examSchedule = isParent ? parentExams?.schedule || [] : dummySchedule;
+  const canSwitchChild = isParent && children.length > 1;
+  const switchList = children.length ? children : childList;
+
+  const openSwitch = useCallback(() => {
+    setSwitchVisible(true);
+    setModalReplay(value => value + 1);
+  }, []);
+
+  const handleSelectChild = useCallback(
+    nextId => {
+      if (!nextId || String(nextId) === String(selectedChildId)) {
+        return;
+      }
+      dispatch(fetchChildDashboard(nextId));
+      setSelectedChildId(String(nextId));
+    },
+    [dispatch, selectedChildId, setSelectedChildId],
+  );
 
   useEffect(() => {
     if (!isParent || selectedChildId) {
@@ -156,13 +177,27 @@ const ExamSchedule = () => {
     <ParentNavyIceLayout
       title={Strings.examSchedule}
       subtitle={Strings.examScheduleSubtitleParent}
-      unreadCount={1}>
+      unreadCount={1}
+      footer={
+        canSwitchChild ? (
+          <ChildSwitchModal
+            visible={switchVisible}
+            childrenList={switchList}
+            selectedId={String(selectedChildId || shownChild?.value || '')}
+            onSelect={handleSelectChild}
+            onClose={() => setSwitchVisible(false)}
+            replayToken={modalReplay}
+          />
+        ) : null
+      }>
         <SelectedChildBanner
           child={shownChild}
+          variant="large"
           icy
-          canSwitch={false}
+          disableEnterAnimation
           compactMargin
-          animationIndex={1}
+          canSwitch={canSwitchChild}
+          onSwitchPress={canSwitchChild ? openSwitch : undefined}
         />
         <ProfileGradientCard
           innerStyle={styles.headerInner}

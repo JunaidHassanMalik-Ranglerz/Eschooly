@@ -11,6 +11,10 @@ import MainHeaderComponent from '../../Component/MainHeaderComponent';
 import {ScreenEnterProvider} from '../../hooks/useScreenEnterGate';
 import {API_BASE_URL, getAuthToken} from '../../api/axiosInstance';
 import {storage, storageKeys} from '../../utils/storage';
+import {
+  classifyFetchedDocument,
+  jsonDocumentMessage,
+} from '../../utils/documentResponse';
 import {Colors} from '../../Constants/Colors';
 import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
@@ -86,34 +90,34 @@ const PdfViewer = () => {
           info.headers?.['Content-Type'] || info.headers?.['content-type'] || '',
         ).toLowerCase();
 
-        if (info.status >= 400) {
-          throw new Error('Unable to open this file.');
-        }
+        const body = await ReactNativeBlobUtil.fs.readFile(cachedPath, 'utf8');
+        const classified = classifyFetchedDocument({
+          contentType: type,
+          bodyPreview: body,
+        });
 
         if (cancelled) {
           return;
         }
 
-        if (type.includes('application/pdf')) {
+        if (info.status >= 400) {
+          throw new Error(
+            classified.kind === 'json'
+              ? jsonDocumentMessage(body) || 'Unable to open this file.'
+              : 'Unable to open this file.',
+          );
+        }
+
+        if (classified.kind === 'pdf') {
           setPdfPath(cachedPath);
           setSource({uri: `file://${cachedPath}`, cache: false});
           return;
         }
-
-        const body = await ReactNativeBlobUtil.fs.readFile(cachedPath, 'utf8');
-        if (body.startsWith('%PDF-')) {
-          if (!cancelled) {
-            setPdfPath(cachedPath);
-            setSource({uri: `file://${cachedPath}`, cache: false});
-          }
-          return;
+        if (classified.kind === 'json') {
+          throw new Error(jsonDocumentMessage(body) || 'Unable to open this file.');
         }
-        if (type.includes('json')) {
-          const parsed = JSON.parse(body);
-          throw new Error(parsed?.message || 'Unable to open this file.');
-        }
-        if (cancelled) {
-          return;
+        if (classified.kind !== 'html') {
+          throw new Error('Unable to open this file.');
         }
         setHtml(withViewport(body));
       } catch (error) {
@@ -158,15 +162,45 @@ const PdfViewer = () => {
     await ReactNativeBlobUtil.ios.presentOptionsMenu(target);
   };
 
+  const saveHtmlFile = async () => {
+    const fileName = `${fileBase}-${Date.now()}.html`;
+    if (Platform.OS === 'android') {
+      const tempPath = `${ReactNativeBlobUtil.fs.dirs.CacheDir}/${fileName}`;
+      await ReactNativeBlobUtil.fs.writeFile(tempPath, html, 'utf8');
+      try {
+        await ReactNativeBlobUtil.MediaCollection.copyToMediaStore(
+          {name: fileName, parentFolder: '', mimeType: 'text/html'},
+          'Download',
+          tempPath,
+        );
+      } catch (error) {
+        const downloadDir = ReactNativeBlobUtil.fs.dirs.DownloadDir;
+        if (!downloadDir) {
+          throw error;
+        }
+        await ReactNativeBlobUtil.fs.cp(tempPath, `${downloadDir}/${fileName}`);
+      }
+      showToast({type: 'success', text1: 'Saved to Downloads.'});
+      return;
+    }
+    const target = `${ReactNativeBlobUtil.fs.dirs.DocumentDir}/${fileName}`;
+    await ReactNativeBlobUtil.fs.writeFile(target, html, 'utf8');
+    await ReactNativeBlobUtil.ios.presentOptionsMenu(target);
+  };
+
   const handleSave = async () => {
     if (!canSave || saving) {
       return;
     }
     setSaving(true);
     try {
-      if (pdfPath) {
+      if (pdfPath && !html) {
         await savePdfFile();
-      } else {
+        return;
+      }
+      try {
+        await saveHtmlFile();
+      } catch (error) {
         await RNPrint.print({html, jobName: fileBase});
       }
     } catch (error) {

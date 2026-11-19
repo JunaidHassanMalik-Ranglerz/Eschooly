@@ -1,6 +1,7 @@
-import React, {useCallback, useState} from 'react';
-import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import React, {useCallback, useEffect, useState} from 'react';
+import {ActivityIndicator, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
+import {useDispatch, useSelector} from 'react-redux';
 import Icon from 'react-native-vector-icons/Ionicons';
 import LinearGradient from 'react-native-linear-gradient';
 import AnimatedCard from '../../Component/AnimatedCard';
@@ -8,6 +9,7 @@ import {SCREEN_WAVES} from '../../Component/CardWave';
 import ParentNavyIceLayout from '../../Component/Parent/ParentNavyIceLayout';
 import ParentIceCard from '../../Component/Parent/ParentIceCard';
 import SelectedChildBanner from '../../Component/SelectedChildBanner';
+import ChildSwitchModal from '../../Component/Parent/ChildSwitchModal';
 import SegmentTabs from '../../Component/SegmentTabs';
 import FeatureArtImage from '../../Component/Glass/FeatureArtImage';
 import {EducationIcons} from '../../Assets/EducationIcons';
@@ -23,6 +25,35 @@ import {wp, hp} from '../../Constants/Responsive';
 import {useRoleData} from '../../hooks/useRoleData';
 import {withScreenEnter} from '../../hooks/useScreenEnterGate';
 import {getHomeScreenEnter} from '../../utils/cardAnimation';
+import {showToast} from '../../utils/toast';
+import {
+  childFeeChallanDownloadUrl,
+  childFeeReceiptDownloadUrl,
+} from '../../services/parentService';
+import {
+  fetchChildDashboard,
+  fetchChildFees,
+  fetchParentHome,
+} from '../../store/slices/parentHomeSlice';
+
+const EMPTY_FEES = {
+  summary: {},
+  charges: [],
+  challans: [],
+  receipts: [],
+  documents: [],
+  history: [],
+};
+
+const matchesFeeTab = (item, tabId) =>
+  tabId === 'transport'
+    ? item?.category === 'transport'
+    : item?.category !== 'transport';
+
+const isSettledStatus = status => {
+  const key = String(status || '').toLowerCase();
+  return key === 'paid' || key === 'settled' || key === 'complete' || key === 'completed';
+};
 
 const FEE_TABS = [
   {id: 'school', label: Strings.schoolFees},
@@ -116,19 +147,62 @@ const getStatusStyle = status => {
 
 const Fee = () => {
   const navigation = useNavigation();
-  const {activeStudent, feeDetails, unreadNotificationCount} = useRoleData();
-  const fee = feeDetails || {};
+  const dispatch = useDispatch();
+  const {
+    activeStudent,
+    unreadNotificationCount,
+    childList,
+    selectedChildId: roleChildId,
+    setSelectedChildId,
+    canSwitchChild: roleCanSwitch,
+    isParent,
+  } = useRoleData();
+  const {selectedChildId: homeChildId, children} = useSelector(
+    state => state.parentHome,
+  );
+  const activeChildId = homeChildId || children[0]?.value || roleChildId || null;
+  const parentChild =
+    children.find(item => item.value === String(activeChildId)) ||
+    childList.find(item => item.value === String(activeChildId)) ||
+    children[0] ||
+    childList[0] ||
+    null;
+  const shownChild = isParent ? parentChild || activeStudent : activeStudent;
+  const canSwitchChild = isParent
+    ? (children.length > 1 || childList.length > 1)
+    : roleCanSwitch;
+  const switchList = children.length ? children : childList;
+  const [parentFees, setParentFees] = useState(EMPTY_FEES);
+  const [feesChildId, setFeesChildId] = useState(null);
+  const [loading, setLoading] = useState(isParent);
   const [feeTab, setFeeTab] = useState('school');
   const [viewMode, setViewMode] = useState('home');
   const [tabReplay, setTabReplay] = useState(0);
   const [viewReplay, setViewReplay] = useState(0);
+  const [switchVisible, setSwitchVisible] = useState(false);
+  const [modalReplay, setModalReplay] = useState(0);
   const panelReplay = tabReplay + viewReplay;
-  const current = feeTab === 'transport' ? fee.transport : fee.school;
+  const fee = parentFees || EMPTY_FEES;
   const actionItems = feeTab === 'transport' ? TRANSPORT_ACTIONS : SCHOOL_ACTIONS;
   const headerTitle = VIEW_TITLES[viewMode] || Strings.fee;
-  const details = fee.details || [];
-  const history = fee.history || [];
-  const receipts = fee.receipts || [];
+  const details = (fee.charges || []).filter(item => matchesFeeTab(item, feeTab));
+  const history = (fee.history || []).filter(item => matchesFeeTab(item, feeTab));
+  const receipts = (fee.documents || []).filter(item => matchesFeeTab(item, feeTab));
+  const headline =
+    details.find(item => item.status && !isSettledStatus(item.status)) ||
+    details[0] ||
+    null;
+  const summary = fee.summary || {};
+  const summaryTitle = headline?.title || summary.title;
+  const summaryAmount =
+    headline?.dueAmount ||
+    headline?.amount ||
+    (feeTab === 'school' ? summary.dueAmount || summary.amount : '');
+  const summaryDate =
+    headline?.dueDate || (feeTab === 'school' ? summary.dueDate : '');
+  const summaryStatus =
+    headline?.status || (feeTab === 'school' ? summary.status : '');
+  const showPayNow = Boolean(summaryAmount) && !isSettledStatus(summaryStatus);
 
   const selectFeeTab = useCallback(tabId => {
     if (tabId === feeTab) {
@@ -154,14 +228,123 @@ const Fee = () => {
     setFeeViewMode(item.id);
   };
 
+  const openSwitch = useCallback(() => {
+    setSwitchVisible(true);
+    setModalReplay(value => value + 1);
+  }, []);
+
+  const handleSelectChild = useCallback(
+    nextId => {
+      if (!nextId || String(nextId) === String(activeChildId)) {
+        return;
+      }
+      if (isParent) {
+        dispatch(fetchChildDashboard(nextId));
+      }
+      setSelectedChildId(String(nextId));
+    },
+    [activeChildId, dispatch, isParent, setSelectedChildId],
+  );
+
+  useEffect(() => {
+    if (!isParent || homeChildId || children.length) {
+      return undefined;
+    }
+    dispatch(fetchParentHome());
+  }, [children.length, dispatch, homeChildId, isParent]);
+
+  useEffect(() => {
+    if (!isParent || !activeChildId) {
+      return undefined;
+    }
+    const requestedId = String(activeChildId);
+    let active = true;
+    setParentFees(EMPTY_FEES);
+    setFeesChildId(null);
+    setLoading(true);
+    dispatch(fetchChildFees(requestedId))
+      .unwrap()
+      .then(payload => {
+        if (active) {
+          setParentFees(payload || EMPTY_FEES);
+          setFeesChildId(requestedId);
+        }
+      })
+      .catch(error => {
+        if (!active) {
+          return;
+        }
+        setParentFees(EMPTY_FEES);
+        setFeesChildId(null);
+        if (!error?.stale) {
+          showToast({
+            type: 'error',
+            text1: error?.message || 'Unable to load fees.',
+          });
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setLoading(false);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [activeChildId, dispatch, isParent]);
+
+  const openDocument = useCallback(
+    item => {
+      const studentId = String(feesChildId || '');
+      if (!studentId || !item) {
+        return;
+      }
+      if (String(activeChildId || '') !== studentId) {
+        showToast({
+          type: 'error',
+          text1: 'Select this child again to open their documents.',
+        });
+        return;
+      }
+      if (item.kind === 'receipt') {
+        if (!item.paymentId) {
+          showToast({
+            type: 'error',
+            text1: 'This receipt is missing a payment ID.',
+          });
+          return;
+        }
+        navigation.navigate('PdfViewer', {
+          pdfUrl: childFeeReceiptDownloadUrl(studentId, item.paymentId),
+          title: item.title || Strings.receiptDownload,
+        });
+        return;
+      }
+      if (!item.chargeId) {
+        showToast({
+          type: 'error',
+          text1: 'This challan is missing a charge ID.',
+        });
+        return;
+      }
+      navigation.navigate('PdfViewer', {
+        pdfUrl: childFeeChallanDownloadUrl(studentId, item.chargeId),
+        title: item.title || Strings.feeChallan,
+      });
+    },
+    [activeChildId, feesChildId, navigation],
+  );
+
   const renderHome = () => (
     <>
       <SelectedChildBanner
-        child={activeStudent}
+        child={shownChild}
+        variant="large"
         icy
-        canSwitch={false}
+        disableEnterAnimation
         compactMargin
-        animationIndex={1}
+        canSwitch={canSwitchChild}
+        onSwitchPress={canSwitchChild ? openSwitch : undefined}
       />
 
       <AnimatedCard
@@ -186,6 +369,13 @@ const Fee = () => {
         index={3}
         entering={getHomeScreenEnter(3)}
         replayToken={panelReplay}>
+        {loading ? (
+          <ActivityIndicator
+            style={styles.loader}
+            size="large"
+            color={Colors.brandRoyal}
+          />
+        ) : (
         <ParentIceCard waveVariant={SCREEN_WAVES.fees}>
           <View style={styles.termTop}>
             <FeatureArtImage
@@ -194,26 +384,45 @@ const Fee = () => {
               style={styles.termIcon}
             />
             <Text style={styles.termTitle} numberOfLines={1}>
-              {current?.term || fee.term}
+              {summaryTitle || Strings.fee}
             </Text>
-            <View style={styles.dueBadge}>
-              <Text style={styles.dueBadgeText}>{Strings.dueSoon}</Text>
-            </View>
+            {summaryStatus ? (
+              <View
+                style={[
+                  styles.dueBadge,
+                  {backgroundColor: getStatusStyle(summaryStatus).bg},
+                ]}>
+                <Text
+                  style={[
+                    styles.dueBadgeText,
+                    {color: getStatusStyle(summaryStatus).text},
+                  ]}>
+                  {summaryStatus}
+                </Text>
+              </View>
+            ) : null}
           </View>
-          <Text style={styles.amount}>{current?.dueAmount || fee.dueAmount}</Text>
-          <Text style={styles.dueDate}>
-            {Strings.dueDateLabel} {current?.dueDate || fee.dueDate}
-          </Text>
-          <TouchableOpacity activeOpacity={0.88}>
-            <LinearGradient
-              colors={[Colors.brandNavy, Colors.brandRoyal, Colors.brandAccent]}
-              start={GRADIENT_START}
-              end={GRADIENT_END}
-              style={styles.payBtn}>
-              <Text style={styles.payBtnText}>{Strings.payOnline}</Text>
-            </LinearGradient>
-          </TouchableOpacity>
+          <Text style={styles.amount}>{summaryAmount || '—'}</Text>
+          {summaryDate ? (
+            <Text style={styles.dueDate}>
+              {Strings.dueDateLabel} {summaryDate}
+            </Text>
+          ) : (
+            <View style={styles.dueDateSpacer} />
+          )}
+          {showPayNow ? (
+            <TouchableOpacity activeOpacity={0.88}>
+              <LinearGradient
+                colors={[Colors.brandNavy, Colors.brandRoyal, Colors.brandAccent]}
+                start={GRADIENT_START}
+                end={GRADIENT_END}
+                style={styles.payBtn}>
+                <Text style={styles.payBtnText}>{Strings.payOnline}</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          ) : null}
         </ParentIceCard>
+        )}
       </AnimatedCard>
 
       {actionItems.map((item, index) => {
@@ -262,7 +471,14 @@ const Fee = () => {
     </>
   );
 
-  const renderDetails = () => (
+  const renderDetails = () =>
+    loading ? (
+      <ActivityIndicator
+        style={styles.loader}
+        size="large"
+        color={Colors.brandRoyal}
+      />
+    ) : (
     <>
       <AnimatedCard
         index={1}
@@ -270,13 +486,14 @@ const Fee = () => {
         replayToken={viewReplay}>
         <ParentIceCard waveVariant={SCREEN_WAVES.fees}>
           <Text style={styles.summaryLabel}>{Strings.totalPayable}</Text>
-          <Text style={styles.summaryAmount}>
-            {current?.dueAmount || fee.dueAmount}
-          </Text>
-          <Text style={styles.summaryMeta}>
-            {current?.term || fee.term} · {Strings.dueDateLabel}{' '}
-            {current?.dueDate || fee.dueDate}
-          </Text>
+          <Text style={styles.summaryAmount}>{summaryAmount || '—'}</Text>
+          {summaryTitle || summaryDate ? (
+            <Text style={styles.summaryMeta}>
+              {[summaryTitle, summaryDate ? `${Strings.dueDateLabel} ${summaryDate}` : '']
+                .filter(Boolean)
+                .join(' · ')}
+            </Text>
+          ) : null}
         </ParentIceCard>
       </AnimatedCard>
 
@@ -308,10 +525,13 @@ const Fee = () => {
                       {item.title}
                     </Text>
                     <Text style={styles.detailHint}>
-                      {index + 1} of {details.length}
+                      {[item.status, item.hint, item.dueDate].filter(Boolean).join(' · ') ||
+                        `${index + 1} of ${details.length}`}
                     </Text>
                   </View>
-                  <Text style={styles.detailAmount}>{item.amount}</Text>
+                  <Text style={styles.detailAmount}>
+                    {item.dueAmount || item.amount}
+                  </Text>
                 </View>
               </ParentIceCard>
             </AnimatedCard>
@@ -321,10 +541,16 @@ const Fee = () => {
         <Text style={styles.empty}>{Strings.noFeeDetails}</Text>
       )}
     </>
-  );
+    );
 
   const renderHistory = () =>
-    history.length ? (
+    loading ? (
+      <ActivityIndicator
+        style={styles.loader}
+        size="large"
+        color={Colors.brandRoyal}
+      />
+    ) : history.length ? (
       history.map((item, index) => {
         const statusStyle = getStatusStyle(item.status);
         const slot = index + 1;
@@ -346,18 +572,22 @@ const Fee = () => {
                     {item.title}
                   </Text>
                   <Text style={styles.historyMeta} numberOfLines={1}>
-                    {Strings.paidOn} {item.date}
+                    {isSettledStatus(item.status) && item.date
+                      ? `${Strings.paidOn} ${item.date}`
+                      : item.date || item.status}
                   </Text>
                 </View>
-                <View style={[styles.statusChip, {backgroundColor: statusStyle.bg}]}>
-                  <Text style={[styles.statusChipText, {color: statusStyle.text}]}>
-                    {item.status}
-                  </Text>
-                </View>
+                {item.status ? (
+                  <View style={[styles.statusChip, {backgroundColor: statusStyle.bg}]}>
+                    <Text style={[styles.statusChipText, {color: statusStyle.text}]}>
+                      {item.status}
+                    </Text>
+                  </View>
+                ) : null}
               </View>
               <View style={styles.historyBottom}>
-                <Text style={styles.historyAmountLabel}>{Strings.dueAmount}</Text>
-                <Text style={styles.historyAmount}>{item.amount}</Text>
+                <Text style={styles.historyAmountLabel}>Amount</Text>
+                <Text style={styles.historyAmount}>{item.amount || '—'}</Text>
               </View>
             </ParentIceCard>
           </AnimatedCard>
@@ -368,7 +598,13 @@ const Fee = () => {
     );
 
   const renderReceipts = () =>
-    receipts.length ? (
+    loading ? (
+      <ActivityIndicator
+        style={styles.loader}
+        size="large"
+        color={Colors.brandRoyal}
+      />
+    ) : receipts.length ? (
       receipts.map((item, index) => {
         const slot = index + 1;
         return (
@@ -377,7 +613,7 @@ const Fee = () => {
             index={slot}
             entering={getHomeScreenEnter(slot)}
             replayToken={viewReplay}>
-            <ParentIceCard>
+            <ParentIceCard onPress={() => openDocument(item)}>
               <View style={styles.receiptRow}>
                 <FeatureArtImage
                   source={EducationIcons.digitalLibrary}
@@ -393,16 +629,22 @@ const Fee = () => {
                       <Text style={styles.typeChipText}>{item.type}</Text>
                     </View>
                   </View>
-                  <Text style={styles.receiptDate}>{item.date}</Text>
+                  <Text style={styles.receiptDate}>
+                    {[item.date, item.amount, item.status].filter(Boolean).join(' · ')}
+                  </Text>
                   <View style={styles.receiptDivider} />
-                  <TouchableOpacity style={styles.downloadRow} activeOpacity={0.85}>
+                  <View style={styles.downloadRow}>
                     <Icon
-                      name="download-outline"
+                      name="eye-outline"
                       size={wp(4)}
                       color={Colors.brandRoyal}
                     />
-                    <Text style={styles.downloadText}>{Strings.downloadPdf}</Text>
-                  </TouchableOpacity>
+                    <Text style={styles.downloadText}>
+                      {item.kind === 'receipt'
+                        ? Strings.viewDetails
+                        : Strings.viewChallan}
+                    </Text>
+                  </View>
                 </View>
               </View>
             </ParentIceCard>
@@ -420,6 +662,18 @@ const Fee = () => {
       unreadCount={unreadNotificationCount || 1}
       onBackPress={
         viewMode === 'home' ? undefined : () => setFeeViewMode('home')
+      }
+      footer={
+        canSwitchChild ? (
+          <ChildSwitchModal
+            visible={switchVisible}
+            childrenList={switchList}
+            selectedId={String(activeChildId || shownChild?.value || '')}
+            onSelect={handleSelectChild}
+            onClose={() => setSwitchVisible(false)}
+            replayToken={modalReplay}
+          />
+        ) : null
       }>
       {viewMode === 'home' && renderHome()}
       {viewMode === 'details' && renderDetails()}
@@ -440,6 +694,12 @@ const styles = StyleSheet.create({
   },
   tabCard: {
     marginBottom: hp(1.35),
+  },
+  loader: {
+    marginVertical: hp(2.5),
+  },
+  dueDateSpacer: {
+    marginBottom: hp(1.6),
   },
   termTop: {
     flexDirection: 'row',

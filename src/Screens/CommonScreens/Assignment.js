@@ -21,6 +21,7 @@ import AssignmentSubjectCard from '../../Component/Assignment/AssignmentSubjectC
 import AssignmentHeroBanner from '../../Component/Assignment/AssignmentHeroBanner';
 import AssignmentStudentHeader from '../../Component/Assignment/AssignmentStudentHeader';
 import SelectedChildBanner from '../../Component/SelectedChildBanner';
+import ChildSwitchModal from '../../Component/Parent/ChildSwitchModal';
 import {Colors} from '../../Constants/Colors';
 import {Strings} from '../../Constants/Strings';
 import {spacing} from '../../Constants/Theme';
@@ -38,6 +39,7 @@ import {
   sendStudentAssignmentSubmission,
 } from '../../store/slices/studentHomeSlice';
 import {downloadStudentAssignmentAttachment} from '../../services/studentService';
+import {fetchChildDashboard} from '../../store/slices/parentHomeSlice';
 import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
 
@@ -56,8 +58,26 @@ const Assignment = () => {
     activeStudent,
     assignmentSubjects,
     assignmentOverview,
-    canSwitchChild,
+    canSwitchChild: roleCanSwitch,
+    childList,
+    selectedChildId: roleChildId,
+    setSelectedChildId,
   } = useRoleData();
+  const {selectedChildId: homeChildId, children} = useSelector(
+    state => state.parentHome,
+  );
+  const activeChildId = homeChildId || children[0]?.value || roleChildId || null;
+  const parentChild =
+    children.find(item => item.value === String(activeChildId)) ||
+    childList.find(item => item.value === String(activeChildId)) ||
+    children[0] ||
+    childList[0] ||
+    null;
+  const shownChild = isParent ? parentChild || activeStudent : activeStudent;
+  const canSwitchChild = isParent
+    ? children.length > 1 || childList.length > 1
+    : roleCanSwitch;
+  const switchList = children.length ? children : childList;
   const [openSubjectId, setOpenSubjectId] = useState(null);
   const [openAssignmentId, setOpenAssignmentId] = useState(null);
   const [studentOverview, setStudentOverview] = useState(null);
@@ -70,6 +90,8 @@ const Assignment = () => {
   const [loading, setLoading] = useState(!isParent);
   const [refreshing, setRefreshing] = useState(false);
   const [keyboardInset, setKeyboardInset] = useState(0);
+  const [switchVisible, setSwitchVisible] = useState(false);
+  const [modalReplay, setModalReplay] = useState(0);
   const listRef = useRef(null);
   const overview = isParent ? assignmentOverview : studentOverview;
   const subjects = isParent ? assignmentSubjects : studentSubjects;
@@ -142,6 +164,35 @@ const Assignment = () => {
       hide.remove();
     };
   }, []);
+
+  const openSwitch = useCallback(() => {
+    setSwitchVisible(true);
+    setModalReplay(value => value + 1);
+  }, []);
+
+  const handleSelectChild = useCallback(
+    nextId => {
+      if (!nextId || String(nextId) === String(activeChildId)) {
+        return;
+      }
+      if (isParent) {
+        dispatch(fetchChildDashboard(nextId));
+      }
+      setSelectedChildId(String(nextId));
+    },
+    [activeChildId, dispatch, isParent, setSelectedChildId],
+  );
+
+  const switchModal = canSwitchChild ? (
+    <ChildSwitchModal
+      visible={switchVisible}
+      childrenList={switchList}
+      selectedId={String(activeChildId || shownChild?.value || '')}
+      onSelect={handleSelectChild}
+      onClose={() => setSwitchVisible(false)}
+      replayToken={modalReplay}
+    />
+  ) : null;
 
   const scrollNotesIntoView = useCallback(() => {
     const subjectIndex = subjects.findIndex(
@@ -338,7 +389,7 @@ const Assignment = () => {
             <>
               <EschoolyScreenShell.Header>
                 <AssignmentStudentHeader
-                  student={isParent ? activeStudent : homeStudent}
+                  student={isParent ? shownChild : homeStudent}
                   unreadCount={unreadNotifications}
                   roleLabel={isParent ? Strings.child : undefined}
                 />
@@ -347,11 +398,13 @@ const Assignment = () => {
                 <AssignmentHeroBanner />
                 {isParent ? (
                   <SelectedChildBanner
-                    child={activeStudent}
+                    child={shownChild}
+                    variant="large"
                     icy
-                    canSwitch={false}
+                    disableEnterAnimation
                     compactMargin
-                    animationIndex={1}
+                    canSwitch={canSwitchChild}
+                    onSwitchPress={canSwitchChild ? openSwitch : undefined}
                   />
                 ) : null}
                 {loading ? (
@@ -372,8 +425,9 @@ const Assignment = () => {
           ) : (
             <>
               <SelectedChildBanner
-                child={activeStudent}
+                child={shownChild}
                 canSwitch={canSwitchChild}
+                onSwitchPress={canSwitchChild ? openSwitch : undefined}
                 animationIndex={1}
               />
               <AssignmentOverviewCard
@@ -431,6 +485,7 @@ const Assignment = () => {
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
             {list}
           </KeyboardAvoidingView>
+          {switchModal}
         </EschoolyScreenShell>
       </StudentToneProvider>
     );
@@ -453,6 +508,7 @@ const Assignment = () => {
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           {list}
         </KeyboardAvoidingView>
+        {switchModal}
       </SafeAreaView>
     </StudentToneProvider>
   );

@@ -28,13 +28,14 @@ const SyllabusFilter = props => {
   const animationIndex = props?.animationIndex ?? 1;
   const subjects = props?.subjects || [];
   const icy = useStudentTone();
+  const managed = typeof props?.onOpen === 'function';
 
   const cardInner = (
     <>
       <TouchableOpacity
         style={[styles.dropdownWrap, icy && styles.dropdownWrapIcy]}
         activeOpacity={0.8}
-        onPress={() => setOpen(true)}>
+        onPress={() => (managed ? props.onOpen() : setOpen(true))}>
         {icy ? (
           <FeatureArtImage
             source={EducationIcons.syllabus}
@@ -111,16 +112,18 @@ const SyllabusFilter = props => {
         </LinearGradient>
       )}
 
-      <OptionPickerSheetModal
-        visible={open}
-        onClose={() => setOpen(false)}
-        title={Strings.subject}
-        subtitle={props?.label}
-        data={subjects}
-        selectedValue={props?.value}
-        onSelect={item => props?.onChange?.(item)}
-        variant={icy ? 'ice' : 'navy'}
-      />
+      {managed ? null : (
+        <OptionPickerSheetModal
+          visible={open}
+          onClose={() => setOpen(false)}
+          title={Strings.subject}
+          subtitle={props?.label}
+          data={subjects}
+          selectedValue={props?.value}
+          onSelect={item => props?.onChange?.(item)}
+          variant={icy ? 'ice' : 'navy'}
+        />
+      )}
     </AnimatedCard>
   );
 };

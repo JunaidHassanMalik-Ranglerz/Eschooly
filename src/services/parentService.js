@@ -835,3 +835,12 @@ export const getChildAttendance = (childId, {view = 'monthly', month} = {}) =>
 
 export const getChildTransport = childId =>
   axiosInstance.get(`/parent/children/${childId}/transport`);
+
+export const getChildFees = childId =>
+  axiosInstance.get(`/parent/children/${childId}/fees`);
+
+export {
+  childFeeChallanDownloadUrl,
+  childFeeReceiptDownloadUrl,
+  mapChildFees,
+} from './parentFeesMapper';

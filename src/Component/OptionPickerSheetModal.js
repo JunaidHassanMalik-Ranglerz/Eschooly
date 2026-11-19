@@ -81,7 +81,7 @@ const OptionPickerSheetModal = ({
       title={title}
       subtitle={subtitle}
       variant={variant}
-      dismissOnBackdropPress={false}
+      dismissOnBackdropPress
       compact={!useTallList}
       tall={useTallList}>
       <FlatList

@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {
   ActivityIndicator,
   StatusBar,
@@ -26,7 +26,8 @@ import CardWave, {SCREEN_WAVES} from '../../Component/CardWave';
 import {useRoleData} from '../../hooks/useRoleData';
 import {useDispatch, useSelector} from 'react-redux';
 import {showToast} from '../../utils/toast';
-import {fetchChildLibrary, fetchParentHome} from '../../store/slices/parentHomeSlice';
+import ChildSwitchModal from '../../Component/Parent/ChildSwitchModal';
+import {fetchChildDashboard, fetchChildLibrary, fetchParentHome} from '../../store/slices/parentHomeSlice';
 import {fetchStudentLibrary} from '../../store/slices/studentHomeSlice';
 import {downloadStudentLibraryFile} from '../../services/studentService';
 import {withScreenEnter} from '../../hooks/useScreenEnterGate';
@@ -67,8 +68,11 @@ const DigitalLibrary = () => {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
   const [showAll, setShowAll] = useState(false);
+  const [switchVisible, setSwitchVisible] = useState(false);
+  const [modalReplay, setModalReplay] = useState(0);
 
   const activeChildId = homeChildId || children[0]?.value || null;
+  const parentCanSwitch = isParent && children.length > 1;
   const parentChild =
     parentLibrary?.child?.label
       ? parentLibrary.child
@@ -232,6 +236,36 @@ const DigitalLibrary = () => {
     }
   };
 
+  const openSwitch = useCallback(() => {
+    if (!parentCanSwitch) {
+      return;
+    }
+    setSwitchVisible(true);
+    setModalReplay(value => value + 1);
+  }, [parentCanSwitch]);
+
+  const handleSelectChild = useCallback(
+    nextId => {
+      if (!nextId || String(nextId) === String(activeChildId)) {
+        return;
+      }
+      dispatch(fetchChildDashboard(nextId));
+    },
+    [activeChildId, dispatch],
+  );
+
+  const switchModal =
+    parentCanSwitch ? (
+      <ChildSwitchModal
+        visible={switchVisible}
+        childrenList={children}
+        selectedId={String(activeChildId || '')}
+        onSelect={handleSelectChild}
+        onClose={() => setSwitchVisible(false)}
+        replayToken={modalReplay}
+      />
+    ) : null;
+
   const handleDownload = item => {
     if (!isParent) {
       openStudentFile(item);
@@ -331,7 +365,12 @@ const DigitalLibrary = () => {
                   />
                 </View>
                 <View style={styles.canvasForeground}>
-                  <LibraryProfileCard student={profileStudent} look="float" />
+                  <LibraryProfileCard
+                    student={profileStudent}
+                    look="float"
+                    canSwitch={parentCanSwitch}
+                    onSwitchPress={parentCanSwitch ? openSwitch : undefined}
+                  />
                   <LibrarySearchBar
                     value={search}
                     onChangeText={setSearch}
@@ -349,6 +388,7 @@ const DigitalLibrary = () => {
               </View>
             </EschoolyScreenShell.Body>
           </ScrollEnterScrollView>
+          {switchModal}
         </EschoolyScreenShell>
       </StudentToneProvider>
     );
@@ -370,7 +410,12 @@ const DigitalLibrary = () => {
           bounces={false}
           overScrollMode="never"
           removeClippedSubviews={false}>
-          <LibraryProfileCard student={profileStudent} animationIndex={1} />
+          <LibraryProfileCard
+            student={profileStudent}
+            animationIndex={1}
+            canSwitch={parentCanSwitch}
+            onSwitchPress={parentCanSwitch ? openSwitch : undefined}
+          />
           <LibrarySearchBar
             value={search}
             onChangeText={setSearch}
@@ -401,6 +446,7 @@ const DigitalLibrary = () => {
           {grid}
           {empty}
         </ScrollEnterScrollView>
+        {switchModal}
       </SafeAreaView>
     </StudentToneProvider>
   );

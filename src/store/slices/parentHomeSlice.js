@@ -5,6 +5,7 @@ import {
   getChildDashboard,
   getChildAnnouncements,
   getChildExams,
+  getChildFees,
   getChildLibrary,
   getChildResultCard,
   getChildSyllabus,
@@ -14,6 +15,7 @@ import {
   mapChildAnnouncements,
   mapChildAttendance,
   mapChildExams,
+  mapChildFees,
   mapChildLibrary,
   mapChildResultCard,
   mapChildSyllabus,
@@ -223,6 +225,37 @@ export const fetchChildTransport = fetchChildResource(
   getChildTransport,
   mapChildTransport,
   'Unable to load transport.',
+);
+
+export const fetchChildFees = createAsyncThunk(
+  'parentHome/fetchChildFees',
+  async (childId, {getState, rejectWithValue}) => {
+    const requestedId = String(childId);
+    try {
+      const response = await getChildFees(requestedId);
+      const currentId = String(getState().parentHome.selectedChildId || '');
+      if (currentId && currentId !== requestedId) {
+        return rejectWithValue({stale: true, childId: requestedId});
+      }
+      const body = response?.data;
+      if (isFailedBody(body)) {
+        return rejectWithValue({
+          message:
+            typeof body.message === 'string' && body.message
+              ? body.message
+              : 'Unable to load fees.',
+          status: response?.status ?? null,
+        });
+      }
+      return mapChildFees(body);
+    } catch (error) {
+      const currentId = String(getState().parentHome.selectedChildId || '');
+      if (currentId && currentId !== requestedId) {
+        return rejectWithValue({stale: true, childId: requestedId});
+      }
+      return rejectWithValue(rejectMessage(error));
+    }
+  },
 );
 
 const parentHomeSlice = createSlice({
