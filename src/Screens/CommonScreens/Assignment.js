@@ -38,7 +38,7 @@ import {
   fetchStudentAssignments,
   sendStudentAssignmentSubmission,
 } from '../../store/slices/studentHomeSlice';
-import {downloadStudentAssignmentAttachment} from '../../services/studentService';
+import {studentAssignmentAttachmentDownloadUrl} from '../../services/studentAssignmentDocument';
 import {fetchChildDashboard} from '../../store/slices/parentHomeSlice';
 import {Fonts} from '../../Constants/Fonts';
 import {Fontsize} from '../../Constants/Fontsize';
@@ -86,7 +86,6 @@ const Assignment = () => {
   const [notesById, setNotesById] = useState({});
   const [loadingAssignmentId, setLoadingAssignmentId] = useState(null);
   const [submittingId, setSubmittingId] = useState(null);
-  const [downloadingFileId, setDownloadingFileId] = useState(null);
   const [loading, setLoading] = useState(!isParent);
   const [refreshing, setRefreshing] = useState(false);
   const [keyboardInset, setKeyboardInset] = useState(0);
@@ -276,35 +275,14 @@ const Assignment = () => {
       });
   };
 
-  const handleAttachment = async (assignment, file) => {
-    if (downloadingFileId || !file?.id) {
+  const handleAttachment = (assignment, file) => {
+    if (!assignment?.id || !file?.id) {
       return;
     }
-    setDownloadingFileId(file.id);
-    try {
-      const downloaded = await downloadStudentAssignmentAttachment(
-        assignment.id,
-        file.id,
-        file.name,
-      );
-      if (downloaded.savedToDevice) {
-        showToast({
-          type: 'success',
-          text1: Strings.libraryDownloadSuccess,
-        });
-      }
-      navigation.navigate('PdfViewer', {
-        pdfUrl: downloaded.uri,
-        title: file.name || Strings.assignment,
-      });
-    } catch (error) {
-      showToast({
-        type: 'error',
-        text1: error?.message || 'Unable to download this file.',
-      });
-    } finally {
-      setDownloadingFileId(null);
-    }
+    navigation.navigate('PdfViewer', {
+      pdfUrl: studentAssignmentAttachmentDownloadUrl(assignment.id, file.id),
+      title: file.name || Strings.assignment,
+    });
   };
 
   const handleSubmit = (assignment, notes, files = []) => {
@@ -462,7 +440,6 @@ const Assignment = () => {
               canSubmit={!isParent}
               notesById={notesById}
               submittingId={submittingId}
-              downloadingFileId={downloadingFileId}
               onAssignmentPress={isParent ? undefined : openAssignment}
               onAttachmentPress={isParent ? undefined : handleAttachment}
               onSubmit={isParent ? undefined : handleSubmit}

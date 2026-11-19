@@ -2,6 +2,8 @@ import {Platform} from 'react-native';
 import ReactNativeBlobUtil from 'react-native-blob-util';
 import axiosInstance, {API_BASE_URL, getAuthToken} from '../api/axiosInstance';
 import {storage, storageKeys} from '../utils/storage';
+import {classifyFetchedDocument, jsonDocumentMessage} from '../utils/documentResponse';
+import {studentAssignmentAttachmentDownloadUrl} from './studentAssignmentDocument';
 import {FEATURE_ICON_META} from '../Constants/IconTheme';
 import {Strings} from '../Constants/Strings';
 
@@ -975,89 +977,55 @@ const assignmentAuthHeaders = async () => {
     }
   }
   return {
-    Accept: 'application/pdf, application/json',
+    Accept: 'application/pdf, text/html, application/json',
     ...(token ? {Authorization: `Bearer ${token}`} : {}),
   };
 };
 
 export const downloadStudentAssignmentAttachment = async (assignmentId, fileId, title) => {
   const headers = await assignmentAuthHeaders();
-  const fileName = `${text(title || `assignment-${fileId}`)
+  const safeTitle = text(title || `assignment-${fileId}`)
     .replace(/[^\w.-]+/g, '_')
     .replace(/_+/g, '_')
-    .slice(0, 60) || `assignment-${fileId}`}.pdf`.replace(/\.pdf\.pdf$/i, '.pdf');
-  const path = `${ReactNativeBlobUtil.fs.dirs.CacheDir}/${fileName}`;
-  const url = `${API_BASE_URL}/student/assignments/${assignmentId}/attachments/${fileId}/download`;
+    .replace(/\.(pdf|html)$/i, '')
+    .slice(0, 60) || `assignment-${fileId}`;
+  const cachePath = `${ReactNativeBlobUtil.fs.dirs.CacheDir}/${safeTitle}`;
+  const url = studentAssignmentAttachmentDownloadUrl(assignmentId, fileId);
   const response = await ReactNativeBlobUtil.config({
     fileCache: true,
-    path,
+    path: cachePath,
   }).fetch('GET', url, headers);
   const info = response.info();
   const type = String(info.headers?.['Content-Type'] || info.headers?.['content-type'] || '');
+  const preview = await ReactNativeBlobUtil.fs.readFile(response.path(), 'utf8');
+  const classified = classifyFetchedDocument({
+    contentType: type,
+    bodyPreview: preview,
+  });
 
   if (info.status >= 400) {
-    throw new Error('Unable to download this file.');
+    throw new Error(
+      classified.kind === 'json'
+        ? jsonDocumentMessage(preview) || 'Unable to download this file.'
+        : 'Unable to download this file.',
+    );
   }
 
-  let savedPath = response.path();
-  if (type.includes('json')) {
-    const body = await response.json();
-    if (body?.success === false) {
-      throw new Error(body?.message || 'Unable to download this file.');
-    }
-    const data = asObject(body?.data) || body || {};
-    const fileUrl = text(data.url || data.file_url || data.pdf_url || body?.url);
-    if (!fileUrl) {
-      throw new Error(body?.message || 'Unable to download this file.');
-    }
-    const saved = await ReactNativeBlobUtil.config({
-      fileCache: true,
-      path,
-    }).fetch('GET', fileUrl, headers);
-    if (saved.info().status >= 400) {
-      throw new Error('Unable to download this file.');
-    }
-    savedPath = saved.path();
+  if (classified.kind === 'json') {
+    throw new Error(jsonDocumentMessage(preview) || 'Unable to download this file.');
   }
 
-  const localPath = savedPath.replace(/^file:\/\//, '');
-  let savedToDevice = false;
-  try {
-    if (Platform.OS === 'android') {
-      await ReactNativeBlobUtil.MediaCollection.copyToMediaStore(
-        {
-          name: fileName,
-          parentFolder: '',
-          mimeType: 'application/pdf',
-        },
-        'Download',
-        localPath,
-      );
-    } else {
-      await ReactNativeBlobUtil.fs.cp(
-        localPath,
-        `${ReactNativeBlobUtil.fs.dirs.DocumentDir}/${fileName}`,
-      );
-    }
-    savedToDevice = true;
-  } catch (error) {
-    try {
-      if (Platform.OS === 'android' && ReactNativeBlobUtil.fs.dirs.DownloadDir) {
-        await ReactNativeBlobUtil.fs.cp(
-          localPath,
-          `${ReactNativeBlobUtil.fs.dirs.DownloadDir}/${fileName}`,
-        );
-        savedToDevice = true;
-      }
-    } catch (fallbackError) {
-      savedToDevice = false;
-    }
+  if (classified.kind === 'html') {
+    const htmlPath = `${cachePath}.html`;
+    await ReactNativeBlobUtil.fs.writeFile(htmlPath, preview, 'utf8');
+    return {uri: fileUri(htmlPath), savedToDevice: false, kind: 'html'};
   }
 
-  return {
-    uri: fileUri(localPath),
-    savedToDevice,
-  };
+  if (classified.kind !== 'pdf') {
+    throw new Error('This attachment is not a readable document.');
+  }
+
+  return {uri: fileUri(response.path()), savedToDevice: false, kind: 'pdf'};
 };
 
 const fileSizeLabel = value => {

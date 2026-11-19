@@ -1,4 +1,4 @@
-import {API_BASE_URL} from '../api/axiosInstance';
+import {API_BASE_URL} from '../api/apiBaseUrl';
 
 const asObject = value =>
   value && typeof value === 'object' && !Array.isArray(value) ? value : null;

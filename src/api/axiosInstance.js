@@ -1,7 +1,8 @@
 import axios from 'axios';
 import {storage, storageKeys} from '../utils/storage';
+import {API_BASE_URL} from './apiBaseUrl';
 
-export const API_BASE_URL = 'https://ranglerz.click/eschool/public/api';
+export {API_BASE_URL} from './apiBaseUrl';
 
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
