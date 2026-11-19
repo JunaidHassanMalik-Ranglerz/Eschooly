@@ -693,6 +693,7 @@ const styles = StyleSheet.create({
     marginTop: hp(1.2),
   },
   tabCard: {
+    marginTop: hp(1),
     marginBottom: hp(1.35),
   },
   loader: {
